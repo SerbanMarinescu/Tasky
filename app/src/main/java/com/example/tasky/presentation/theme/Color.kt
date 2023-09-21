@@ -1,4 +1,4 @@
-package com.example.tasky.ui.theme
+package com.example.tasky.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 
