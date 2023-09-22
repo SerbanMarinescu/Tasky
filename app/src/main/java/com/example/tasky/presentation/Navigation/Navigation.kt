@@ -8,10 +8,7 @@ import com.example.tasky.util.Screen
 
 @Composable
 fun Navigation(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = Screen.SplashScreen.route) {
-        composable(Screen.SplashScreen.route) {
-
-        }
+    NavHost(navController = navController, startDestination = Screen.LoginScreen.route) {
         composable(Screen.RegisterScreen.route) {
 
         }

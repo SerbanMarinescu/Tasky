@@ -12,20 +12,17 @@ import retrofit2.http.POST
 interface TaskyAuthApi {
     @POST("/register")
     suspend fun signUp(
-        @Header("x-api-key") key: String,
         @Body registrationRequest: RegistrationRequest
     )
 
     @POST("/login")
     suspend fun signIn(
-        @Header("x-api-key") key: String,
         @Body loginRequest: LoginRequest
     ): Response<LoginResponse>
 
     @GET("/authenticate")
     suspend fun authenticate(
-        @Header("x-api-key") key: String,
-        @Header("Authorization") token: String
+        @Header("Authorization: ") token: String
     )
 
 }
