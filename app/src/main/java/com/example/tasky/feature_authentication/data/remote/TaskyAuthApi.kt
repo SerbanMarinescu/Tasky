@@ -22,7 +22,7 @@ interface TaskyAuthApi {
 
     @GET("/authenticate")
     suspend fun authenticate(
-        @Header("Authorization: ") token: String
+        @Header("Authorization") token: String
     )
 
 }
