@@ -1,5 +1,6 @@
 package com.example.tasky.feature_authentication.di
 
+import android.content.Context
 import android.content.SharedPreferences
 import com.example.tasky.common.Constants.API_KEY
 import com.example.tasky.common.Constants.BASE_URL
@@ -20,6 +21,7 @@ import com.example.tasky.feature_authentication.domain.validation.UserDataValida
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -48,6 +50,12 @@ object AuthModule {
             .client(client)
             .build()
             .create()
+    }
+
+    @Provides
+    @Singleton
+    fun provideSharedPrefs(@ApplicationContext context: Context): SharedPreferences {
+        return context.getSharedPreferences("Prefs", Context.MODE_PRIVATE)
     }
 
     @Provides

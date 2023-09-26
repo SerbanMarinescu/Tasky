@@ -13,7 +13,6 @@ import com.example.tasky.presentation.Navigation.Navigation
 import com.example.tasky.presentation.theme.TaskyTheme
 import com.example.tasky.util.Screen
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collect
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
