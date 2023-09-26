@@ -37,7 +37,7 @@ class UserDataValidatorImpl(
             )
         }
 
-        if(!emailPatternValidator.isEmailPatternValid(email)) {
+        if(!emailPatternValidator.isValid(email)) {
             return ValidationResult(
                 emailError = EmailError.EMAIL_INVALID,
                 isValid = false
