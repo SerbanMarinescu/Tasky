@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.tasky.feature_authentication.presentation.login_screen.LoginScreen
 import com.example.tasky.util.Screen
 
 @Composable
@@ -13,7 +14,7 @@ fun Navigation(navController: NavHostController) {
 
         }
         composable(Screen.LoginScreen.route) {
-
+            LoginScreen(navController = navController)
         }
     }
 }

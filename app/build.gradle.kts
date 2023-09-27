@@ -84,6 +84,10 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.48")
     ksp("com.google.dagger:hilt-android-compiler:2.48")
 
+    //ViewModel Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0-beta01")
+    implementation("androidx.hilt:hilt-navigation-compose:1.0.0-alpha03")
+
     //Room
     val roomVersion = "2.5.2"
     implementation("androidx.room:room-runtime:$roomVersion")
