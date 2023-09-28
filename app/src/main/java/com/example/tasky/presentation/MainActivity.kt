@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
                     viewModel.authResult.collect { result ->
                         when(result) {
                             is AuthUseCaseResult.GenericError -> navController.navigate(Screen.LoginScreen.route)
-                            is AuthUseCaseResult.Success -> TODO("Navigate to Agenda Screen")
+                            is AuthUseCaseResult.Success -> navController.navigate(Screen.AgendaScreen.route)
                             else -> Unit
                         }
                     }

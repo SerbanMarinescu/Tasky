@@ -10,6 +10,7 @@ import com.example.tasky.feature_authentication.domain.util.AuthUseCaseResult
 import com.example.tasky.feature_authentication.domain.validation.EmailError
 import com.example.tasky.feature_authentication.domain.validation.PasswordError
 import com.example.tasky.feature_authentication.domain.validation.UserDataValidator
+import com.example.tasky.feature_authentication.presentation.util.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
@@ -170,16 +171,6 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             val result = useCases.authenticate()
             resultChannel.send(result)
-        }
-    }
-
-    sealed class UiText {
-        data class StringResource(@StringRes val id: Int): UiText()
-
-        fun getString(context: Context): String {
-            return when(this) {
-                is StringResource -> context.getString(id)
-            }
         }
     }
 }
