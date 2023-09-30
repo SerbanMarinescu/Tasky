@@ -1,5 +1,7 @@
 package com.example.tasky.feature_authentication.presentation.register_screen
 
+import com.example.tasky.feature_authentication.presentation.util.UiText
+
 data class RegisterState(
     val fullName: String = "",
     val email: String = "",
@@ -8,7 +10,7 @@ data class RegisterState(
     val isFullNameValid: Boolean = false,
     val isEmailValid: Boolean = false,
     val isPasswordValid: Boolean = false,
-    val fullNameError: String? = null,
-    val emailError: String? = null,
-    val passwordError: String? = null,
+    val fullNameError: UiText? = null,
+    val emailError: UiText? = null,
+    val passwordError: UiText? = null,
 )

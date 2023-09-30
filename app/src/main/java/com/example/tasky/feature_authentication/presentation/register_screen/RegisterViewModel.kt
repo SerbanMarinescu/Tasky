@@ -28,15 +28,6 @@ class RegisterViewModel @Inject constructor(
     private val _state = MutableStateFlow(RegisterState())
     val state = _state.asStateFlow()
 
-    private val fullNameErrorChannel = Channel<UiText>()
-    val fullNameResult = fullNameErrorChannel.receiveAsFlow()
-
-    private val emailErrorChannel = Channel<UiText>()
-    val emailResult = emailErrorChannel.receiveAsFlow()
-
-    private val passwordErrorChannel = Channel<UiText>()
-    val passwordResult = passwordErrorChannel.receiveAsFlow()
-
     private val authChannel = Channel<AuthUseCaseResult>()
     val authResult = authChannel.receiveAsFlow()
 
@@ -153,42 +144,34 @@ class RegisterViewModel @Inject constructor(
                     it.copy(
                         fullNameError = when(fullNameResult.fullNameError) {
                             FullNameError.NAME_EMPTY -> {
-                                fullNameErrorChannel.send(UiText.StringResource(R.string.FULL_NAME_EMPTY))
-                                "NameEmpty"
+                                UiText.StringResource(R.string.FULL_NAME_EMPTY)
                             }
                             FullNameError.NAME_TOO_SHORT -> {
-                                fullNameErrorChannel.send(UiText.StringResource(R.string.FULL_NAME_TOO_SHORT))
-                                "NameTooShort"
+                                UiText.StringResource(R.string.FULL_NAME_TOO_SHORT)
                             }
                             FullNameError.NAME_TOO_LONG -> {
-                                fullNameErrorChannel.send(UiText.StringResource(R.string.FULL_NAME_TOO_LONG))
-                                "NameTooLong"
+                                UiText.StringResource(R.string.FULL_NAME_TOO_LONG)
                             }
                             null -> null
                         },
                         emailError = when(emailResult.emailError) {
                             EmailError.EMAIL_EMPTY -> {
-                                emailErrorChannel.send(UiText.StringResource(R.string.EMAIL_EMPTY))
-                                "EmailEmpty"
+                                UiText.StringResource(R.string.EMAIL_EMPTY)
                             }
                             EmailError.EMAIL_INVALID -> {
-                                emailErrorChannel.send(UiText.StringResource(R.string.EMAIL_INVALID))
-                                "EmailInvalid"
+                                UiText.StringResource(R.string.EMAIL_INVALID)
                             }
                             null -> null
                         },
                         passwordError = when(passwordResult.passwordError) {
                             PasswordError.PASSWORD_EMPTY -> {
-                                passwordErrorChannel.send(UiText.StringResource(R.string.PASSWORD_EMPTY))
-                                "PasswordEmpty"
+                                UiText.StringResource(R.string.PASSWORD_EMPTY)
                             }
                             PasswordError.PASSWORD_INVALID -> {
-                                passwordErrorChannel.send(UiText.StringResource(R.string.PASSWORD_INVALID))
-                                "PasswordInvalid"
+                                UiText.StringResource(R.string.PASSWORD_INVALID)
                             }
                             PasswordError.PASSWORD_TOO_SHORT -> {
-                                passwordErrorChannel.send(UiText.StringResource(R.string.PASSWORD_TOO_SHORT))
-                                "PasswordTooShort"
+                                UiText.StringResource(R.string.PASSWORD_TOO_SHORT)
                             }
                             null -> null
                         }

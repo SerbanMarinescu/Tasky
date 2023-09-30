@@ -3,7 +3,6 @@ package com.example.tasky.feature_authentication.presentation.login_screen
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,9 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,15 +32,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.tasky.R
 import com.example.tasky.feature_authentication.domain.util.AuthUseCaseResult
-import com.example.tasky.feature_authentication.domain.validation.EmailError
-import com.example.tasky.feature_authentication.domain.validation.PasswordError
 import com.example.tasky.feature_authentication.presentation.components.TaskyTextField
 import com.example.tasky.presentation.theme.BackgroundBlack
 import com.example.tasky.presentation.theme.BackgroundWhite
 import com.example.tasky.presentation.theme.BtnNavRegScreen
 import com.example.tasky.presentation.theme.LoginBtnTextColor
 import com.example.tasky.presentation.theme.HintColor
-import com.example.tasky.presentation.theme.RedInvalid
 import com.example.tasky.util.Screen
 
 @Composable
@@ -54,13 +47,6 @@ fun LoginScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-
-    var emailError by remember {
-        mutableStateOf("")
-    }
-    var passwordError by remember {
-        mutableStateOf("")
-    }
 
     LaunchedEffect(key1 = true) {
         viewModel.authResult.collect { result ->
@@ -73,18 +59,6 @@ fun LoginScreen(
                 }
                 else -> Unit
             }
-        }
-    }
-
-    LaunchedEffect(key1 = true) {
-        viewModel.emailErrorResult.collect {
-            emailError = it.getString(context)
-        }
-    }
-
-    LaunchedEffect(key1 = true) {
-        viewModel.passwordErrorResult.collect {
-            passwordError = it.getString(context)
         }
     }
 
@@ -130,12 +104,9 @@ fun LoginScreen(
                     keyboardType = KeyboardType.Email,
                     isValid = state.isEmailValid,
                     contentDescription = stringResource(id = R.string.DescriptionEmailValid),
-                    isError = state.emailError != null
+                    isError = state.emailError != null,
+                    errorMessage = state.emailError?.asString(context)
                 )
-                if(state.emailError != null) {
-                    //Text(text = state.emailError!!, color = RedInvalid)
-                    Text(text = emailError, color = RedInvalid)
-                }
                 Spacer(modifier = Modifier.height(15.dp))
                 TaskyTextField(
                     value = state.password,
@@ -149,12 +120,9 @@ fun LoginScreen(
                         viewModel.onEvent(LoginEvent.ChangePasswordVisibility)
                     },
                     contentDescription = stringResource(id = R.string.DescriptionPasswordVisibility),
-                    isError = state.passwordError != null
+                    isError = state.passwordError != null,
+                    errorMessage = state.passwordError?.asString(context)
                 )
-                if(state.passwordError != null) {
-                    //Text(text = state.passwordError!!, color = RedInvalid)
-                    Text(text = passwordError, color = RedInvalid)
-                }
                 Spacer(modifier = Modifier.height(25.dp))
                 Button(
                     onClick = {

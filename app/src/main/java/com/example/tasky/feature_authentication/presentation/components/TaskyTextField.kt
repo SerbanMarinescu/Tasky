@@ -13,13 +13,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.sp
 import com.example.tasky.R
 import com.example.tasky.presentation.theme.GreenValid
 import com.example.tasky.presentation.theme.TextFieldBackground
@@ -39,7 +37,8 @@ fun TaskyTextField(
     contentDescription: String? = null,
     passwordVisible: Boolean = false,
     onClick: () -> Unit = {},
-    isError: Boolean
+    isError: Boolean,
+    errorMessage: String? = null
 ) {
     OutlinedTextField(
         value = value,
@@ -82,11 +81,20 @@ fun TaskyTextField(
                 )
             }
         },
-        visualTransformation = if(keyboardType == KeyboardType.Password) {
-            if(passwordVisible) VisualTransformation.None else PasswordVisualTransformation()
+        visualTransformation = if(!passwordVisible && keyboardType == KeyboardType.Password) {
+           PasswordVisualTransformation()
         } else {
             VisualTransformation.None
         },
-        isError = isError
+        isError = isError,
+        supportingText = {
+           if(isError) {
+               Text(
+                   text = errorMessage ?: "",
+                   style = MaterialTheme.typography.labelSmall,
+                   color = RedInvalid
+               )
+           }
+        }
     )
 }

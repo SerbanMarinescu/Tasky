@@ -22,9 +22,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,7 +39,6 @@ import com.example.tasky.feature_authentication.presentation.components.TaskyTex
 import com.example.tasky.presentation.theme.BackgroundBlack
 import com.example.tasky.presentation.theme.BackgroundWhite
 import com.example.tasky.presentation.theme.LoginBtnTextColor
-import com.example.tasky.presentation.theme.RedInvalid
 import com.example.tasky.util.Screen
 
 @Composable
@@ -52,16 +48,6 @@ fun RegisterScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-
-    var fullNameError by remember {
-        mutableStateOf("")
-    }
-    var emailError by remember {
-        mutableStateOf("")
-    }
-    var passwordError by remember {
-        mutableStateOf("")
-    }
 
     LaunchedEffect(key1 = true) {
         viewModel.authResult.collect { result ->
@@ -74,24 +60,6 @@ fun RegisterScreen(
                 }
                 else -> Unit
             }
-        }
-    }
-
-    LaunchedEffect(key1 = true) {
-        viewModel.fullNameResult.collect {
-            fullNameError = it.getString(context)
-        }
-    }
-
-    LaunchedEffect(key1 = true) {
-        viewModel.emailResult.collect {
-            emailError = it.getString(context)
-        }
-    }
-
-    LaunchedEffect(key1 = true) {
-        viewModel.passwordResult.collect {
-            passwordError = it.getString(context)
         }
     }
 
@@ -137,11 +105,9 @@ fun RegisterScreen(
                     keyboardType = KeyboardType.Text,
                     contentDescription = stringResource(id = R.string.DescriptionFullNameValid),
                     isValid = state.isFullNameValid,
-                    isError = state.fullNameError != null
+                    isError = state.fullNameError != null,
+                    errorMessage = state.fullNameError?.asString(context)
                 )
-                if(state.fullNameError != null) {
-                    Text(text = fullNameError, color = RedInvalid)
-                }
                 Spacer(modifier = Modifier.height(15.dp))
                 TaskyTextField(
                     value = state.email,
@@ -152,11 +118,9 @@ fun RegisterScreen(
                     keyboardType = KeyboardType.Email,
                     contentDescription = stringResource(id = R.string.DescriptionEmailValid),
                     isValid = state.isEmailValid,
-                    isError = state.emailError != null
+                    isError = state.emailError != null,
+                    errorMessage = state.emailError?.asString(context)
                 )
-                if(state.emailError != null) {
-                    Text(text = emailError, color = RedInvalid)
-                }
                 Spacer(modifier = Modifier.height(15.dp))
                 TaskyTextField(
                     value = state.password,
@@ -170,11 +134,9 @@ fun RegisterScreen(
                     contentDescription = stringResource(id = R.string.DescriptionPasswordVisibility),
                     keyboardType = KeyboardType.Password,
                     passwordVisible = state.isPasswordVisible,
-                    isError = state.passwordError != null
+                    isError = state.passwordError != null,
+                    errorMessage = state.passwordError?.asString(context)
                 )
-                if(state.passwordError != null) {
-                    Text(text = passwordError, color = RedInvalid)
-                }
             }
             Box(
                 contentAlignment = Alignment.TopCenter,

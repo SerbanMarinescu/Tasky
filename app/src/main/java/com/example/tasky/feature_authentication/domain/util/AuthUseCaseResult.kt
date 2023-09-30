@@ -8,6 +8,6 @@ sealed class AuthUseCaseResult {
     data class ErrorFullName(val fullNameError: FullNameError): AuthUseCaseResult()
     data class ErrorEmail(val emailError: EmailError): AuthUseCaseResult()
     data class ErrorPassword(val passwordError: PasswordError): AuthUseCaseResult()
-    object Success: AuthUseCaseResult()
+    data object Success: AuthUseCaseResult()
     data class GenericError(val message: String): AuthUseCaseResult()
 }
