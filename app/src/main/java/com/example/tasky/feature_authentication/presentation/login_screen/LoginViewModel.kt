@@ -1,7 +1,5 @@
 package com.example.tasky.feature_authentication.presentation.login_screen
 
-import android.content.Context
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tasky.R
@@ -12,7 +10,6 @@ import com.example.tasky.feature_authentication.domain.validation.PasswordError
 import com.example.tasky.feature_authentication.domain.validation.UserDataValidator
 import com.example.tasky.feature_authentication.presentation.util.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,12 +28,6 @@ class LoginViewModel @Inject constructor(
 
     private val resultChannel = Channel<AuthUseCaseResult>()
     val authResult = resultChannel.receiveAsFlow()
-
-    private val emailErrorChannel = Channel<UiText>()
-    val emailErrorResult = emailErrorChannel.receiveAsFlow()
-
-    private val passwordErrorChannel = Channel<UiText>()
-    val passwordErrorResult = passwordErrorChannel.receiveAsFlow()
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
@@ -130,27 +121,22 @@ class LoginViewModel @Inject constructor(
                 it.copy(
                     emailError = when(emailResult.emailError) {
                         EmailError.EMAIL_EMPTY -> {
-                            emailErrorChannel.send(UiText.StringResource(R.string.EMAIL_EMPTY))
-                            "Email Empty"
+                            UiText.StringResource(R.string.EMAIL_EMPTY)
                         }
                         EmailError.EMAIL_INVALID -> {
-                            emailErrorChannel.send(UiText.StringResource(R.string.EMAIL_INVALID))
-                            "Email Invalid"
+                            UiText.StringResource(R.string.EMAIL_INVALID)
                         }
                         null -> null
                     },
                     passwordError = when(passwordResult.passwordError) {
                         PasswordError.PASSWORD_EMPTY -> {
-                            passwordErrorChannel.send(UiText.StringResource(R.string.PASSWORD_EMPTY))
-                            "Password Empty"
+                            UiText.StringResource(R.string.PASSWORD_EMPTY)
                         }
                         PasswordError.PASSWORD_INVALID -> {
-                            passwordErrorChannel.send(UiText.StringResource(R.string.PASSWORD_INVALID))
-                            "Password Invalid"
+                            UiText.StringResource(R.string.PASSWORD_INVALID)
                         }
                         PasswordError.PASSWORD_TOO_SHORT -> {
-                            passwordErrorChannel.send(UiText.StringResource(R.string.PASSWORD_TOO_SHORT))
-                            "Password Too Short"
+                            UiText.StringResource(R.string.PASSWORD_TOO_SHORT)
                         }
                         null -> null
                     }
