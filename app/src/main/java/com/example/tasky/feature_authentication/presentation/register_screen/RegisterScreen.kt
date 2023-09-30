@@ -1,20 +1,22 @@
-package com.example.tasky.feature_authentication.presentation.login_screen
+package com.example.tasky.feature_authentication.presentation.register_screen
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,25 +38,24 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.tasky.R
 import com.example.tasky.feature_authentication.domain.util.AuthUseCaseResult
-import com.example.tasky.feature_authentication.domain.validation.EmailError
-import com.example.tasky.feature_authentication.domain.validation.PasswordError
 import com.example.tasky.feature_authentication.presentation.components.TaskyTextField
 import com.example.tasky.presentation.theme.BackgroundBlack
 import com.example.tasky.presentation.theme.BackgroundWhite
-import com.example.tasky.presentation.theme.BtnNavRegScreen
 import com.example.tasky.presentation.theme.LoginBtnTextColor
-import com.example.tasky.presentation.theme.HintColor
 import com.example.tasky.presentation.theme.RedInvalid
 import com.example.tasky.util.Screen
 
 @Composable
-fun LoginScreen(
+fun RegisterScreen(
     navController: NavController,
-    viewModel: LoginViewModel = hiltViewModel()
+    viewModel: RegisterViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
+    var fullNameError by remember {
+        mutableStateOf("")
+    }
     var emailError by remember {
         mutableStateOf("")
     }
@@ -77,13 +78,19 @@ fun LoginScreen(
     }
 
     LaunchedEffect(key1 = true) {
-        viewModel.emailErrorResult.collect {
+        viewModel.fullNameResult.collect {
+            fullNameError = it.getString(context)
+        }
+    }
+
+    LaunchedEffect(key1 = true) {
+        viewModel.emailResult.collect {
             emailError = it.getString(context)
         }
     }
 
     LaunchedEffect(key1 = true) {
-        viewModel.passwordErrorResult.collect {
+        viewModel.passwordResult.collect {
             passwordError = it.getString(context)
         }
     }
@@ -95,7 +102,7 @@ fun LoginScreen(
             .background(BackgroundBlack)
     ) {
         Text(
-            text = stringResource(id = R.string.WelcomeMessage),
+            text = stringResource(id = R.string.RegisterScreenTitle),
             color = Color.White,
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(top = 77.dp)
@@ -116,93 +123,106 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
-                        top = 50.dp,
-                        start = 17.dp,
-                        end = 15.dp
+                        top = 40.dp,
+                        start = 16.dp,
+                        end = 16.dp,
                     )
             ) {
                 TaskyTextField(
+                    value = state.fullName,
+                    onValueChanged = {
+                        viewModel.onEvent(RegisterEvent.FullNameChanged(it))
+                    },
+                    hint = stringResource(id = R.string.FullNameHint),
+                    keyboardType = KeyboardType.Text,
+                    contentDescription = stringResource(id = R.string.DescriptionFullNameValid),
+                    isValid = state.isFullNameValid,
+                    isError = state.fullNameError != null
+                )
+                if(state.fullNameError != null) {
+                    Text(text = fullNameError, color = RedInvalid)
+                }
+                Spacer(modifier = Modifier.height(15.dp))
+                TaskyTextField(
                     value = state.email,
                     onValueChanged = {
-                        viewModel.onEvent(LoginEvent.EmailChanged(it))
+                        viewModel.onEvent(RegisterEvent.EmailChanged(it))
                     },
                     hint = stringResource(id = R.string.EmailHint),
                     keyboardType = KeyboardType.Email,
-                    isValid = state.isEmailValid,
                     contentDescription = stringResource(id = R.string.DescriptionEmailValid),
+                    isValid = state.isEmailValid,
                     isError = state.emailError != null
                 )
                 if(state.emailError != null) {
-                    //Text(text = state.emailError!!, color = RedInvalid)
                     Text(text = emailError, color = RedInvalid)
                 }
                 Spacer(modifier = Modifier.height(15.dp))
                 TaskyTextField(
                     value = state.password,
                     onValueChanged = {
-                        viewModel.onEvent(LoginEvent.PasswordChanged(it))
+                        viewModel.onEvent(RegisterEvent.PasswordChanged(it))
                     },
                     hint = stringResource(id = R.string.PasswordHint),
-                    keyboardType = KeyboardType.Password,
-                    passwordVisible = state.isPasswordVisible,
                     onClick = {
-                        viewModel.onEvent(LoginEvent.ChangePasswordVisibility)
+                        viewModel.onEvent(RegisterEvent.ChangePasswordVisibility)
                     },
                     contentDescription = stringResource(id = R.string.DescriptionPasswordVisibility),
+                    keyboardType = KeyboardType.Password,
+                    passwordVisible = state.isPasswordVisible,
                     isError = state.passwordError != null
                 )
                 if(state.passwordError != null) {
-                    //Text(text = state.passwordError!!, color = RedInvalid)
                     Text(text = passwordError, color = RedInvalid)
                 }
-                Spacer(modifier = Modifier.height(25.dp))
+            }
+            Box(
+                contentAlignment = Alignment.TopCenter,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        top = 330.dp,
+                        start = 16.dp,
+                        end = 16.dp,
+                    )
+            ) {
                 Button(
                     onClick = {
-                        viewModel.onEvent(LoginEvent.SignIn)
+                        viewModel.onEvent(RegisterEvent.SignUp)
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = BackgroundBlack
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(55.dp)
-                        .padding(start = 18.dp, end = 18.dp)
-                    ,
+                        .height(55.dp),
                     shape = RoundedCornerShape(38.dp)
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.SignInBtn),
+                    Text(text = stringResource(id = R.string.SignUpBtn),
                         style = MaterialTheme.typography.labelLarge,
                         color = LoginBtnTextColor
                     )
                 }
-                Spacer(modifier = Modifier.height(283.dp))
             }
-            Box(
-                contentAlignment = Alignment.BottomCenter,
+            Box(contentAlignment = Alignment.BottomStart,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
-                        start = 70.dp,
-                        bottom = 40.dp
-                        )
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.NeedAccount),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = HintColor
+                        start = 16.dp,
+                        bottom = 68.dp
                     )
-                    Text(
-                        text = stringResource(id = R.string.GoSignUp),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = BtnNavRegScreen,
-                        modifier = Modifier.clickable {
-                            navController.navigate(Screen.RegisterScreen.route)
-                        }
+            ){
+                FloatingActionButton(
+                    onClick = {
+                        navController.navigate(Screen.LoginScreen.route)
+                    },
+                    modifier = Modifier
+                        .size(56.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowLeft,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }

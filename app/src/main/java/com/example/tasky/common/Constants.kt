@@ -8,4 +8,5 @@ object Constants {
 
     const val ROUTE_REGISTER = "RegisterScreen"
     const val ROUTE_LOGIN = "LoginScreen"
+    const val ROUTE_AGENDA = "AgendaScreen"
 }

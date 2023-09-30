@@ -7,11 +7,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
@@ -23,11 +25,12 @@ import com.example.tasky.presentation.theme.GreenValid
 import com.example.tasky.presentation.theme.TextFieldBackground
 import com.example.tasky.presentation.theme.HintColor
 import com.example.tasky.presentation.theme.InputTextColor
+import com.example.tasky.presentation.theme.RedInvalid
 import com.example.tasky.presentation.theme.VisibilityIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TextFieldComponent(
+fun TaskyTextField(
     value: String,
     onValueChanged: (String) -> Unit,
     hint: String,
@@ -35,7 +38,8 @@ fun TextFieldComponent(
     isValid: Boolean = false,
     contentDescription: String? = null,
     passwordVisible: Boolean = false,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    isError: Boolean
 ) {
     OutlinedTextField(
         value = value,
@@ -45,7 +49,7 @@ fun TextFieldComponent(
         placeholder = {
             Text(
                 text = hint,
-                fontSize = 16.sp,
+                style = MaterialTheme.typography.labelSmall,
                 color = HintColor
             )
         },
@@ -53,7 +57,9 @@ fun TextFieldComponent(
             textColor = InputTextColor,
             containerColor = TextFieldBackground
         ),
-        textStyle = TextStyle(fontSize = 16.sp),
+        textStyle = MaterialTheme.typography.labelSmall + TextStyle(
+            color = if(isError) RedInvalid else InputTextColor
+        ),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         trailingIcon = {
             if((keyboardType == KeyboardType.Email || keyboardType == KeyboardType.Text) && isValid) {
@@ -76,6 +82,11 @@ fun TextFieldComponent(
                 )
             }
         },
-        visualTransformation = if(passwordVisible) PasswordVisualTransformation() else VisualTransformation.None
+        visualTransformation = if(keyboardType == KeyboardType.Password) {
+            if(passwordVisible) VisualTransformation.None else PasswordVisualTransformation()
+        } else {
+            VisualTransformation.None
+        },
+        isError = isError
     )
 }

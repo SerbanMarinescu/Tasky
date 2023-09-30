@@ -88,6 +88,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0-beta01")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0-alpha03")
 
+    //Collect with LifeCycle
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.0")
+
     //Room
     val roomVersion = "2.5.2"
     implementation("androidx.room:room-runtime:$roomVersion")

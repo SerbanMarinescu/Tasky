@@ -5,13 +5,22 @@
     <string name="PASSWORD_EMPTY">Password field cannot be empty!</string>
     <string name="PASSWORD_INVALID">The password must contain lowercase and uppercase letters as well as at least one digit!</string>
     <string name="PASSWORD_TOO_SHORT">The password needs to be at least 9 characters long!</string>
+    <string name="FULL_NAME_EMPTY">The full name field cannot be empty!</string>
+    <string name="FULL_NAME_TOO_SHORT">The full name must be longer than 4 characters!</string>
+    <string name="FULL_NAME_TOO_LONG">The full name must be shorter than 50 characters!</string>
+    <string name="NoErrorMessage">NoError</string>
 
     <string name="WelcomeMessage">Welcome Back!</string>
-    <string name="EmailHint">Email</string>
+    <string name="EmailHint">Email address</string>
     <string name="PasswordHint">Password</string>
     <string name="SignInBtn">LOG IN</string>
-    <string name="NeedAccount">DON\'T HAVE AN ACCOUNT? </string>
+    <string name="NeedAccount">DON\'T HAVE AN ACCOUNT?\ </string>
     <string name="GoSignUp">SIGN UP</string>
     <string name="DescriptionEmailValid">Shows that inputted email is valid</string>
     <string name="DescriptionPasswordVisibility">Toggles visibility of password field</string>
+    <string name="DescriptionFullNameValid">Shows that inputted full name is valid</string>
+
+    <string name="RegisterScreenTitle">Create your account</string>
+    <string name="SignUpBtn">GET STARTED</string>
+    <string name="FullNameHint">Name</string>
 </resources>
