@@ -1,6 +1,6 @@
-package com.example.tasky.feature_agenda.domain.model
+package com.example.tasky.feature_agenda.data.remote.dto
 
-data class Attendees(
+data class AttendeesDto(
     val email: String,
     val fullName: String,
     val userId: String,

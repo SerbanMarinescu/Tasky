@@ -1,4 +1,4 @@
-package com.example.tasky.feature_agenda.data.remote.dto
+package com.example.tasky.feature_agenda.data.remote
 
 data class UpdateEventRequest(
     val id: String,

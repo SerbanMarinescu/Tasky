@@ -1,13 +1,8 @@
 package com.example.tasky.feature_agenda.data.remote
 
-import com.example.tasky.feature_agenda.data.remote.dto.AgendaResponse
-import com.example.tasky.feature_agenda.data.remote.dto.AttendeeResponse
-import com.example.tasky.feature_agenda.domain.model.Event
-import com.example.tasky.feature_agenda.data.remote.dto.EventRequest
-import com.example.tasky.feature_agenda.data.remote.dto.SyncAgendaRequest
-import com.example.tasky.feature_agenda.data.remote.dto.UpdateEventRequest
-import com.example.tasky.feature_agenda.domain.model.Reminder
-import com.example.tasky.feature_agenda.domain.model.Task
+import com.example.tasky.feature_agenda.data.remote.dto.EventDto
+import com.example.tasky.feature_agenda.data.remote.dto.ReminderDto
+import com.example.tasky.feature_agenda.data.remote.dto.TaskDto
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -45,12 +40,12 @@ interface TaskyAgendaApi {
     suspend fun createEvent(
         @Part("create_event_request") createEventRequest: EventRequest,
         @Part photos: List<MultipartBody.Part>
-    ): Response<Event>
+    ): Response<EventDto>
 
     @GET("/event")
     suspend fun getEvent(
         @Query("eventId") eventId: String
-    ): Response<Event>
+    ): Response<EventDto>
 
     @DELETE("/event")
     suspend fun deleteEvent(
@@ -62,7 +57,7 @@ interface TaskyAgendaApi {
     suspend fun updateEvent(
         @Part("update_event_request") updateEventRequest: UpdateEventRequest,
         @Part photos: List<MultipartBody.Part>
-    ): Response<Event>
+    ): Response<EventDto>
 
     @GET("/attendee")
     suspend fun getAttendee(
@@ -76,18 +71,18 @@ interface TaskyAgendaApi {
 
     @POST("/task")
     suspend fun createTask(
-        @Body task: Task
+        @Body taskDto: TaskDto
     )
 
     @PUT("/task")
     suspend fun updateTask(
-        @Body task: Task
+        @Body taskDto: TaskDto
     )
 
     @GET("/task")
     suspend fun getTask(
         @Query("taskId") taskId: String
-    ): Response<Task>
+    ): Response<TaskDto>
 
     @DELETE("/task")
     suspend fun deleteTask(
@@ -96,18 +91,18 @@ interface TaskyAgendaApi {
 
     @POST("/reminder")
     suspend fun createReminder(
-        @Body reminder: Reminder
+        @Body reminderDto: ReminderDto
     )
 
     @PUT("/reminder")
     suspend fun updateReminder(
-        @Body reminder: Reminder
+        @Body reminderDto: ReminderDto
     )
 
     @GET("/reminder")
     suspend fun getReminder(
         @Query("reminderId") reminderId: String
-    ): Response<Reminder>
+    ): Response<ReminderDto>
 
     @DELETE("/reminder")
     suspend fun deleteReminder(

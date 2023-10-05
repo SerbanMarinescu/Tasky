@@ -1,14 +1,13 @@
 package com.example.tasky.feature_agenda.domain.model
 
+import java.time.LocalDateTime
+
 data class Event(
-    val id: String,
     val title: String,
-    val description: String,
-    val from: Long,
-    val to: Long,
-    val remindAt: Long,
-    val host: String,
-    val isUserEventCreator: Boolean,
-    val attendees: List<Attendees>,
-    val photos: List<Photo>
+    val description: String?,
+    val from: LocalDateTime,
+    val to: LocalDateTime,
+    val remindAt: LocalDateTime,
+    val attendees: List<Attendee>,
+    val photos: List<Photo>?
 )
