@@ -9,6 +9,6 @@ data class ReminderEntity(
     val description: String,
     val time: Long,
     val remindAt: Long,
-    @PrimaryKey
-    val reminderId: Int? = null
+    @PrimaryKey(autoGenerate = true)
+    val reminderId: Int = 0
 )

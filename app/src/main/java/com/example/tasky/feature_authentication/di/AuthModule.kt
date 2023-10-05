@@ -1,12 +1,9 @@
 package com.example.tasky.feature_authentication.di
 
-import android.content.Context
 import android.content.SharedPreferences
-import com.example.tasky.common.Constants.API_KEY
 import com.example.tasky.common.Constants.BASE_URL
 import com.example.tasky.feature_authentication.data.remote.TaskyAuthApi
 import com.example.tasky.feature_authentication.data.repository.AuthRepositoryImpl
-import com.example.tasky.feature_authentication.data.util.ApiKeyInterceptor
 import com.example.tasky.feature_authentication.data.util.UserPreferencesImpl
 import com.example.tasky.feature_authentication.data.validation.EmailPatternValidatorImpl
 import com.example.tasky.feature_authentication.domain.repository.AuthRepository
@@ -21,7 +18,6 @@ import com.example.tasky.feature_authentication.domain.validation.UserDataValida
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -35,14 +31,6 @@ object AuthModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
-        return  OkHttpClient.Builder()
-            .addInterceptor(ApiKeyInterceptor(API_KEY))
-            .build()
-    }
-
-    @Provides
-    @Singleton
     fun provideAuthApi(client: OkHttpClient): TaskyAuthApi {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
@@ -50,12 +38,6 @@ object AuthModule {
             .client(client)
             .build()
             .create()
-    }
-
-    @Provides
-    @Singleton
-    fun provideSharedPrefs(@ApplicationContext context: Context): SharedPreferences {
-        return context.getSharedPreferences("Prefs", Context.MODE_PRIVATE)
     }
 
     @Provides

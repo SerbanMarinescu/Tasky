@@ -11,6 +11,6 @@ data class TaskEntity(
     val time: Long,
     val remindAt: Long,
     val isDone: Boolean,
-    @PrimaryKey
-    val taskId: Int? = null
+    @PrimaryKey(autoGenerate = true)
+    val taskId: Int = 0
 )

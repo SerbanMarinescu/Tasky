@@ -10,6 +10,6 @@ data class EventEntity(
     val from: Long,
     val to: Long,
     val remindAt: Long,
-    @PrimaryKey
-    val eventId: Int? = null
+    @PrimaryKey(autoGenerate = true)
+    val eventId: Int = 0
 )
