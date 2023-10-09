@@ -21,8 +21,5 @@ interface TaskyAuthApi {
     ): Response<LoginResponse>
 
     @GET("/authenticate")
-    suspend fun authenticate(
-        @Header("Authorization") token: String
-    )
-
+    suspend fun authenticate()
 }

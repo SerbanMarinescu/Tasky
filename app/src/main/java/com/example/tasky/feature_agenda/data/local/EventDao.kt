@@ -7,12 +7,10 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import com.example.tasky.feature_agenda.data.local.entity.AttendeeEntity
 import com.example.tasky.feature_agenda.data.local.entity.EventEntity
-import com.example.tasky.feature_agenda.data.local.entity.ReminderEntity
-import com.example.tasky.feature_agenda.data.local.entity.TaskEntity
 import com.example.tasky.feature_agenda.data.local.relations.EventWithAttendee
 
 @Dao
-interface AgendaDao {
+interface EventDao {
 
     @Upsert
     suspend fun upsertEvent(event: EventEntity)
@@ -24,30 +22,18 @@ interface AgendaDao {
     suspend fun getEvents(): List<EventEntity>
 
     @Upsert
-    suspend fun upsertAttendee(attendee: AttendeeEntity)
+    suspend fun upsertAttendee(attendees: List<AttendeeEntity>)
 
     @Delete
     suspend fun deleteAttendee(attendee: AttendeeEntity)
 
     @Transaction
     @Query("SELECT * FROM Event WHERE eventId = :eventId")
-    suspend fun getEventWithAttendees(eventId: Int): List<EventWithAttendee>
+    suspend fun getEventWithAttendees(eventId: Int): EventWithAttendee
 
-    @Upsert
-    suspend fun upsertTask(task: TaskEntity)
+    @Query("DELETE FROM Event")
+    suspend fun deleteEvents()
 
-    @Delete
-    suspend fun deleteTask(task: TaskEntity)
-
-    @Query("SELECT * FROM Task")
-    suspend fun getTasks(): List<TaskEntity>
-
-    @Upsert
-    suspend fun upsertReminder(reminder: ReminderEntity)
-
-    @Delete
-    suspend fun deleteReminder(reminder: ReminderEntity)
-
-    @Query("SELECT * FROM Reminder")
-    suspend fun getReminders(): List<ReminderEntity>
+    @Query("DELETE FROM Attendee")
+    suspend fun deleteAttendees()
 }
