@@ -17,9 +17,9 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 @RequiresApi(Build.VERSION_CODES.O)
-fun Long.toTime(): LocalDateTime {
+fun Long.asUtcTimestampToLocalDateTime(): LocalDateTime {
     val instant = Instant.ofEpochMilli(this)
-    return LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
+    return LocalDateTime.ofInstant(instant, ZoneId.of("UTC"))
 }
 
 fun AttendeesDto.toAttendee(): Attendee {
@@ -41,9 +41,9 @@ fun EventDto.toEvent() : Event {
     return Event(
         title = title,
         description = description,
-        from = from.toTime(),
-        to = to.toTime(),
-        remindAt = remindAt.toTime(),
+        from = from.asUtcTimestampToLocalDateTime(),
+        to = to.asUtcTimestampToLocalDateTime(),
+        remindAt = remindAt.asUtcTimestampToLocalDateTime(),
         attendees = attendees.map { it.toAttendee()},
         photos = photos.map { it.toPhoto() }
     )
@@ -54,8 +54,8 @@ fun ReminderDto.toReminder() : Reminder {
     return Reminder(
         title = title,
         description = description,
-        time = time.toTime(),
-        remindAt = remindAt.toTime()
+        time = time.asUtcTimestampToLocalDateTime(),
+        remindAt = remindAt.asUtcTimestampToLocalDateTime()
     )
 }
 
@@ -64,8 +64,8 @@ fun TaskDto.toTask() : Task {
     return Task(
         title = title,
         description = description,
-        time = time.toTime(),
-        remindAt = remindAt.toTime(),
+        time = time.asUtcTimestampToLocalDateTime(),
+        remindAt = remindAt.asUtcTimestampToLocalDateTime(),
         isDone = isDone
     )
 }

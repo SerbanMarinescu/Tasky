@@ -8,6 +8,7 @@ data class AttendeeEntity(
     val email: String,
     val fullName: String,
     val userId: String,
-    @PrimaryKey
-    val attendeeId: Int? = null
+    val eventId: Int,
+    @PrimaryKey(autoGenerate = true)
+    val attendeeId: Int = 0
 )
