@@ -25,16 +25,10 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideToken(prefs: SharedPreferences): String? {
-        return prefs.getString("jwt", null)
-    }
-
-    @Provides
-    @Singleton
-    fun provideOkHttpClient(token: String): OkHttpClient {
+    fun provideOkHttpClient(prefs: SharedPreferences): OkHttpClient {
         return  OkHttpClient.Builder()
             .addInterceptor(ApiKeyInterceptor(Constants.API_KEY))
-            .addInterceptor(ApiTokenInterceptor(token))
+            .addInterceptor(ApiTokenInterceptor(prefs.getString("jwt", null)))
             .build()
     }
 }

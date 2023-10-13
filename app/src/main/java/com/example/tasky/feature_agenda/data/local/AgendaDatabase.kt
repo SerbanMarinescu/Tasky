@@ -18,5 +18,7 @@ import com.example.tasky.feature_agenda.data.local.entity.TaskEntity
 )
 abstract class AgendaDatabase: RoomDatabase() {
 
-    abstract val dao: AgendaDao
+    abstract val eventDao: EventDao
+    abstract val taskDao: TaskDao
+    abstract val reminderDao: ReminderDao
 }
