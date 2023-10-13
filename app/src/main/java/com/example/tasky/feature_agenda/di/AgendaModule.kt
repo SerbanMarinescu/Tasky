@@ -5,7 +5,6 @@ import com.example.tasky.TaskyApp
 import com.example.tasky.common.Constants
 import com.example.tasky.common.Constants.DATABASE_NAME
 import com.example.tasky.feature_agenda.data.local.AgendaDatabase
-import com.example.tasky.feature_agenda.data.local.Daos
 import com.example.tasky.feature_agenda.data.remote.TaskyAgendaApi
 import dagger.Module
 import dagger.Provides
@@ -42,13 +41,4 @@ object AgendaModule {
         ).build()
     }
 
-    @Provides
-    @Singleton
-    fun providDaos(db: AgendaDatabase): Daos {
-        return Daos(
-            eventDao = db.eventDao,
-            taskDao = db.taskDao,
-            reminderDao = db.reminderDao,
-        )
-    }
 }

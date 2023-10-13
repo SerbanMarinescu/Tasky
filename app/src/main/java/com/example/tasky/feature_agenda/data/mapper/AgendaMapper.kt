@@ -29,7 +29,7 @@ fun Long.toZonedDateTime(timeZoneId: ZoneId = ZoneId.systemDefault()): ZonedDate
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-fun ZonedDateTime.toLong(): Long {
+fun ZonedDateTime.toUtcTimestamp(): Long {
     val instant = this.toInstant()
     return instant.toEpochMilli()
 }
@@ -145,9 +145,9 @@ fun AgendaItem.Event.toEventEntity(): EventEntity {
     return EventEntity(
         title = title,
         description = description ?: "",
-        from = from.toLong(),
-        to = to.toLong(),
-        remindAt = remindAtTime.toLong(),
+        from = from.toUtcTimestamp(),
+        to = to.toUtcTimestamp(),
+        remindAt = remindAtTime.toUtcTimestamp(),
         isUserEventCreator = isUserEventCreator,
         host = host ?: "",
         eventId = id.toInt()
@@ -159,8 +159,8 @@ fun AgendaItem.Task.toTaskEntity(): TaskEntity {
     return TaskEntity(
         title = title,
         description = description ?: "",
-        time = time.toLong(),
-        remindAt = remindAtTime.toLong(),
+        time = time.toUtcTimestamp(),
+        remindAt = remindAtTime.toUtcTimestamp(),
         isDone = isDone,
         taskId = id.toInt()
     )
@@ -171,8 +171,8 @@ fun AgendaItem.Reminder.toReminderEntity(): ReminderEntity {
     return ReminderEntity(
         title = title,
         description = description ?: "",
-        time = time.toLong(),
-        remindAt = remindAtTime.toLong(),
+        time = time.toUtcTimestamp(),
+        remindAt = remindAtTime.toUtcTimestamp(),
         reminderId = id.toInt()
     )
 }

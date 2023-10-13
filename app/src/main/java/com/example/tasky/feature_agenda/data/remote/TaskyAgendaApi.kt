@@ -31,9 +31,7 @@ interface TaskyAgendaApi {
     )
 
     @GET("/fullAgenda")
-    suspend fun getFullAgenda(
-        @Body agenda: AgendaResponse
-    )
+    suspend fun getFullAgenda(): Response<AgendaResponse>
 
     @Multipart
     @POST("/event")

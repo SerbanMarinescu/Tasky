@@ -59,8 +59,8 @@ class AuthRepositoryImpl(
 
     override suspend fun authenticate(): AuthResult {
         return try {
-            val token = userPreferences.getAuthenticatedUser()?.token ?: return AuthResult.Error("Jwt Token has expired!")
-            api.authenticate("Bearer $token")
+            //val token = userPreferences.getAuthenticatedUser()?.token ?: return AuthResult.Error("Jwt Token has expired!")
+            api.authenticate()
             AuthResult.Authorized()
         } catch (e: HttpException){
             if(e.code() == 401){
