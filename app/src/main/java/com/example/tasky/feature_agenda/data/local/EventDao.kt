@@ -8,6 +8,7 @@ import androidx.room.Upsert
 import com.example.tasky.feature_agenda.data.local.entity.AttendeeEntity
 import com.example.tasky.feature_agenda.data.local.entity.EventEntity
 import com.example.tasky.feature_agenda.data.local.relations.EventWithAttendee
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface EventDao {
@@ -19,7 +20,7 @@ interface EventDao {
     suspend fun deleteEvent(event: EventEntity)
 
     @Query("SELECT * FROM Event")
-    suspend fun getEvents(): List<EventEntity>
+    suspend fun getEvents(): Flow<List<EventEntity>>
 
     @Upsert
     suspend fun upsertAttendee(attendees: List<AttendeeEntity>)

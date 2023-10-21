@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.example.tasky.TaskyApp
 import com.example.tasky.common.Constants
+import com.example.tasky.feature_authentication.domain.util.UserPreferences
 import com.example.tasky.util.ApiKeyInterceptor
 import com.example.tasky.util.ApiTokenInterceptor
 import dagger.Module
@@ -25,10 +26,10 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(prefs: SharedPreferences): OkHttpClient {
+    fun provideOkHttpClient(userPrefs: UserPreferences): OkHttpClient {
         return  OkHttpClient.Builder()
             .addInterceptor(ApiKeyInterceptor(Constants.API_KEY))
-            .addInterceptor(ApiTokenInterceptor(prefs.getString("jwt", null)))
+            .addInterceptor(ApiTokenInterceptor(userPrefs))
             .build()
     }
 }
