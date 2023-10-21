@@ -16,8 +16,11 @@ interface ReminderDao {
     @Delete
     suspend fun deleteReminder(reminder: ReminderEntity)
 
-    @Query("SELECT * FROM Reminder")
-    suspend fun getReminders(): Flow<List<ReminderEntity>>
+    @Query("SELECT * FROM Reminder WHERE time BETWEEN :startOfDay AND :endOfDay")
+    fun getRemindersForSpecificDay(startOfDay: Long, endOfDay: Long): Flow<List<ReminderEntity>>
+
+    @Query("DELETE FROM Reminder WHERE time BETWEEN :startOfDay AND :endOfDay")
+    fun deleteRemindersForSpecificDay(startOfDay: Long, endOfDay: Long)
 
     @Query("DELETE FROM Reminder")
     suspend fun deleteReminders()

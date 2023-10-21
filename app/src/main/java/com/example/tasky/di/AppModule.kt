@@ -10,6 +10,7 @@ import com.example.tasky.util.ApiTokenInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import javax.inject.Singleton
@@ -20,8 +21,14 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideSharedPrefs(app: TaskyApp): SharedPreferences {
-        return app.getSharedPreferences("Prefs", Context.MODE_PRIVATE)
+    fun provideTaskyApp(): TaskyApp {
+        return TaskyApp()
+    }
+
+    @Provides
+    @Singleton
+    fun provideSharedPrefs(@ApplicationContext context: Context): SharedPreferences {
+        return context.getSharedPreferences("Prefs", Context.MODE_PRIVATE)
     }
 
     @Provides

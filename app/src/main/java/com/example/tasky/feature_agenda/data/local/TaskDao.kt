@@ -16,8 +16,11 @@ interface TaskDao {
     @Delete
     suspend fun deleteTask(task: TaskEntity)
 
-    @Query("SELECT * FROM Task")
-    suspend fun getTasks(): Flow<List<TaskEntity>>
+    @Query("SELECT * FROM Task WHERE time BETWEEN :startOfDay AND :endOfDay")
+    fun getTasksForSpecificDay(startOfDay: Long, endOfDay: Long): Flow<List<TaskEntity>>
+
+    @Query("DELETE FROM Task WHERE time BETWEEN :startOfDay AND :endOfDay")
+    suspend fun deleteTasksForSpecificDay(startOfDay: Long, endOfDay: Long)
 
     @Query("DELETE FROM Task")
     suspend fun deleteTasks()
