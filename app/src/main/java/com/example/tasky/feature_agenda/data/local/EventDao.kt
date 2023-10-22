@@ -19,14 +19,17 @@ interface EventDao {
     @Delete
     suspend fun deleteEvent(event: EventEntity)
 
-    @Query("SELECT * FROM Event")
-    suspend fun getEvents(): Flow<List<EventEntity>>
+    @Query("SELECT * FROM Event WHERE `from` >= :startOfDay AND `to` <= :endOfDay")
+    fun getEventsForSpecificDay(startOfDay: Long, endOfDay: Long): Flow<List<EventEntity>>
+
+    @Query("DELETE FROM Event WHERE `from` >= :startOfDay AND `to` <= :endOfDay")
+    suspend fun deleteEventsForSpecificDay(startOfDay: Long, endOfDay: Long)
 
     @Upsert
-    suspend fun upsertAttendee(attendees: List<AttendeeEntity>)
+    suspend fun upsertAttendees(attendees: List<AttendeeEntity>)
 
-    @Delete
-    suspend fun deleteAttendee(attendee: AttendeeEntity)
+    @Query("DELETE FROM Attendee WHERE eventId IN (SELECT eventId FROM Event WHERE `from` >= :startOfDay AND `to` <= :endOfDay)")
+    suspend fun deleteAttendeesForSpecificDay(startOfDay: Long, endOfDay: Long)
 
     @Transaction
     @Query("SELECT * FROM Event WHERE eventId = :eventId")

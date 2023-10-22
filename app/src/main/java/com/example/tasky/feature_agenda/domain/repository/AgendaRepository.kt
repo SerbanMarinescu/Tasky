@@ -1,18 +1,21 @@
 package com.example.tasky.feature_agenda.domain.repository
 
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
-import com.example.tasky.feature_agenda.domain.util.AgendaResult
+import com.example.tasky.util.Result
 import kotlinx.coroutines.flow.Flow
+import java.time.ZonedDateTime
 
 interface AgendaRepository {
 
-    suspend fun logout()
+    suspend fun logout(): Result
 
-    suspend fun getAgenda(): Flow<List<AgendaItem>>
+    suspend fun getAgendaForSpecificDay(zonedDateTime: ZonedDateTime): Flow<List<AgendaItem>>
 
-    suspend fun fetchAgendaFromRemote(): AgendaResult
+    suspend fun fetchAgendaFromRemote(zonedDateTime: ZonedDateTime): Result
 
-    suspend fun syncServerWithLocallyDeletedItems(eventIds: List<String>, reminderIds: List<String>, taskIds: List<String>) : AgendaResult
-
-    suspend fun syncLocalCacheWithServer()
+    suspend fun syncAgenda(
+        deletedEventIds: List<String>,
+        deletedReminderIds: List<String>,
+        deletedTaskIds: List<String>
+    ): Result
 }
