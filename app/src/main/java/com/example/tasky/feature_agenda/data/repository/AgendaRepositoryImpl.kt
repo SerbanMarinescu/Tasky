@@ -11,7 +11,7 @@ import com.example.tasky.feature_agenda.data.mapper.toReminderEntity
 import com.example.tasky.feature_agenda.data.mapper.toTask
 import com.example.tasky.feature_agenda.data.mapper.toTaskEntity
 import com.example.tasky.feature_agenda.data.mapper.toUtcTimestamp
-import com.example.tasky.feature_agenda.data.remote.SyncAgendaRequest
+import com.example.tasky.feature_agenda.data.remote.request.SyncAgendaRequest
 import com.example.tasky.feature_agenda.data.remote.TaskyAgendaApi
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.AgendaRepository
@@ -20,21 +20,19 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import retrofit2.HttpException
 import java.io.IOException
-import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZonedDateTime
-import java.util.TimeZone
 
 class AgendaRepositoryImpl(
     private val api: TaskyAgendaApi,
     private val db: AgendaDatabase
 ) : AgendaRepository {
 
-    override suspend fun logout(): Result {
+    override suspend fun logout(): Result<Unit> {
 
         return try {
             api.logout()
-            Result.Success
+            Result.Success()
         } catch(e: HttpException) {
             Result.Error(e.message ?: "Invalid Response")
         } catch(e: IOException) {
@@ -57,16 +55,16 @@ class AgendaRepositoryImpl(
                 db.eventDao.getEventWithAttendees(it.eventId)
             }
 
-            val localEvents = eventWithAttendees.map { it.toEvent() }
+            val localEvents = eventWithAttendees.map { it?.toEvent() }
             val localReminders = reminders.map { it.toReminder() }
             val localTasks = tasks.map { it.toTask() }
 
-            (localEvents + localReminders + localTasks).sortedBy { it.sortDate }
+            (localEvents + localReminders + localTasks).filterNotNull().sortedBy { it.sortDate }
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun fetchAgendaFromRemote(zonedDateTime: ZonedDateTime): Result {
+    override suspend fun fetchAgendaFromRemote(zonedDateTime: ZonedDateTime): Result<Unit> {
 
         val timeZone = zonedDateTime.zone
         val time = zonedDateTime.toUtcTimestamp()
@@ -92,38 +90,13 @@ class AgendaRepositoryImpl(
             return Result.Error(e.message ?: "Couldn't reach server")
         }
 
-        db.eventDao.deleteEventsForSpecificDay(startOfDay, endOfDay)
-        db.eventDao.deleteAttendeesForSpecificDay(startOfDay, endOfDay)
-        db.reminderDao.deleteRemindersForSpecificDay(startOfDay, endOfDay)
-        db.taskDao.deleteTasksForSpecificDay(startOfDay, endOfDay)
+        db.agendaDao.updateAgendaForSpecificDay(db, remoteAgenda, startOfDay, endOfDay)
 
-            val eventList = remoteAgenda.filterIsInstance<AgendaItem.Event>()
-            val remindersList = remoteAgenda.filterIsInstance<AgendaItem.Reminder>()
-            val tasksList = remoteAgenda.filterIsInstance<AgendaItem.Task>()
-
-            eventList.forEach { event->
-                val eventEntity = event.toEventEntity()
-                val attendeeEntities = event.attendees.map { it.toAttendeeEntity(event.eventId) }
-
-                db.eventDao.upsertEvent(eventEntity)
-                db.eventDao.upsertAttendees(attendeeEntities)
-            }
-
-            tasksList.forEach { task ->
-                val taskEntity = task.toTaskEntity()
-                db.taskDao.upsertTask(taskEntity)
-            }
-
-            remindersList.forEach { reminder ->
-                val reminderEntity = reminder.toReminderEntity()
-                db.reminderDao.upsertReminder(reminderEntity)
-            }
-
-            return Result.Success
+        return Result.Success()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private suspend fun syncCacheWithServer(): Result {
+    private suspend fun syncCacheWithServer(): Result<Unit> {
 
         val remoteAgenda = try {
             val response = api.getFullAgenda()
@@ -140,34 +113,9 @@ class AgendaRepositoryImpl(
             return Result.Error(e.message ?: "Couldn't reach server")
         }
 
-            db.eventDao.deleteEvents()
-            db.eventDao.deleteAttendees()
-            db.reminderDao.deleteReminders()
-            db.taskDao.deleteTasks()
+        db.agendaDao.updateFullAgenda(db, remoteAgenda)
 
-            val eventList = remoteAgenda.filterIsInstance<AgendaItem.Event>()
-            val remindersList = remoteAgenda.filterIsInstance<AgendaItem.Reminder>()
-            val tasksList = remoteAgenda.filterIsInstance<AgendaItem.Task>()
-
-            eventList.forEach { event ->
-                val eventEntity = event.toEventEntity()
-                val attendeeEntities = event.attendees.map { it.toAttendeeEntity(event.eventId) }
-
-                db.eventDao.upsertEvent(eventEntity)
-                db.eventDao.upsertAttendees(attendeeEntities)
-            }
-
-            tasksList.forEach { task ->
-                val taskEntity = task.toTaskEntity()
-                db.taskDao.upsertTask(taskEntity)
-            }
-
-            remindersList.forEach { reminder ->
-                val reminderEntity = reminder.toReminderEntity()
-                db.reminderDao.upsertReminder(reminderEntity)
-            }
-
-        return Result.Success
+        return Result.Success()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -175,20 +123,21 @@ class AgendaRepositoryImpl(
         deletedEventIds: List<String>,
         deletedReminderIds: List<String>,
         deletedTaskIds: List<String>
-    ): Result {
+    ): Result<Unit> {
 
         return try {
-            api.syncAgenda(SyncAgendaRequest(
+            api.syncAgenda(
+                SyncAgendaRequest(
                 deletedEventIds = deletedEventIds,
                 deletedReminderIds = deletedReminderIds,
                 deletedTaskIds = deletedTaskIds
-            ))
+            )
+            )
             syncCacheWithServer()
         } catch(e: HttpException) {
             Result.Error(e.message ?: "Invalid Response")
         } catch(e: IOException) {
             Result.Error(e.message ?: "Couldn't reach server")
         }
-
     }
 }

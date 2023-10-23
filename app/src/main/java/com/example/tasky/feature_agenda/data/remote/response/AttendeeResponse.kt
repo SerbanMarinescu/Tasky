@@ -1,4 +1,4 @@
-package com.example.tasky.feature_agenda.data.remote
+package com.example.tasky.feature_agenda.data.remote.response
 
 import com.example.tasky.feature_agenda.data.remote.dto.AttendeeDto
 

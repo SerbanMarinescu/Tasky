@@ -21,4 +21,5 @@ abstract class AgendaDatabase: RoomDatabase() {
     abstract val eventDao: EventDao
     abstract val taskDao: TaskDao
     abstract val reminderDao: ReminderDao
+    abstract val agendaDao: AgendaDao
 }

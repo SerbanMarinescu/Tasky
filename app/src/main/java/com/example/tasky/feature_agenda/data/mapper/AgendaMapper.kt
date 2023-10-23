@@ -7,6 +7,7 @@ import com.example.tasky.feature_agenda.data.local.entity.EventEntity
 import com.example.tasky.feature_agenda.data.local.entity.ReminderEntity
 import com.example.tasky.feature_agenda.data.local.entity.TaskEntity
 import com.example.tasky.feature_agenda.data.local.relations.EventWithAttendee
+import com.example.tasky.feature_agenda.data.remote.dto.AttendeeDto
 import com.example.tasky.feature_agenda.data.remote.dto.AttendeesDto
 import com.example.tasky.feature_agenda.data.remote.dto.EventDto
 import com.example.tasky.feature_agenda.data.remote.dto.PhotoDto
@@ -35,6 +36,14 @@ fun ZonedDateTime.toUtcTimestamp(): Long {
 }
 
 fun AttendeesDto.toAttendee(): Attendee {
+    return Attendee(
+        email = email,
+        fullName = fullName,
+        userId = userId
+    )
+}
+
+fun AttendeeDto.toAttendee(): Attendee {
     return Attendee(
         email = email,
         fullName = fullName,
