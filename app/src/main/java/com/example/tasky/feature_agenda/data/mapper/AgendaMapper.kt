@@ -152,37 +152,37 @@ fun ReminderEntity.toReminder(): AgendaItem.Reminder {
 @RequiresApi(Build.VERSION_CODES.O)
 fun AgendaItem.Event.toEventEntity(): EventEntity {
     return EventEntity(
-        title = title,
-        description = description ?: "",
+        title = eventTitle,
+        description = eventDescription ?: "",
         from = from.toUtcTimestamp(),
         to = to.toUtcTimestamp(),
         remindAt = remindAtTime.toUtcTimestamp(),
         isUserEventCreator = isUserEventCreator,
         host = host ?: "",
-        eventId = id.toInt()
+        eventId = eventId.toInt()
     )
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun AgendaItem.Task.toTaskEntity(): TaskEntity {
     return TaskEntity(
-        title = title,
-        description = description ?: "",
+        title = taskTitle,
+        description = taskDescription ?: "",
         time = time.toUtcTimestamp(),
         remindAt = remindAtTime.toUtcTimestamp(),
         isDone = isDone,
-        taskId = id.toInt()
+        taskId = taskId.toInt()
     )
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun AgendaItem.Reminder.toReminderEntity(): ReminderEntity {
     return ReminderEntity(
-        title = title,
-        description = description ?: "",
+        title = reminderTitle,
+        description = reminderDescription ?: "",
         time = time.toUtcTimestamp(),
         remindAt = remindAtTime.toUtcTimestamp(),
-        reminderId = id.toInt()
+        reminderId = reminderId.toInt()
     )
 }
 
@@ -192,6 +192,29 @@ fun Attendee.toAttendeeEntity(eventId: String): AttendeeEntity {
         fullName = fullName,
         userId = userId,
         eventId = eventId.toInt()
+    )
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun AgendaItem.Task.toTaskDto(): TaskDto {
+    return TaskDto(
+        id = taskId,
+        title = taskTitle,
+        description = taskDescription ?: "",
+        time = time.toUtcTimestamp(),
+        remindAt = remindAtTime.toUtcTimestamp(),
+        isDone = isDone
+    )
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun AgendaItem.Reminder.toReminderDto(): ReminderDto {
+    return ReminderDto(
+        id = reminderId,
+        title = reminderTitle,
+        description = reminderDescription ?: "",
+        time = time.toUtcTimestamp(),
+        remindAt = remindAtTime.toUtcTimestamp()
     )
 }
 

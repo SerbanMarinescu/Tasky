@@ -3,7 +3,6 @@ package com.example.tasky.feature_agenda.domain.repository
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.model.Photo
 import com.example.tasky.util.Result
-import java.time.ZonedDateTime
 
 interface EventRepository {
 
