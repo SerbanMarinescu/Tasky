@@ -7,6 +7,7 @@ import com.example.tasky.feature_agenda.data.local.entity.EventEntity
 import com.example.tasky.feature_agenda.data.local.entity.ReminderEntity
 import com.example.tasky.feature_agenda.data.local.entity.TaskEntity
 import com.example.tasky.feature_agenda.data.local.relations.EventWithAttendee
+import com.example.tasky.feature_agenda.data.remote.dto.AttendeeDto
 import com.example.tasky.feature_agenda.data.remote.dto.AttendeesDto
 import com.example.tasky.feature_agenda.data.remote.dto.EventDto
 import com.example.tasky.feature_agenda.data.remote.dto.PhotoDto
@@ -35,6 +36,14 @@ fun ZonedDateTime.toUtcTimestamp(): Long {
 }
 
 fun AttendeesDto.toAttendee(): Attendee {
+    return Attendee(
+        email = email,
+        fullName = fullName,
+        userId = userId
+    )
+}
+
+fun AttendeeDto.toAttendee(): Attendee {
     return Attendee(
         email = email,
         fullName = fullName,
@@ -143,37 +152,37 @@ fun ReminderEntity.toReminder(): AgendaItem.Reminder {
 @RequiresApi(Build.VERSION_CODES.O)
 fun AgendaItem.Event.toEventEntity(): EventEntity {
     return EventEntity(
-        title = title,
-        description = description ?: "",
+        title = eventTitle,
+        description = eventDescription ?: "",
         from = from.toUtcTimestamp(),
         to = to.toUtcTimestamp(),
         remindAt = remindAtTime.toUtcTimestamp(),
         isUserEventCreator = isUserEventCreator,
         host = host ?: "",
-        eventId = id.toInt()
+        eventId = eventId.toInt()
     )
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun AgendaItem.Task.toTaskEntity(): TaskEntity {
     return TaskEntity(
-        title = title,
-        description = description ?: "",
+        title = taskTitle,
+        description = taskDescription ?: "",
         time = time.toUtcTimestamp(),
         remindAt = remindAtTime.toUtcTimestamp(),
         isDone = isDone,
-        taskId = id.toInt()
+        taskId = taskId.toInt()
     )
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun AgendaItem.Reminder.toReminderEntity(): ReminderEntity {
     return ReminderEntity(
-        title = title,
-        description = description ?: "",
+        title = reminderTitle,
+        description = reminderDescription ?: "",
         time = time.toUtcTimestamp(),
         remindAt = remindAtTime.toUtcTimestamp(),
-        reminderId = id.toInt()
+        reminderId = reminderId.toInt()
     )
 }
 
@@ -183,6 +192,29 @@ fun Attendee.toAttendeeEntity(eventId: String): AttendeeEntity {
         fullName = fullName,
         userId = userId,
         eventId = eventId.toInt()
+    )
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun AgendaItem.Task.toTaskDto(): TaskDto {
+    return TaskDto(
+        id = taskId,
+        title = taskTitle,
+        description = taskDescription ?: "",
+        time = time.toUtcTimestamp(),
+        remindAt = remindAtTime.toUtcTimestamp(),
+        isDone = isDone
+    )
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun AgendaItem.Reminder.toReminderDto(): ReminderDto {
+    return ReminderDto(
+        id = reminderId,
+        title = reminderTitle,
+        description = reminderDescription ?: "",
+        time = time.toUtcTimestamp(),
+        remindAt = remindAtTime.toUtcTimestamp()
     )
 }
 

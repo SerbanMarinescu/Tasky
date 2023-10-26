@@ -12,25 +12,22 @@ class UserPreferencesImpl(
             .putString("jwt", user.token)
             .putString("fullName", user.fullName)
             .putString("email", user.email)
+            .putString("userId", user.userId)
             .apply()
     }
 
     override fun getAuthenticatedUser(): AuthenticatedUser? {
-        val fullName = prefs.getString("fullName", null)
-        val email = prefs.getString("email", null)
-        val token = prefs.getString("jwt", null)
+        val fullName = prefs.getString("fullName", null) ?: return null
+        val email = prefs.getString("email", null) ?: return null
+        val token = prefs.getString("jwt", null) ?: return null
+        val userId = prefs.getString("userId", null) ?: return null
 
-        return fullName?.let {
-            email?.let { it1 ->
-                token?.let { it2 ->
-                    AuthenticatedUser(
-                        fullName = it,
-                        email = it1,
-                        token = it2
-                    )
-                }
-            }
-        }
+        return AuthenticatedUser(
+            fullName = fullName,
+            email = email,
+            token = token,
+            userId = userId
+        )
     }
 
     override fun clearPreferences() {

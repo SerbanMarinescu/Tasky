@@ -7,15 +7,15 @@ import java.time.ZonedDateTime
 
 interface AgendaRepository {
 
-    suspend fun logout(): Result
+    suspend fun logout(): Result<Unit>
 
-    suspend fun getAgendaForSpecificDay(zonedDateTime: ZonedDateTime): Flow<List<AgendaItem>>
+    suspend fun getAgendaForSpecificDay(zonedDateTime: ZonedDateTime): Flow<List<AgendaItem?>>
 
-    suspend fun fetchAgendaFromRemote(zonedDateTime: ZonedDateTime): Result
+    suspend fun fetchAgendaFromRemote(zonedDateTime: ZonedDateTime): Result<Unit>
 
     suspend fun syncAgenda(
         deletedEventIds: List<String>,
         deletedReminderIds: List<String>,
         deletedTaskIds: List<String>
-    ): Result
+    ): Result<Unit>
 }

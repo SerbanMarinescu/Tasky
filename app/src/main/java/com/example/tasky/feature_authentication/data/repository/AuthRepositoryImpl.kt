@@ -13,23 +13,25 @@ import retrofit2.HttpException
 class AuthRepositoryImpl(
     private val api: TaskyAuthApi,
     private val userPreferences: UserPreferences
-) : AuthRepository{
+) : AuthRepository {
     override suspend fun signUp(fullName: String, email: String, password: String): AuthResult {
         return try {
-            api.signUp(RegistrationRequest(
-                fullName = fullName,
-                email = email,
-                password = password
-            ))
+            api.signUp(
+                RegistrationRequest(
+                    fullName = fullName,
+                    email = email,
+                    password = password
+                )
+            )
             signIn(email, password)
         } catch (e: HttpException) {
-            if(e.code() == 401){
+            if (e.code() == 401) {
                 AuthResult.Unauthorized(e.message)
             } else {
                 AuthResult.Error(e.message)
             }
-        } catch (e: Exception){
-            if(e is CancellationException) throw e
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
             AuthResult.Error(e.message)
         }
     }
@@ -40,19 +42,21 @@ class AuthRepositoryImpl(
 
             userPreferences.saveAuthenticatedUser(
                 AuthenticatedUser(
-                fullName = response.body()?.fullName ?: return AuthResult.Error("Error Singing In"),
-                email = email,
-                token = response.body()?.token ?: return AuthResult.Error("Error Singing In")
-            ))
+                    fullName = response.body()?.fullName ?: return AuthResult.Error("Error Singing In"),
+                    email = email,
+                    token = response.body()?.token ?: return AuthResult.Error("Error Singing In"),
+                    userId = response.body()?.userId ?: return AuthResult.Error("Error Singing In")
+                )
+            )
             AuthResult.Authorized()
         } catch (e: HttpException) {
-            if(e.code() == 401){
+            if (e.code() == 401) {
                 AuthResult.Unauthorized(e.message)
             } else {
                 AuthResult.Error(e.message)
             }
-        } catch (e: Exception){
-            if(e is CancellationException) throw e
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
             AuthResult.Error(e.message)
         }
     }
@@ -62,14 +66,14 @@ class AuthRepositoryImpl(
             //val token = userPreferences.getAuthenticatedUser()?.token ?: return AuthResult.Error("Jwt Token has expired!")
             api.authenticate()
             AuthResult.Authorized()
-        } catch (e: HttpException){
-            if(e.code() == 401){
+        } catch (e: HttpException) {
+            if (e.code() == 401) {
                 AuthResult.Unauthorized(e.message)
             } else {
                 AuthResult.Error(e.message)
             }
-        } catch (e: Exception){
-            if(e is CancellationException) throw e
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
             AuthResult.Error(e.message)
         }
 

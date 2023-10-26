@@ -3,6 +3,11 @@ package com.example.tasky.feature_agenda.data.remote
 import com.example.tasky.feature_agenda.data.remote.dto.EventDto
 import com.example.tasky.feature_agenda.data.remote.dto.ReminderDto
 import com.example.tasky.feature_agenda.data.remote.dto.TaskDto
+import com.example.tasky.feature_agenda.data.remote.request.EventRequest
+import com.example.tasky.feature_agenda.data.remote.request.SyncAgendaRequest
+import com.example.tasky.feature_agenda.data.remote.request.UpdateEventRequest
+import com.example.tasky.feature_agenda.data.remote.response.AgendaResponse
+import com.example.tasky.feature_agenda.data.remote.response.AttendeeResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
