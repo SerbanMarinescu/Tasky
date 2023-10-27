@@ -2,217 +2,144 @@ package com.example.tasky.feature_agenda.data.repository
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.tasky.feature_agenda.data.local.AgendaDatabase
-import com.example.tasky.feature_agenda.data.mapper.toAttendee
 import com.example.tasky.feature_agenda.data.mapper.toAttendeeEntity
 import com.example.tasky.feature_agenda.data.mapper.toEvent
 import com.example.tasky.feature_agenda.data.mapper.toEventEntity
-import com.example.tasky.feature_agenda.data.mapper.toUtcTimestamp
 import com.example.tasky.feature_agenda.data.remote.TaskyAgendaApi
-import com.example.tasky.feature_agenda.data.remote.request.EventRequest
-import com.example.tasky.feature_agenda.data.remote.request.UpdateEventRequest
+import com.example.tasky.feature_agenda.data.worker.EventWorker
+import com.example.tasky.feature_agenda.data.worker.enqueueWorker
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.model.Attendee
 import com.example.tasky.feature_agenda.domain.model.Photo
 import com.example.tasky.feature_agenda.domain.repository.EventRepository
-import com.example.tasky.feature_authentication.domain.util.UserPreferences
-import com.example.tasky.util.Result
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.asRequestBody
+import com.example.tasky.util.Resource
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
 import retrofit2.HttpException
-import java.io.File
 import java.io.IOException
 
 class EventRepositoryImpl(
     private val api: TaskyAgendaApi,
     private val db: AgendaDatabase,
-    private val userPrefs: UserPreferences
-): EventRepository {
+    private val workManager: WorkManager,
+    private val moshi: Moshi
+) : EventRepository {
 
-    private suspend fun validateAttendees(attendees: List<Attendee>): Result<List<Attendee>> {
+    override suspend fun doesAttendeeExist(attendee: Attendee): Resource<Unit> {
+        return try {
+            val email = attendee.email
+            val response = api.getAttendee(email)
+            val doesUserExist =
+                response.body()?.doesUserExist ?: return Resource.Error("User not found!")
 
-        val emailList = attendees.map { it.email }
-        val validatedAttendees = mutableListOf<Attendee>()
-
-        emailList.forEach { email ->
-
-            try {
-
-                val response = api.getAttendee(email)
-
-                val userExists = response.body()?.doesUserExist ?: false
-                val attendeeDto = response.body()?.attendee
-
-                attendeeDto?.let {
-                    val attendee = attendeeDto.toAttendee()
-
-                    if(userExists) {
-                        validatedAttendees.add(attendee)
-                    }
-                }
-
-            } catch(e: HttpException) {
-                return Result.Error(e.message ?: "Invalid Response")
-            } catch(e: IOException) {
-                return Result.Error(e.message ?: "Couldn't reach server")
+            if (doesUserExist) {
+                Resource.Success()
+            } else {
+                Resource.Error("User not found!")
             }
+        } catch (e: HttpException) {
+            return Resource.Error(e.message ?: "Invalid Response")
+        } catch (e: IOException) {
+            return Resource.Error(e.message ?: "Couldn't reach server")
         }
-        return Result.Success(validatedAttendees)
     }
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun createEvent(
         event: AgendaItem.Event
-    ): Result<Unit> {
+    ): Resource<Unit> {
 
-       return try {
+        val eventEntity = event.toEventEntity()
+        val attendeeEntities = event.attendees.map { it.toAttendeeEntity(event.eventId) }
 
-           val photoList = event.photos.map { photo ->
-               val file = File(photo.url)
-               val requestFile: RequestBody = file.asRequestBody("image/*".toMediaTypeOrNull())
-               MultipartBody.Part.createFormData("photos", file.name, requestFile)
-           }
+        db.agendaDao.upsertEventWithAttendees(db, eventEntity, attendeeEntities)
 
-           var validatedAttendees = listOf<Attendee>()
-           val doAttendeesExist = validateAttendees(event.attendees)
+        val jsonEvent = moshi.adapter(AgendaItem.Event::class.java).toJson(event)
+        val inputData = Data.Builder()
+            .putString("action", "create")
+            .putString("event", jsonEvent)
+            .build()
 
-           when(doAttendeesExist) {
-               is Result.Error -> {
-                   return Result.Error(doAttendeesExist.message ?: "Attendees not found!")
-               }
-               is Result.Success -> {
-                   validatedAttendees = doAttendeesExist.data ?: return Result.Error("Something went wrong!")
-               }
-           }
+        enqueueWorker(
+            workManager = workManager,
+            inputData = inputData,
+            requestBuilder = OneTimeWorkRequestBuilder<EventWorker>()
+        )
 
-            api.createEvent(
-                EventRequest(
-                    id = event.eventId,
-                    title = event.eventTitle,
-                    description = event.eventDescription ?: "",
-                    from = event.from.toUtcTimestamp(),
-                    to = event.to.toUtcTimestamp(),
-                    remindAt = event.remindAt.toUtcTimestamp(),
-                    attendeeIds = validatedAttendees.map { it.userId }
-                ),
-                photoList
-            )
-
-           val eventEntity = event.toEventEntity()
-           val attendeeEntities = validatedAttendees.map { it.toAttendeeEntity(event.eventId) }
-
-           db.agendaDao.upsertEventWithAttendees(db, eventEntity, attendeeEntities)
-           
-           Result.Success()
-
-        } catch(e: HttpException) {
-           Result.Error(e.message ?: "Invalid Response")
-        } catch(e: IOException) {
-           Result.Error(e.message ?: "Couldn't reach server")
-        }
+        return Resource.Success()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun getEvent(eventId: String): Result<AgendaItem.Event> {
+    override suspend fun getEvent(eventId: String): Resource<AgendaItem.Event> {
 
         val localEvent = db.eventDao.getEventWithAttendees(eventId.toInt())
 
         localEvent?.let {
-            return Result.Success(localEvent.toEvent())
+            return Resource.Success(localEvent.toEvent())
         }
 
-            return try {
+        val inputData = Data.Builder()
+            .putString("action", "get")
+            .putString("eventId", eventId)
+            .build()
 
-                val response = api.getEvent(eventId)
+        enqueueWorker(
+            workManager = workManager,
+            inputData = inputData,
+            requestBuilder = OneTimeWorkRequestBuilder<EventWorker>()
+        )
 
-                val event = response.body()?.toEvent() ?: return Result.Error("No such event found!")
-
-                val eventEntity = event.toEventEntity()
-
-                db.eventDao.upsertEvent(eventEntity)
-
-                val newEvent = db.eventDao.getEventWithAttendees(eventId.toInt()) ?: return Result.Error("No such event found!")
-
-                Result.Success(newEvent.toEvent())
-
-            } catch(e: HttpException) {
-                Result.Error(e.message ?: "Invalid Response")
-            } catch(e: IOException) {
-                Result.Error(e.message ?: "Couldn't reach server")
-            }
+        return Resource.Success()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun updateEvent(event: AgendaItem.Event, deletedPhotos: List<Photo>): Result<Unit> {
-
-        var validatedAttendees = listOf<Attendee>()
-        val doAttendeesExist = validateAttendees(event.attendees)
-
-        when(doAttendeesExist) {
-            is Result.Error -> {
-                return Result.Error(doAttendeesExist.message ?: "Attendees not found!")
-            }
-            is Result.Success -> {
-                validatedAttendees = doAttendeesExist.data ?: return Result.Error("Something went wrong!")
-            }
-        }
+    override suspend fun updateEvent(
+        event: AgendaItem.Event,
+        deletedPhotos: List<Photo>
+    ): Resource<Unit> {
 
         val eventEntity = event.toEventEntity()
-        val attendeeEntities = validatedAttendees.map { it.toAttendeeEntity(event.eventId) }
+        val attendeeEntities = event.attendees.map { it.toAttendeeEntity(event.eventId) }
 
         db.agendaDao.upsertEventWithAttendees(db, eventEntity, attendeeEntities)
 
-        val photoList = event.photos.map { photo ->
-            val file = File(photo.url)
-            val requestFile: RequestBody = file.asRequestBody("image/*".toMediaTypeOrNull())
-            MultipartBody.Part.createFormData("photos", file.name, requestFile)
-        }
+        val jsonEvent = moshi.adapter(AgendaItem.Event::class.java).toJson(event)
+        val jsonPhotoList = moshi.adapter<List<Photo>>(Types.newParameterizedType(List::class.java, Photo::class.java)).toJson(deletedPhotos)
+        val inputData = Data.Builder()
+            .putString("action", "update")
+            .putString("event", jsonEvent)
+            .putString("photoList", jsonPhotoList)
+            .build()
 
-        val userId = userPrefs.getAuthenticatedUser()?.userId ?: return Result.Error("User is not logged in!")
+        enqueueWorker(
+            workManager = workManager,
+            inputData = inputData,
+            requestBuilder = OneTimeWorkRequestBuilder<EventWorker>()
+        )
 
-        return try {
-
-            api.updateEvent(
-                UpdateEventRequest(
-                    id = event.eventId,
-                    title = event.title,
-                    description = event.description ?: "",
-                    from = event.from.toUtcTimestamp(),
-                    to = event.to.toUtcTimestamp(),
-                    remindAt = event.remindAt.toUtcTimestamp(),
-                    attendeeIds = validatedAttendees.map { it.userId },
-                    deletedPhotoKeys = deletedPhotos.map { it.key },
-                    isGoing = validatedAttendees.any{ it.userId == userId }
-                ),
-                photoList
-            )
-
-            Result.Success()
-
-        } catch(e: HttpException) {
-            Result.Error(e.message ?: "Invalid Response")
-        } catch(e: IOException) {
-            Result.Error(e.message ?: "Couldn't reach server")
-        }
+        return Resource.Success()
     }
 
-    override suspend fun deleteEventAndAttendees(eventId: String): Result<Unit> {
+    override suspend fun deleteEventAndAttendees(eventId: String): Resource<Unit> {
 
         db.eventDao.deleteEventAndAttendees(eventId.toInt())
 
-        return try {
+        val inputData = Data.Builder()
+            .putString("action", "delete")
+            .putString("eventId", eventId)
+            .build()
 
-            api.deleteEvent(eventId)
-            api.deleteAttendee(eventId)
+        enqueueWorker(
+            workManager = workManager,
+            inputData = inputData,
+            requestBuilder = OneTimeWorkRequestBuilder<EventWorker>()
+        )
 
-            Result.Success()
-
-        } catch(e: HttpException) {
-            Result.Error(e.message ?: "Invalid Response")
-        } catch(e: IOException) {
-            Result.Error(e.message ?: "Couldn't reach server")
-        }
+        return Resource.Success()
     }
 }

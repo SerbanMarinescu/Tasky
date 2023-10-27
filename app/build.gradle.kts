@@ -108,4 +108,10 @@ dependencies {
 
     //Splash Screen
     implementation("androidx.core:core-splashscreen:1.0.1")
+
+    //WorkManager with Coroutines
+    implementation("androidx.work:work-runtime-ktx:2.7.1")
+
+    //DateTime Picker
+    implementation("io.github.vanpra.compose-material-dialogs:datetime:0.8.1-rc")
 }

@@ -3,16 +3,12 @@ package com.example.tasky.feature_agenda.data.repository
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.example.tasky.feature_agenda.data.local.AgendaDatabase
-import com.example.tasky.feature_agenda.data.mapper.toAttendeeEntity
 import com.example.tasky.feature_agenda.data.mapper.toEvent
-import com.example.tasky.feature_agenda.data.mapper.toEventEntity
 import com.example.tasky.feature_agenda.data.mapper.toReminder
-import com.example.tasky.feature_agenda.data.mapper.toReminderEntity
 import com.example.tasky.feature_agenda.data.mapper.toTask
-import com.example.tasky.feature_agenda.data.mapper.toTaskEntity
 import com.example.tasky.feature_agenda.data.mapper.toUtcTimestamp
-import com.example.tasky.feature_agenda.data.remote.request.SyncAgendaRequest
 import com.example.tasky.feature_agenda.data.remote.TaskyAgendaApi
+import com.example.tasky.feature_agenda.data.remote.request.SyncAgendaRequest
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.AgendaRepository
 import com.example.tasky.util.Result
@@ -55,11 +51,11 @@ class AgendaRepositoryImpl(
                 db.eventDao.getEventWithAttendees(it.eventId)
             }
 
-            val localEvents = eventWithAttendees.map { it?.toEvent() }
+            val localEvents = eventWithAttendees.mapNotNull { it?.toEvent() }
             val localReminders = reminders.map { it.toReminder() }
             val localTasks = tasks.map { it.toTask() }
 
-            (localEvents + localReminders + localTasks).filterNotNull().sortedBy { it.sortDate }
+            (localEvents + localReminders + localTasks).sortedBy { it.sortDate }
         }
     }
 
