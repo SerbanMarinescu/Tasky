@@ -1,9 +1,10 @@
 package com.example.tasky.feature_agenda.domain.model
 
-import android.os.Parcelable
 import com.example.tasky.feature_agenda.domain.util.ReminderType
+import com.squareup.moshi.JsonClass
 import java.time.ZonedDateTime
 
+@JsonClass(generateAdapter = true)
 sealed class AgendaItem(
     val id: String,
     val title: String,
@@ -12,6 +13,7 @@ sealed class AgendaItem(
     val remindAt: ZonedDateTime,
     val reminderType: ReminderType
 ) {
+    @JsonClass(generateAdapter = true)
     data class Event(
         val eventId: String,
         val eventTitle: String,
@@ -26,6 +28,7 @@ sealed class AgendaItem(
         val eventReminderType: ReminderType
     ) : AgendaItem(eventId, eventTitle, eventDescription, from, remindAtTime, eventReminderType)
 
+    @JsonClass(generateAdapter = true)
     data class Task(
         val taskId: String,
         val taskTitle: String,
@@ -36,6 +39,7 @@ sealed class AgendaItem(
         val taskReminderType: ReminderType
     ) : AgendaItem(taskId, taskTitle, taskDescription, time, remindAtTime, taskReminderType)
 
+    @JsonClass(generateAdapter = true)
     data class Reminder(
         val reminderId: String,
         val reminderTitle: String,

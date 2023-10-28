@@ -21,13 +21,11 @@ class TaskRepositoryImpl(
     @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun createTask(task: AgendaItem.Task): Result<Unit> {
 
+        val taskEntity = task.toTaskEntity()
+        db.taskDao.upsertTask(taskEntity)
+
         return try {
-
             api.createTask(task.toTaskDto())
-
-            val taskEntity = task.toTaskEntity()
-            db.taskDao.upsertTask(taskEntity)
-
             Result.Success()
         } catch(e: HttpException) {
             Result.Error(e.message ?: "Invalid Response")
@@ -39,13 +37,11 @@ class TaskRepositoryImpl(
     @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun updateTask(task: AgendaItem.Task): Result<Unit> {
 
+        val taskEntity = task.toTaskEntity()
+        db.taskDao.upsertTask(taskEntity)
+
         return try {
-
             api.updateTask(task.toTaskDto())
-
-            val taskEntity = task.toTaskEntity()
-            db.taskDao.upsertTask(taskEntity)
-
             Result.Success()
         } catch(e: HttpException) {
             Result.Error(e.message ?: "Invalid Response")
@@ -66,16 +62,13 @@ class TaskRepositoryImpl(
         return try {
 
             val response = api.getTask(taskId)
-
             val task = response.body()?.toTask() ?: return Result.Error("No such task was found!")
+
             val taskEntity = task.toTaskEntity()
-
             db.taskDao.upsertTask(taskEntity)
-
             val newTask = db.taskDao.getTask(taskId.toInt()) ?: return Result.Error("No such task was found!")
 
             Result.Success(newTask.toTask())
-
         } catch(e: HttpException) {
             Result.Error(e.message ?: "Invalid Response")
         } catch(e: IOException) {
@@ -88,9 +81,7 @@ class TaskRepositoryImpl(
         db.taskDao.deleteTask(taskId.toInt())
 
         return try {
-
             api.deleteTask(taskId)
-
             Result.Success()
         } catch(e: HttpException) {
             Result.Error(e.message ?: "Invalid Response")

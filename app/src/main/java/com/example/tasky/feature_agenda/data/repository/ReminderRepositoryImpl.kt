@@ -21,13 +21,11 @@ class ReminderRepositoryImpl(
     @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun createReminder(reminder: AgendaItem.Reminder): Result<Unit> {
 
+        val reminderEntity = reminder.toReminderEntity()
+        db.reminderDao.upsertReminder(reminderEntity)
+
         return try {
-
             api.createReminder(reminder.toReminderDto())
-
-            val reminderEntity = reminder.toReminderEntity()
-            db.reminderDao.upsertReminder(reminderEntity)
-
             Result.Success()
         } catch(e: HttpException) {
             Result.Error(e.message ?: "Invalid Response")
@@ -39,13 +37,11 @@ class ReminderRepositoryImpl(
     @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun updateReminder(reminder: AgendaItem.Reminder): Result<Unit> {
 
+        val reminderEntity = reminder.toReminderEntity()
+        db.reminderDao.upsertReminder(reminderEntity)
+
         return try {
-
             api.updateReminder(reminder.toReminderDto())
-
-            val reminderEntity = reminder.toReminderEntity()
-            db.reminderDao.upsertReminder(reminderEntity)
-
             Result.Success()
         } catch(e: HttpException) {
             Result.Error(e.message ?: "Invalid Response")
@@ -66,12 +62,10 @@ class ReminderRepositoryImpl(
         return try {
 
             val response = api.getReminder(reminderId)
-
             val reminder = response.body()?.toReminder() ?: return Result.Error("No such reminder was found!")
+
             val reminderEntity = reminder.toReminderEntity()
-
             db.reminderDao.upsertReminder(reminderEntity)
-
             val newReminder = db.reminderDao.getReminder(reminderId.toInt()) ?: return Result.Error("No such reminder was found!")
 
             Result.Success(newReminder.toReminder())
@@ -87,9 +81,7 @@ class ReminderRepositoryImpl(
         db.reminderDao.deleteReminder(reminderId.toInt())
 
         return try {
-
             api.deleteReminder(reminderId)
-
             Result.Success()
         } catch(e: HttpException) {
             Result.Error(e.message ?: "Invalid Response")
