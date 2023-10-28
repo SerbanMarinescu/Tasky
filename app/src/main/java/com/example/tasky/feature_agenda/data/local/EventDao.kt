@@ -1,7 +1,6 @@
 package com.example.tasky.feature_agenda.data.local
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
@@ -31,6 +30,9 @@ interface EventDao {
 
     @Query("DELETE FROM Attendee WHERE eventId IN (SELECT eventId FROM Event WHERE `from` >= :startOfDay AND `to` <= :endOfDay)")
     suspend fun deleteAttendeesForSpecificDay(startOfDay: Long, endOfDay: Long)
+
+    @Query("DELETE FROM Attendee WHERE eventId = :eventId")
+    suspend fun deleteAttendee(eventId: Int)
 
     @Transaction
     @Query("SELECT * FROM Event WHERE eventId = :eventId")
