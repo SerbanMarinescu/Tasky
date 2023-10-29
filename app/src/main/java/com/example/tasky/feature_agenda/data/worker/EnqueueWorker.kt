@@ -22,3 +22,8 @@ fun enqueueWorker(
 
     workManager.enqueue(myWorkRequest)
 }
+
+inline fun <reified T : Enum<T>> Data.getEnum(key: String): T? {
+    val value = getString(key) ?: return null
+    return enumValueOf<T>(value)
+}
