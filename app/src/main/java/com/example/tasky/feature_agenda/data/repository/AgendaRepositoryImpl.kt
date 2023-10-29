@@ -11,7 +11,8 @@ import com.example.tasky.feature_agenda.data.remote.TaskyAgendaApi
 import com.example.tasky.feature_agenda.data.remote.request.SyncAgendaRequest
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.AgendaRepository
-import com.example.tasky.util.Result
+import com.example.tasky.util.ErrorType
+import com.example.tasky.util.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import retrofit2.HttpException
@@ -24,15 +25,15 @@ class AgendaRepositoryImpl(
     private val db: AgendaDatabase
 ) : AgendaRepository {
 
-    override suspend fun logout(): Result<Unit> {
+    override suspend fun logout(): Resource<Unit> {
 
         return try {
             api.logout()
-            Result.Success()
+            Resource.Success()
         } catch(e: HttpException) {
-            Result.Error(e.message ?: "Invalid Response")
+            Resource.Error(message = e.message ?: "Invalid Response", errorType = ErrorType.HTTP)
         } catch(e: IOException) {
-            Result.Error(e.message ?: "Couldn't reach server")
+            Resource.Error(message = e.message ?: "Couldn't reach server", errorType = ErrorType.IO)
         }
     }
 
@@ -60,7 +61,7 @@ class AgendaRepositoryImpl(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun fetchAgendaFromRemote(zonedDateTime: ZonedDateTime): Result<Unit> {
+    override suspend fun fetchAgendaFromRemote(zonedDateTime: ZonedDateTime): Resource<Unit> {
 
         val timeZone = zonedDateTime.zone
         val time = zonedDateTime.toUtcTimestamp()
@@ -81,18 +82,18 @@ class AgendaRepositoryImpl(
             remoteEvents + remoteTasks + remoteReminders
 
         } catch (e: HttpException) {
-            return Result.Error(e.message ?: "Invalid Response")
+            return Resource.Error(message = e.message ?: "Invalid Response", errorType = ErrorType.HTTP)
         } catch (e: IOException) {
-            return Result.Error(e.message ?: "Couldn't reach server")
+            return Resource.Error(message = e.message ?: "Couldn't reach server", errorType = ErrorType.IO)
         }
 
         db.agendaDao.updateAgendaForSpecificDay(db, remoteAgenda, startOfDay, endOfDay)
 
-        return Result.Success()
+        return Resource.Success()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private suspend fun syncCacheWithServer(): Result<Unit> {
+    private suspend fun syncCacheWithServer(): Resource<Unit> {
 
         val remoteAgenda = try {
             val response = api.getFullAgenda()
@@ -104,14 +105,14 @@ class AgendaRepositoryImpl(
             remoteEvents + remoteReminders + remoteTasks
 
         } catch(e: HttpException) {
-            return Result.Error(e.message ?: "Invalid Response")
+            return Resource.Error(message = e.message ?: "Invalid Response", errorType = ErrorType.HTTP)
         } catch(e: IOException) {
-            return Result.Error(e.message ?: "Couldn't reach server")
+            return Resource.Error(message = e.message ?: "Couldn't reach server", errorType = ErrorType.IO)
         }
 
         db.agendaDao.updateFullAgenda(db, remoteAgenda)
 
-        return Result.Success()
+        return Resource.Success()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -119,7 +120,7 @@ class AgendaRepositoryImpl(
         deletedEventIds: List<String>,
         deletedReminderIds: List<String>,
         deletedTaskIds: List<String>
-    ): Result<Unit> {
+    ): Resource<Unit> {
 
         return try {
             api.syncAgenda(
@@ -131,9 +132,9 @@ class AgendaRepositoryImpl(
             )
             syncCacheWithServer()
         } catch(e: HttpException) {
-            Result.Error(e.message ?: "Invalid Response")
+            Resource.Error(message = e.message ?: "Invalid Response", errorType = ErrorType.HTTP)
         } catch(e: IOException) {
-            Result.Error(e.message ?: "Couldn't reach server")
+            Resource.Error(message = e.message ?: "Couldn't reach server", errorType = ErrorType.IO)
         }
     }
 }

@@ -10,6 +10,11 @@ object Constants {
     const val ACTION = "action"
     const val EVENT = "event"
     const val DELETED_PHOTOS = "deletedPhotos"
+    const val REMINDER = "reminder"
+    const val TASK = "task"
+    const val DELETED_EVENT_IDS = "deletedEventIds"
+    const val DELETED_REMINDER_IDS = "deletedReminderIds"
+    const val DELETED_TASK_IDS = "deletedTaskIds"
 
     const val WORK_DATA_KEY = "workDataKey"
 
