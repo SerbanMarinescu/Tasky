@@ -1,15 +1,21 @@
 package com.example.tasky.feature_agenda.domain.repository
 
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
-import com.example.tasky.util.Result
+import com.example.tasky.util.Resource
 
 interface ReminderRepository {
 
-    suspend fun createReminder(reminder: AgendaItem.Reminder): Result<Unit>
+    suspend fun createReminder(reminder: AgendaItem.Reminder)
 
-    suspend fun updateReminder(reminder: AgendaItem.Reminder): Result<Unit>
+    suspend fun syncCreatedReminder(reminder: AgendaItem.Reminder): Resource<Unit>
 
-    suspend fun getReminder(reminderId: String): Result<AgendaItem.Reminder>
+    suspend fun updateReminder(reminder: AgendaItem.Reminder)
 
-    suspend fun deleteReminder(reminderId: String): Result<Unit>
+    suspend fun syncUpdatedReminder(reminder: AgendaItem.Reminder): Resource<Unit>
+
+    suspend fun getReminder(reminderId: String): Resource<AgendaItem.Reminder>
+
+    suspend fun deleteReminder(reminder: AgendaItem.Reminder)
+
+    suspend fun syncDeletedReminder(reminder: AgendaItem.Reminder): Resource<Unit>
 }
