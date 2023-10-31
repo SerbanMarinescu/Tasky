@@ -1,13 +1,6 @@
 package com.example.tasky.feature_agenda.data.repository
 
-import android.os.Build
-import androidx.annotation.RequiresApi
-import androidx.work.Data
-import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import com.example.tasky.common.Constants.ACTION
-import com.example.tasky.common.Constants.DELETED_PHOTOS
-import com.example.tasky.common.Constants.EVENT
 import com.example.tasky.feature_agenda.data.local.AgendaDatabase
 import com.example.tasky.feature_agenda.data.mapper.toAttendeeEntity
 import com.example.tasky.feature_agenda.data.mapper.toEvent
@@ -16,9 +9,6 @@ import com.example.tasky.feature_agenda.data.mapper.toUtcTimestamp
 import com.example.tasky.feature_agenda.data.remote.TaskyAgendaApi
 import com.example.tasky.feature_agenda.data.remote.request.EventRequest
 import com.example.tasky.feature_agenda.data.remote.request.UpdateEventRequest
-import com.example.tasky.feature_agenda.data.util.ActionType
-import com.example.tasky.feature_agenda.data.worker.EventWorker
-import com.example.tasky.feature_agenda.data.worker.enqueueWorker
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.model.Attendee
 import com.example.tasky.feature_agenda.domain.model.Photo
@@ -27,7 +17,6 @@ import com.example.tasky.feature_authentication.domain.util.UserPreferences
 import com.example.tasky.util.ErrorType
 import com.example.tasky.util.Resource
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -62,29 +51,16 @@ class EventRepositoryImpl(
         }
     }
 
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun createEvent(event: AgendaItem.Event) {
+    override suspend fun createEvent(event: AgendaItem.Event): Resource<Unit> {
 
         val eventEntity = event.toEventEntity()
         val attendeeEntities = event.attendees.map { it.toAttendeeEntity(event.eventId) }
 
         db.agendaDao.upsertEventWithAttendees(db, eventEntity, attendeeEntities)
 
-        val jsonEvent = moshi.adapter(AgendaItem.Event::class.java).toJson(event)
-        val inputData = Data.Builder()
-            .putString(ACTION, ActionType.CREATE.toString())
-            .putString(EVENT, jsonEvent)
-            .build()
-
-        enqueueWorker(
-            workManager = workManager,
-            inputData = inputData,
-            requestBuilder = OneTimeWorkRequestBuilder<EventWorker>()
-        )
+        return syncCreatedEvent(event)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun syncCreatedEvent(event: AgendaItem.Event): Resource<Unit> {
 
         val photoList = event.photos.map { photo ->
@@ -114,7 +90,6 @@ class EventRepositoryImpl(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun getEvent(eventId: String): Resource<AgendaItem.Event> {
 
         val localEvent = db.eventDao.getEventWithAttendees(eventId.toInt())
@@ -139,30 +114,16 @@ class EventRepositoryImpl(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun updateEvent(event: AgendaItem.Event, deletedPhotos: List<Photo>) {
+    override suspend fun updateEvent(event: AgendaItem.Event, deletedPhotos: List<Photo>): Resource<Unit> {
 
         val eventEntity = event.toEventEntity()
         val attendeeEntities = event.attendees.map { it.toAttendeeEntity(event.eventId) }
 
         db.agendaDao.upsertEventWithAttendees(db, eventEntity, attendeeEntities)
 
-        val jsonEvent = moshi.adapter(AgendaItem.Event::class.java).toJson(event)
-        val jsonPhotoList = moshi.adapter<List<Photo>>(Types.newParameterizedType(List::class.java, Photo::class.java)).toJson(deletedPhotos)
-        val inputData = Data.Builder()
-            .putString(ACTION, ActionType.UPDATE.toString())
-            .putString(EVENT, jsonEvent)
-            .putString(DELETED_PHOTOS, jsonPhotoList)
-            .build()
-
-        enqueueWorker(
-            workManager = workManager,
-            inputData = inputData,
-            requestBuilder = OneTimeWorkRequestBuilder<EventWorker>()
-        )
+        return syncUpdatedEvent(event, deletedPhotos)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun syncUpdatedEvent(
         event: AgendaItem.Event,
         deletedPhotos: List<Photo>
@@ -200,7 +161,7 @@ class EventRepositoryImpl(
         }
     }
 
-    override suspend fun deleteEvent(event: AgendaItem.Event) {
+    override suspend fun deleteEvent(event: AgendaItem.Event): Resource<Unit> {
 
         if(event.isUserEventCreator) {
             db.eventDao.deleteEventAndAttendees(event.eventId.toInt())
@@ -208,17 +169,7 @@ class EventRepositoryImpl(
             db.eventDao.deleteAttendee(event.eventId.toInt())
         }
 
-        val jsonEvent = moshi.adapter(AgendaItem.Event::class.java).toJson(event)
-        val inputData = Data.Builder()
-            .putString(ACTION, ActionType.DELETE.toString())
-            .putString(EVENT, jsonEvent)
-            .build()
-
-        enqueueWorker(
-            workManager = workManager,
-            inputData = inputData,
-            requestBuilder = OneTimeWorkRequestBuilder<EventWorker>()
-        )
+        return syncDeletedEvent(event)
     }
 
     override suspend fun syncDeletedEvent(event: AgendaItem.Event): Resource<Unit> {

@@ -5,16 +5,34 @@ import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequest
+import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.example.tasky.common.Constants
 import com.example.tasky.util.ErrorType
 import com.example.tasky.util.Resource
 
-fun enqueueWorker(
+fun enqueueOneTimeWorker(
     workManager: WorkManager,
     inputData: Data,
     requestBuilder: OneTimeWorkRequest.Builder
+) {
+    val constraints = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.CONNECTED)
+        .build()
+
+    val myWorkRequest = requestBuilder
+        .setConstraints(constraints)
+        .setInputData(inputData)
+        .build()
+
+    workManager.enqueue(myWorkRequest)
+}
+
+fun enqueuePeriodicWorker(
+    workManager: WorkManager,
+    inputData: Data,
+    requestBuilder: PeriodicWorkRequest.Builder
 ) {
     val constraints = Constraints.Builder()
         .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -42,7 +60,7 @@ fun <T> getWorkerResult(result: Resource<T>): ListenableWorker.Result {
                     ListenableWorker.Result.failure(workDataOf(Constants.WORK_DATA_KEY to result.message))
                 }
                 null -> {
-                    ListenableWorker.Result.failure(workDataOf(Constants.WORK_DATA_KEY to result.message))
+                    ListenableWorker.Result.failure()
                 }
             }
         }

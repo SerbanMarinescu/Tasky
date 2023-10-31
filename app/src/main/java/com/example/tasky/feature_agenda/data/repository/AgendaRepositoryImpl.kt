@@ -1,7 +1,5 @@
 package com.example.tasky.feature_agenda.data.repository
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.example.tasky.feature_agenda.data.local.AgendaDatabase
 import com.example.tasky.feature_agenda.data.mapper.toEvent
 import com.example.tasky.feature_agenda.data.mapper.toReminder
@@ -37,7 +35,6 @@ class AgendaRepositoryImpl(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun getAgendaForSpecificDay(zonedDateTime: ZonedDateTime): Flow<List<AgendaItem>> {
 
         val startOfDay = zonedDateTime.with(LocalTime.MIN).toUtcTimestamp()
@@ -60,7 +57,6 @@ class AgendaRepositoryImpl(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun fetchAgendaFromRemote(zonedDateTime: ZonedDateTime): Resource<Unit> {
 
         val timeZone = zonedDateTime.zone
@@ -92,7 +88,6 @@ class AgendaRepositoryImpl(
         return Resource.Success()
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private suspend fun syncCacheWithServer(): Resource<Unit> {
 
         val remoteAgenda = try {
@@ -115,7 +110,6 @@ class AgendaRepositoryImpl(
         return Resource.Success()
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun syncAgenda(
         deletedEventIds: List<String>,
         deletedReminderIds: List<String>,

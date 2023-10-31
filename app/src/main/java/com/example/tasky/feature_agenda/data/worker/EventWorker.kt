@@ -1,14 +1,12 @@
 package com.example.tasky.feature_agenda.data.worker
 
 import android.content.Context
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.tasky.common.Constants.ACTION
 import com.example.tasky.common.Constants.DELETED_PHOTOS
 import com.example.tasky.common.Constants.EVENT
-import com.example.tasky.feature_agenda.data.util.ActionType
+import com.example.tasky.feature_agenda.data.util.OperationType
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.model.Photo
 import com.example.tasky.feature_agenda.domain.repository.EventRepository
@@ -24,11 +22,10 @@ class EventWorker(
     private val repository: EventRepository
 ): CoroutineWorker(context, workerParams) {
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun doWork(): Result {
 
         return withContext(Dispatchers.IO) {
-            val action = workerParams.inputData.getEnum<ActionType>(ACTION) ?: return@withContext Result.failure()
+            val action = workerParams.inputData.getEnum<OperationType>(ACTION) ?: return@withContext Result.failure()
             val jsonEvent = workerParams.inputData.getString(EVENT) ?: return@withContext Result.failure()
             val jsonPhotoList = workerParams.inputData.getString(DELETED_PHOTOS)
 
@@ -40,20 +37,23 @@ class EventWorker(
                 photoAdapter.fromJson(jsonPhotoList)
             } ?: emptyList()
 
-             when(action) {
-                 ActionType.CREATE -> {
-                     val result = repository.syncCreatedEvent(event)
-                     getWorkerResult(result)
-                 }
-                 ActionType.UPDATE -> {
-                     val result = repository.syncUpdatedEvent(event, deletedPhotos)
-                     getWorkerResult(result)
-                 }
-                 ActionType.DELETE -> {
-                     val result = repository.syncDeletedEvent(event)
-                     getWorkerResult(result)
-                 }
-             }
+            if(runAttemptCount > 3){
+                return@withContext Result.failure()
+            } else {
+                when(action) {
+                    OperationType.CREATE -> {
+                        val result = repository.syncCreatedEvent(event)
+                        getWorkerResult(result)
+                    }
+                    OperationType.UPDATE -> {
+                        val result = repository.syncUpdatedEvent(event, deletedPhotos)
+                        getWorkerResult(result)
+                    }
+                    OperationType.DELETE -> {
+                        Result.failure()
+                    }
+                }
+            }
         }
     }
 }

@@ -5,7 +5,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.tasky.common.Constants.ACTION
 import com.example.tasky.common.Constants.REMINDER
-import com.example.tasky.feature_agenda.data.util.ActionType
+import com.example.tasky.feature_agenda.data.util.OperationType
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.ReminderRepository
 import com.squareup.moshi.Moshi
@@ -21,22 +21,22 @@ class ReminderWorker(
     override suspend fun doWork(): Result {
 
         return withContext(Dispatchers.IO) {
-            val action = workerParams.inputData.getEnum<ActionType>(ACTION) ?: return@withContext Result.failure()
+            val action = workerParams.inputData.getEnum<OperationType>(ACTION) ?: return@withContext Result.failure()
             val jsonReminder = workerParams.inputData.getString(REMINDER) ?: return@withContext Result.failure()
 
             val reminderAdapter = moshi.adapter(AgendaItem.Reminder::class.java)
             val reminder = reminderAdapter.fromJson(jsonReminder) ?: return@withContext Result.failure()
 
             when(action) {
-                ActionType.CREATE -> {
+                OperationType.CREATE -> {
                     val result = repository.syncCreatedReminder(reminder)
                     getWorkerResult(result)
                 }
-                ActionType.UPDATE -> {
+                OperationType.UPDATE -> {
                     val result = repository.syncUpdatedReminder(reminder)
                     getWorkerResult(result)
                 }
-                ActionType.DELETE -> {
+                OperationType.DELETE -> {
                     val result = repository.syncDeletedReminder(reminder)
                     getWorkerResult(result)
                 }

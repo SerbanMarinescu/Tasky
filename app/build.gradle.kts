@@ -43,6 +43,7 @@ android {
         }
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -114,4 +115,7 @@ dependencies {
 
     //DateTime Picker
     implementation("io.github.vanpra.compose-material-dialogs:datetime:0.8.1-rc")
+
+    //Desugaring for min sdk < 26
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
 }
