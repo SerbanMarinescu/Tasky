@@ -1,20 +1,17 @@
 package com.example.tasky.feature_agenda.domain.use_case
 
-import com.example.tasky.feature_agenda.data.local.AgendaDatabase
-import com.example.tasky.feature_agenda.data.local.entity.SyncItemEntity
-import com.example.tasky.feature_agenda.data.util.OperationType
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.EventRepository
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType
+import com.example.tasky.feature_agenda.domain.util.OperationType
+import com.example.tasky.feature_agenda.domain.util.TaskScheduler
 import com.example.tasky.util.ErrorType
 import com.example.tasky.util.Resource
 import com.example.tasky.util.Result
-import com.squareup.moshi.Moshi
 
 class DeleteEvent(
     private val repository: EventRepository,
-    private val moshi: Moshi,
-    private val db: AgendaDatabase
+    private val taskScheduler: TaskScheduler
 ) {
 
     suspend operator fun invoke(event: AgendaItem.Event): Result<Unit> {
@@ -26,15 +23,7 @@ class DeleteEvent(
                     ErrorType.HTTP -> Result.Error(result.message ?: "Unknown Error")
 
                     ErrorType.IO -> {
-                        val jsonEvent = moshi.adapter(AgendaItem.Event::class.java).toJson(event)
-
-                        val itemToBeSynced = SyncItemEntity(
-                            agendaItem = jsonEvent,
-                            itemType = AgendaItemType.EVENT,
-                            operation = OperationType.DELETE
-                        )
-
-                        db.agendaDao.upsertItemToBeSynced(itemToBeSynced)
+                        taskScheduler.scheduleItemToBeSynced(event, AgendaItemType.EVENT, OperationType.DELETE)
                         Result.Success()
                     }
 

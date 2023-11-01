@@ -1,4 +1,4 @@
-package com.example.tasky.feature_agenda.data.util
+package com.example.tasky.feature_agenda.domain.util
 
 enum class OperationType {
     CREATE,

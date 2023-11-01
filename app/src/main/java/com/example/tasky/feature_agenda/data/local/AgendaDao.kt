@@ -102,7 +102,7 @@ interface AgendaDao {
     suspend fun upsertItemToBeSynced(item: SyncItemEntity)
 
     @Delete
-    suspend fun itemWasSynced(item: SyncItemEntity)
+    suspend fun deleteSyncedItem(item: SyncItemEntity)
 
     @Query("SELECT * FROM SyncItems")
      fun getItemsToBeSynced(): Flow<List<SyncItemEntity>>
