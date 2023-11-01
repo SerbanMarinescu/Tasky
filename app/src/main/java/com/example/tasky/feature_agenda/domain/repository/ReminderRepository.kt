@@ -5,17 +5,17 @@ import com.example.tasky.util.Resource
 
 interface ReminderRepository {
 
-    suspend fun createReminder(reminder: AgendaItem.Reminder)
+    suspend fun createReminder(reminder: AgendaItem.Reminder): Resource<Unit>
 
     suspend fun syncCreatedReminder(reminder: AgendaItem.Reminder): Resource<Unit>
 
-    suspend fun updateReminder(reminder: AgendaItem.Reminder)
+    suspend fun updateReminder(reminder: AgendaItem.Reminder): Resource<Unit>
 
     suspend fun syncUpdatedReminder(reminder: AgendaItem.Reminder): Resource<Unit>
 
     suspend fun getReminder(reminderId: String): Resource<AgendaItem.Reminder>
 
-    suspend fun deleteReminder(reminder: AgendaItem.Reminder)
+    suspend fun deleteReminder(reminder: AgendaItem.Reminder): Resource<Unit>
 
     suspend fun syncDeletedReminder(reminder: AgendaItem.Reminder): Resource<Unit>
 }

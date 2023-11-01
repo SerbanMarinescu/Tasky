@@ -1,7 +1,5 @@
 package com.example.tasky.feature_agenda.data.repository
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -12,9 +10,9 @@ import com.example.tasky.feature_agenda.data.mapper.toTask
 import com.example.tasky.feature_agenda.data.mapper.toTaskDto
 import com.example.tasky.feature_agenda.data.mapper.toTaskEntity
 import com.example.tasky.feature_agenda.data.remote.TaskyAgendaApi
-import com.example.tasky.feature_agenda.data.util.ActionType
+import com.example.tasky.feature_agenda.data.util.OperationType
 import com.example.tasky.feature_agenda.data.worker.TaskWorker
-import com.example.tasky.feature_agenda.data.worker.enqueueWorker
+import com.example.tasky.feature_agenda.data.worker.enqueueOneTimeWorker
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.TaskRepository
 import com.example.tasky.util.ErrorType
@@ -30,7 +28,6 @@ class TaskRepositoryImpl(
     private val moshi: Moshi
 ): TaskRepository {
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun createTask(task: AgendaItem.Task) {
 
         val taskEntity = task.toTaskEntity()
@@ -39,18 +36,17 @@ class TaskRepositoryImpl(
         val jsonTask = moshi.adapter(AgendaItem.Task::class.java).toJson(task)
 
         val inputData = Data.Builder()
-            .putString(ACTION, ActionType.CREATE.toString())
+            .putString(ACTION, OperationType.CREATE.toString())
             .putString(TASK, jsonTask)
             .build()
 
-        enqueueWorker(
+        enqueueOneTimeWorker(
             workManager = workManager,
             inputData = inputData,
             requestBuilder = OneTimeWorkRequestBuilder<TaskWorker>()
         )
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun syncCreatedTask(task: AgendaItem.Task): Resource<Unit> {
         return try {
             api.createTask(task.toTaskDto())
@@ -62,7 +58,6 @@ class TaskRepositoryImpl(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun updateTask(task: AgendaItem.Task) {
 
         val taskEntity = task.toTaskEntity()
@@ -71,18 +66,17 @@ class TaskRepositoryImpl(
         val jsonTask = moshi.adapter(AgendaItem.Task::class.java).toJson(task)
 
         val inputData = Data.Builder()
-            .putString(ACTION, ActionType.UPDATE.toString())
+            .putString(ACTION, OperationType.UPDATE.toString())
             .putString(TASK, jsonTask)
             .build()
 
-        enqueueWorker(
+        enqueueOneTimeWorker(
             workManager = workManager,
             inputData = inputData,
             requestBuilder = OneTimeWorkRequestBuilder<TaskWorker>()
         )
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun syncUpdatedTask(task: AgendaItem.Task): Resource<Unit> {
         return try {
             api.updateTask(task.toTaskDto())
@@ -94,7 +88,6 @@ class TaskRepositoryImpl(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun getTask(taskId: String): Resource<AgendaItem.Task> {
 
         val localTask = db.taskDao.getTask(taskId.toInt())
@@ -127,11 +120,11 @@ class TaskRepositoryImpl(
         val jsonTask = moshi.adapter(AgendaItem.Task::class.java).toJson(task)
 
         val inputData = Data.Builder()
-            .putString(ACTION, ActionType.DELETE.toString())
+            .putString(ACTION, OperationType.DELETE.toString())
             .putString(TASK, jsonTask)
             .build()
 
-        enqueueWorker(
+        enqueueOneTimeWorker(
             workManager = workManager,
             inputData = inputData,
             requestBuilder = OneTimeWorkRequestBuilder<TaskWorker>()

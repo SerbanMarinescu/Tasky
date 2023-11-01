@@ -8,6 +8,7 @@ object Constants {
     const val DATABASE_NAME = "Agenda.db"
 
     const val ACTION = "action"
+    const val AGENDA_ITEM_TYPE = "agendaItemType"
     const val EVENT = "event"
     const val DELETED_PHOTOS = "deletedPhotos"
     const val REMINDER = "reminder"

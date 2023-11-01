@@ -1,7 +1,5 @@
 package com.example.tasky.feature_agenda.data.mapper
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.example.tasky.feature_agenda.data.local.entity.AttendeeEntity
 import com.example.tasky.feature_agenda.data.local.entity.EventEntity
 import com.example.tasky.feature_agenda.data.local.entity.ReminderEntity
@@ -18,18 +16,14 @@ import com.example.tasky.feature_agenda.domain.model.Attendee
 import com.example.tasky.feature_agenda.domain.model.Photo
 import com.example.tasky.feature_agenda.domain.util.ReminderType
 import java.time.Instant
-import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
-
-@RequiresApi(Build.VERSION_CODES.O)
 fun Long.toZonedDateTime(timeZoneId: ZoneId = ZoneId.systemDefault()): ZonedDateTime {
     val instant = Instant.ofEpochMilli(this)
     return ZonedDateTime.ofInstant(instant, timeZoneId)
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun ZonedDateTime.toUtcTimestamp(): Long {
     val instant = this.toInstant()
     return instant.toEpochMilli()
@@ -57,7 +51,7 @@ fun PhotoDto.toPhoto(): Photo {
         url = url
     )
 }
-@RequiresApi(Build.VERSION_CODES.O)
+
 fun EventDto.toEvent(): AgendaItem.Event {
     return AgendaItem.Event(
         eventId = id,
@@ -74,7 +68,7 @@ fun EventDto.toEvent(): AgendaItem.Event {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 fun ReminderDto.toReminder(): AgendaItem.Reminder {
     return AgendaItem.Reminder(
         reminderId = id,
@@ -86,7 +80,7 @@ fun ReminderDto.toReminder(): AgendaItem.Reminder {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 fun TaskDto.toTask(): AgendaItem.Task {
     return AgendaItem.Task(
         taskId = id,
@@ -107,7 +101,6 @@ fun AttendeeEntity.toAttendee(): Attendee {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun EventWithAttendee.toEvent(): AgendaItem.Event {
     return AgendaItem.Event(
         eventId = event.eventId.toString(),
@@ -124,7 +117,6 @@ fun EventWithAttendee.toEvent(): AgendaItem.Event {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun TaskEntity.toTask(): AgendaItem.Task {
     return AgendaItem.Task(
         taskId = taskId.toString(),
@@ -137,7 +129,6 @@ fun TaskEntity.toTask(): AgendaItem.Task {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun ReminderEntity.toReminder(): AgendaItem.Reminder {
     return AgendaItem.Reminder(
         reminderId = reminderId.toString(),
@@ -149,7 +140,6 @@ fun ReminderEntity.toReminder(): AgendaItem.Reminder {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun AgendaItem.Event.toEventEntity(): EventEntity {
     return EventEntity(
         title = eventTitle,
@@ -163,7 +153,6 @@ fun AgendaItem.Event.toEventEntity(): EventEntity {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun AgendaItem.Task.toTaskEntity(): TaskEntity {
     return TaskEntity(
         title = taskTitle,
@@ -175,7 +164,6 @@ fun AgendaItem.Task.toTaskEntity(): TaskEntity {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun AgendaItem.Reminder.toReminderEntity(): ReminderEntity {
     return ReminderEntity(
         title = reminderTitle,
@@ -195,7 +183,6 @@ fun Attendee.toAttendeeEntity(eventId: String): AttendeeEntity {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun AgendaItem.Task.toTaskDto(): TaskDto {
     return TaskDto(
         id = taskId,
@@ -207,7 +194,6 @@ fun AgendaItem.Task.toTaskDto(): TaskDto {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun AgendaItem.Reminder.toReminderDto(): ReminderDto {
     return ReminderDto(
         id = reminderId,

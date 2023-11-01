@@ -1,21 +1,23 @@
 package com.example.tasky.feature_agenda.data.local
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import com.example.tasky.feature_agenda.data.local.entity.AttendeeEntity
 import com.example.tasky.feature_agenda.data.local.entity.EventEntity
+import com.example.tasky.feature_agenda.data.local.entity.SyncItemEntity
 import com.example.tasky.feature_agenda.data.mapper.toAttendeeEntity
 import com.example.tasky.feature_agenda.data.mapper.toEventEntity
 import com.example.tasky.feature_agenda.data.mapper.toReminderEntity
 import com.example.tasky.feature_agenda.data.mapper.toTaskEntity
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AgendaDao {
 
-    @RequiresApi(Build.VERSION_CODES.O)
     @Transaction
     suspend fun updateFullAgenda(db: AgendaDatabase, agendaItems: List<AgendaItem>) {
         db.apply {
@@ -49,7 +51,6 @@ interface AgendaDao {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     @Transaction
     suspend fun updateAgendaForSpecificDay(
         db: AgendaDatabase,
@@ -96,4 +97,13 @@ interface AgendaDao {
             db.eventDao.upsertAttendees(attendeeEntities)
         }
     }
+
+    @Upsert
+    suspend fun upsertItemToBeSynced(item: SyncItemEntity)
+
+    @Delete
+    suspend fun itemWasSynced(item: SyncItemEntity)
+
+    @Query("SELECT * FROM SyncItems")
+     fun getItemsToBeSynced(): Flow<List<SyncItemEntity>>
 }
