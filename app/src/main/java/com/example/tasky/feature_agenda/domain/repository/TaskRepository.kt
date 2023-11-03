@@ -5,17 +5,17 @@ import com.example.tasky.util.Resource
 
 interface TaskRepository {
 
-    suspend fun createTask(task: AgendaItem.Task)
+    suspend fun createTask(task: AgendaItem.Task): Resource<Unit>
 
     suspend fun syncCreatedTask(task: AgendaItem.Task): Resource<Unit>
 
-    suspend fun updateTask(task: AgendaItem.Task)
+    suspend fun updateTask(task: AgendaItem.Task): Resource<Unit>
 
     suspend fun syncUpdatedTask(task: AgendaItem.Task): Resource<Unit>
 
     suspend fun getTask(taskId: String): Resource<AgendaItem.Task>
 
-    suspend fun deleteTask(task: AgendaItem.Task)
+    suspend fun deleteTask(task: AgendaItem.Task): Resource<Unit>
 
     suspend fun syncDeletedTask(task: AgendaItem.Task): Resource<Unit>
 }

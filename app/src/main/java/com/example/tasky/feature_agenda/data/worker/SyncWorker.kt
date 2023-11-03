@@ -4,15 +4,16 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.tasky.feature_agenda.data.local.AgendaDatabase
-import com.example.tasky.feature_agenda.data.util.OperationType
-import com.example.tasky.feature_agenda.domain.model.AgendaItem
+import com.example.tasky.feature_agenda.data.mapper.toEvent
+import com.example.tasky.feature_agenda.data.mapper.toReminder
+import com.example.tasky.feature_agenda.data.mapper.toTask
 import com.example.tasky.feature_agenda.domain.repository.AgendaRepositories
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType.EVENT
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType.REMINDER
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType.TASK
+import com.example.tasky.feature_agenda.domain.util.OperationType
 import com.squareup.moshi.Moshi
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.first
 
 class SyncWorker(
     private val context: Context,
@@ -23,78 +24,81 @@ class SyncWorker(
 ) : CoroutineWorker(context, workerParams) {
     override suspend fun doWork(): Result {
 
-        db.agendaDao.getItemsToBeSynced().collectLatest { entityItemList ->
-            entityItemList.forEach { item ->
+        val syncItems = db.agendaDao.getItemsToBeSynced().first()
 
-               val result = when (item.itemType) {
-                    EVENT -> {
-                        val event = moshi.adapter(AgendaItem.Event::class.java).fromJson(item.agendaItem)
-                        event?.let {
-                            when (item.operation) {
-                                OperationType.CREATE -> Result.failure()
-                                OperationType.UPDATE -> Result.failure()
-                                OperationType.DELETE -> {
-                                    val result = repositories.eventRepository.syncDeletedEvent(event)
-                                    getWorkerResult(result)
-                                }
+        syncItems.forEach { item ->
+            val result = when (item.itemType) {
+                EVENT -> {
+                    val eventEntity = db.eventDao.getEventWithAttendees(item.itemId)
+                    val event = eventEntity?.toEvent()
+
+                    event?.let {
+                        when (item.operation) {
+                            OperationType.CREATE -> Result.failure()
+                            OperationType.UPDATE -> Result.failure()
+                            OperationType.DELETE -> {
+                                val result = repositories.eventRepository.syncDeletedEvent(event)
+                                getWorkerResult(result)
                             }
-                        } ?: Result.failure()
-                    }
-
-                    REMINDER -> {
-                        val reminder = moshi.adapter(AgendaItem.Reminder::class.java).fromJson(item.agendaItem)
-                        reminder?.let {
-                             when (item.operation) {
-                                OperationType.CREATE -> {
-                                    val result = repositories.reminderRepository.syncCreatedReminder(reminder)
-                                    getWorkerResult(result)
-                                }
-
-                                OperationType.UPDATE -> {
-                                    val result = repositories.reminderRepository.syncUpdatedReminder(reminder)
-                                    getWorkerResult(result)
-                                }
-
-                                OperationType.DELETE -> {
-                                    val result = repositories.reminderRepository.syncDeletedReminder(reminder)
-                                    getWorkerResult(result)
-                                }
-                            }
-                        } ?: Result.failure()
-                    }
-
-                    TASK -> {
-                        val task = moshi.adapter(AgendaItem.Task::class.java).fromJson(item.agendaItem)
-                        task?.let {
-                            when (item.operation) {
-                                OperationType.CREATE -> {
-                                    val result = repositories.taskRepository.syncCreatedTask(task)
-                                    getWorkerResult(result)
-                                }
-
-                                OperationType.UPDATE -> {
-                                    val result = repositories.taskRepository.syncUpdatedTask(task)
-                                    getWorkerResult(result)
-                                }
-
-                                OperationType.DELETE -> {
-                                    val result = repositories.taskRepository.syncDeletedTask(task)
-                                    getWorkerResult(result)
-                                }
-                            }
-                        } ?: Result.failure()
-                    }
+                        }
+                    } ?: Result.failure()
                 }
 
-                if(result is Result.Success) {
-                    db.agendaDao.itemWasSynced(item)
+                REMINDER -> {
+                    val reminderEntity = db.reminderDao.getReminder(item.itemId)
+                    val reminder = reminderEntity?.toReminder()
+
+                    reminder?.let {
+                        when (item.operation) {
+                            OperationType.CREATE -> {
+                                val result = repositories.reminderRepository.syncCreatedReminder(reminder)
+                                getWorkerResult(result)
+                            }
+
+                            OperationType.UPDATE -> {
+                                val result = repositories.reminderRepository.syncUpdatedReminder(reminder)
+                                getWorkerResult(result)
+                            }
+
+                            OperationType.DELETE -> {
+                                val result = repositories.reminderRepository.syncDeletedReminder(reminder)
+                                getWorkerResult(result)
+                            }
+                        }
+                    } ?: Result.failure()
                 }
+
+                TASK -> {
+                    val taskEntity = db.taskDao.getTask(item.itemId)
+                    val task = taskEntity?.toTask()
+
+                    task?.let {
+                        when (item.operation) {
+                            OperationType.CREATE -> {
+                                val result = repositories.taskRepository.syncCreatedTask(task)
+                                getWorkerResult(result)
+                            }
+
+                            OperationType.UPDATE -> {
+                                val result = repositories.taskRepository.syncUpdatedTask(task)
+                                getWorkerResult(result)
+                            }
+
+                            OperationType.DELETE -> {
+                                val result = repositories.taskRepository.syncDeletedTask(task)
+                                getWorkerResult(result)
+                            }
+                        }
+                    } ?: Result.failure()
+                }
+            }
+
+            if(result is Result.Success) {
+                db.agendaDao.deleteSyncedItem(item)
             }
         }
 
-        val itemList = db.agendaDao.getItemsToBeSynced().firstOrNull()
-
-        return if(itemList.isNullOrEmpty()) {
+        return if(syncItems.isEmpty()) {
             Result.success()
         } else {
             Result.retry()
