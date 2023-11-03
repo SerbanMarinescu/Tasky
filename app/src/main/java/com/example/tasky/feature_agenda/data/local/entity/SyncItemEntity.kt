@@ -3,15 +3,16 @@ package com.example.tasky.feature_agenda.data.local.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
-import com.example.tasky.feature_agenda.domain.util.OperationType
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType
+import com.example.tasky.feature_agenda.domain.util.OperationType
 
 @Entity(tableName = "SyncItems")
 data class SyncItemEntity(
-    @PrimaryKey
     val itemId: Int,
     val itemType: AgendaItemType,
-    val operation: OperationType
+    val operation: OperationType,
+    @PrimaryKey(autoGenerate = true)
+    val tableId: Int = 0
 ) {
     class Converters {
 

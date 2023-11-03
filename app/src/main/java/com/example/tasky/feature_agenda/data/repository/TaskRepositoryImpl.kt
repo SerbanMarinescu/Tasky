@@ -1,6 +1,5 @@
 package com.example.tasky.feature_agenda.data.repository
 
-import androidx.work.WorkManager
 import com.example.tasky.feature_agenda.data.local.AgendaDatabase
 import com.example.tasky.feature_agenda.data.mapper.toTask
 import com.example.tasky.feature_agenda.data.mapper.toTaskDto
@@ -10,15 +9,12 @@ import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.TaskRepository
 import com.example.tasky.util.ErrorType
 import com.example.tasky.util.Resource
-import com.squareup.moshi.Moshi
 import retrofit2.HttpException
 import java.io.IOException
 
 class TaskRepositoryImpl(
     private val api: TaskyAgendaApi,
-    private val db: AgendaDatabase,
-    private val workManager: WorkManager,
-    private val moshi: Moshi
+    private val db: AgendaDatabase
 ): TaskRepository {
 
     override suspend fun createTask(task: AgendaItem.Task): Resource<Unit> {
@@ -61,7 +57,7 @@ class TaskRepositoryImpl(
 
     override suspend fun getTask(taskId: String): Resource<AgendaItem.Task> {
 
-        val localTask = db.taskDao.getTask(taskId.toInt())
+        val localTask = db.taskDao.getTaskById(taskId.toInt())
 
         localTask?.let {
             return Resource.Success(it.toTask())
@@ -74,7 +70,7 @@ class TaskRepositoryImpl(
 
             val taskEntity = task.toTaskEntity()
             db.taskDao.upsertTask(taskEntity)
-            val newTask = db.taskDao.getTask(taskId.toInt()) ?: return Resource.Error(message = "No such task was found!", errorType = ErrorType.OTHER)
+            val newTask = db.taskDao.getTaskById(taskId.toInt()) ?: return Resource.Error(message = "No such task was found!", errorType = ErrorType.OTHER)
 
             Resource.Success(newTask.toTask())
         } catch(e: HttpException) {
@@ -85,7 +81,7 @@ class TaskRepositoryImpl(
     }
 
     override suspend fun deleteTask(task: AgendaItem.Task): Resource<Unit> {
-        db.taskDao.deleteTask(task.taskId.toInt())
+        db.taskDao.deleteTaskById(task.taskId.toInt())
         return syncDeletedTask(task)
     }
 

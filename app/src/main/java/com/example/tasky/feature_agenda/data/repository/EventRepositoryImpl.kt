@@ -1,10 +1,10 @@
 package com.example.tasky.feature_agenda.data.repository
 
-import androidx.work.WorkManager
 import com.example.tasky.feature_agenda.data.local.AgendaDatabase
 import com.example.tasky.feature_agenda.data.mapper.toAttendeeEntity
 import com.example.tasky.feature_agenda.data.mapper.toEvent
 import com.example.tasky.feature_agenda.data.mapper.toEventEntity
+import com.example.tasky.feature_agenda.data.mapper.toPhotoEntity
 import com.example.tasky.feature_agenda.data.mapper.toUtcTimestamp
 import com.example.tasky.feature_agenda.data.remote.TaskyAgendaApi
 import com.example.tasky.feature_agenda.data.remote.request.EventRequest
@@ -16,7 +16,6 @@ import com.example.tasky.feature_agenda.domain.repository.EventRepository
 import com.example.tasky.feature_authentication.domain.util.UserPreferences
 import com.example.tasky.util.ErrorType
 import com.example.tasky.util.Resource
-import com.squareup.moshi.Moshi
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -28,9 +27,7 @@ import java.io.IOException
 class EventRepositoryImpl(
     private val api: TaskyAgendaApi,
     private val db: AgendaDatabase,
-    private val workManager: WorkManager,
-    private val userPrefs: UserPreferences,
-    private val moshi: Moshi
+    private val userPrefs: UserPreferences
 ) : EventRepository {
 
     override suspend fun doesAttendeeExist(attendee: Attendee): Resource<Unit> {
@@ -55,8 +52,9 @@ class EventRepositoryImpl(
 
         val eventEntity = event.toEventEntity()
         val attendeeEntities = event.attendees.map { it.toAttendeeEntity(event.eventId) }
+        val photoEntities = event.photos.map { it.toPhotoEntity(event.eventId) }
 
-        db.agendaDao.upsertEventWithAttendees(db, eventEntity, attendeeEntities)
+        db.agendaDao.upsertEventWithAttendeesAndPhotos(db, eventEntity, attendeeEntities, photoEntities)
 
         return syncCreatedEvent(event)
     }
@@ -92,7 +90,7 @@ class EventRepositoryImpl(
 
     override suspend fun getEvent(eventId: String): Resource<AgendaItem.Event> {
 
-        val localEvent = db.eventDao.getEventWithAttendees(eventId.toInt())
+        val localEvent = db.eventDao.getEventById(eventId.toInt())
 
         localEvent?.let {
             return Resource.Success(localEvent.toEvent())
@@ -104,7 +102,7 @@ class EventRepositoryImpl(
 
             val eventEntity = event.toEventEntity()
             db.eventDao.upsertEvent(eventEntity)
-            val newEvent = db.eventDao.getEventWithAttendees(eventId.toInt()) ?: return Resource.Error(message = "No such event found!", errorType = ErrorType.OTHER)
+            val newEvent = db.eventDao.getEventById(eventId.toInt()) ?: return Resource.Error(message = "No such event found!", errorType = ErrorType.OTHER)
 
             Resource.Success(newEvent.toEvent())
         } catch(e: HttpException) {
@@ -118,8 +116,9 @@ class EventRepositoryImpl(
 
         val eventEntity = event.toEventEntity()
         val attendeeEntities = event.attendees.map { it.toAttendeeEntity(event.eventId) }
+        val photoEntities = event.photos.map { it.toPhotoEntity(event.eventId) }
 
-        db.agendaDao.upsertEventWithAttendees(db, eventEntity, attendeeEntities)
+        db.agendaDao.upsertEventWithAttendeesAndPhotos(db, eventEntity, attendeeEntities, photoEntities)
 
         return syncUpdatedEvent(event, deletedPhotos)
     }
@@ -164,9 +163,9 @@ class EventRepositoryImpl(
     override suspend fun deleteEvent(event: AgendaItem.Event): Resource<Unit> {
 
         if(event.isUserEventCreator) {
-            db.eventDao.deleteEventAndAttendees(event.eventId.toInt())
+            db.eventDao.deleteEventById(event.eventId.toInt())
         } else {
-            db.eventDao.deleteAttendee(event.eventId.toInt())
+            db.eventDao.deleteAttendeeByEventId(event.eventId.toInt())
         }
 
         return syncDeletedEvent(event)

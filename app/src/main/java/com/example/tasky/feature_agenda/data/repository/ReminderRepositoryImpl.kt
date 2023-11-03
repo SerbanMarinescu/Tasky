@@ -1,6 +1,5 @@
 package com.example.tasky.feature_agenda.data.repository
 
-import androidx.work.WorkManager
 import com.example.tasky.feature_agenda.data.local.AgendaDatabase
 import com.example.tasky.feature_agenda.data.mapper.toReminder
 import com.example.tasky.feature_agenda.data.mapper.toReminderDto
@@ -10,15 +9,12 @@ import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.ReminderRepository
 import com.example.tasky.util.ErrorType
 import com.example.tasky.util.Resource
-import com.squareup.moshi.Moshi
 import retrofit2.HttpException
 import java.io.IOException
 
 class ReminderRepositoryImpl(
     private val api: TaskyAgendaApi,
-    private val db: AgendaDatabase,
-    private val workManager: WorkManager,
-    private val moshi: Moshi
+    private val db: AgendaDatabase
 ): ReminderRepository {
 
     override suspend fun createReminder(reminder: AgendaItem.Reminder): Resource<Unit> {
@@ -61,7 +57,7 @@ class ReminderRepositoryImpl(
 
     override suspend fun getReminder(reminderId: String): Resource<AgendaItem.Reminder> {
 
-        val localReminder = db.reminderDao.getReminder(reminderId.toInt())
+        val localReminder = db.reminderDao.getReminderById(reminderId.toInt())
 
         localReminder?.let {
             return Resource.Success(localReminder.toReminder())
@@ -74,7 +70,7 @@ class ReminderRepositoryImpl(
 
             val reminderEntity = reminder.toReminderEntity()
             db.reminderDao.upsertReminder(reminderEntity)
-            val newReminder = db.reminderDao.getReminder(reminderId.toInt()) ?: return Resource.Error(message = "No such reminder was found!", errorType = ErrorType.OTHER)
+            val newReminder = db.reminderDao.getReminderById(reminderId.toInt()) ?: return Resource.Error(message = "No such reminder was found!", errorType = ErrorType.OTHER)
 
             Resource.Success(newReminder.toReminder())
         } catch(e: HttpException) {
@@ -85,7 +81,7 @@ class ReminderRepositoryImpl(
     }
 
     override suspend fun deleteReminder(reminder: AgendaItem.Reminder): Resource<Unit> {
-        db.reminderDao.deleteReminder(reminder.reminderId.toInt())
+        db.reminderDao.deleteReminderById(reminder.reminderId.toInt())
         return syncDeletedReminder(reminder)
     }
 

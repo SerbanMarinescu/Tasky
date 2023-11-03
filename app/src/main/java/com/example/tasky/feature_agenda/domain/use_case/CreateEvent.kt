@@ -24,7 +24,7 @@ class CreateEvent(
                     HTTP -> Result.Error(result.message ?: "Unknown Error")
 
                     IO -> {
-                        taskScheduler.scheduleEventTask(event, OperationType.CREATE)
+                        taskScheduler.scheduleItemToBeSynced(event, OperationType.CREATE)
                         Result.Success()
                     }
 

@@ -7,9 +7,11 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import com.example.tasky.feature_agenda.data.local.entity.AttendeeEntity
 import com.example.tasky.feature_agenda.data.local.entity.EventEntity
+import com.example.tasky.feature_agenda.data.local.entity.PhotoEntity
 import com.example.tasky.feature_agenda.data.local.entity.SyncItemEntity
 import com.example.tasky.feature_agenda.data.mapper.toAttendeeEntity
 import com.example.tasky.feature_agenda.data.mapper.toEventEntity
+import com.example.tasky.feature_agenda.data.mapper.toPhotoEntity
 import com.example.tasky.feature_agenda.data.mapper.toReminderEntity
 import com.example.tasky.feature_agenda.data.mapper.toTaskEntity
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
@@ -19,13 +21,19 @@ import kotlinx.coroutines.flow.Flow
 interface AgendaDao {
 
     @Transaction
+    suspend fun clearCache(db: AgendaDatabase) {
+        db.apply {
+            db.eventDao.deleteEvents()
+            db.reminderDao.deleteReminders()
+            db.taskDao.deleteTasks()
+        }
+    }
+
+    @Transaction
     suspend fun updateFullAgenda(db: AgendaDatabase, agendaItems: List<AgendaItem>) {
         db.apply {
 
-            db.eventDao.deleteEvents()
-            db.eventDao.deleteAttendees()
-            db.reminderDao.deleteReminders()
-            db.taskDao.deleteTasks()
+            clearCache(db)
 
             val eventList = agendaItems.filterIsInstance<AgendaItem.Event>()
             val remindersList = agendaItems.filterIsInstance<AgendaItem.Reminder>()
@@ -34,9 +42,11 @@ interface AgendaDao {
             eventList.forEach { event ->
                 val eventEntity = event.toEventEntity()
                 val attendeeEntities = event.attendees.map { it.toAttendeeEntity(event.eventId) }
+                val photoEntities = event.photos.map { it.toPhotoEntity(event.eventId) }
 
                 db.eventDao.upsertEvent(eventEntity)
                 db.eventDao.upsertAttendees(attendeeEntities)
+                db.eventDao.upsertPhotos(photoEntities)
             }
 
             tasksList.forEach { task ->
@@ -60,8 +70,7 @@ interface AgendaDao {
     ) {
         db.apply {
 
-            db.eventDao.deleteEventsForSpecificDay(startOfDay, endOfDay)
-            db.eventDao.deleteAttendeesForSpecificDay(startOfDay, endOfDay)
+            db.eventDao.deleteEventsForASpecificDay(startOfDay, endOfDay)
             db.reminderDao.deleteRemindersForSpecificDay(startOfDay, endOfDay)
             db.taskDao.deleteTasksForSpecificDay(startOfDay, endOfDay)
 
@@ -72,9 +81,11 @@ interface AgendaDao {
             eventList.forEach { event->
                 val eventEntity = event.toEventEntity()
                 val attendeeEntities = event.attendees.map { it.toAttendeeEntity(event.eventId) }
+                val photoEntities = event.photos.map { it.toPhotoEntity(event.eventId) }
 
                 db.eventDao.upsertEvent(eventEntity)
                 db.eventDao.upsertAttendees(attendeeEntities)
+                db.eventDao.upsertPhotos(photoEntities)
             }
 
             tasksList.forEach { task ->
@@ -90,11 +101,17 @@ interface AgendaDao {
     }
 
     @Transaction
-    suspend fun upsertEventWithAttendees(db: AgendaDatabase, eventEntity: EventEntity, attendeeEntities: List<AttendeeEntity>) {
+    suspend fun upsertEventWithAttendeesAndPhotos(
+        db: AgendaDatabase,
+        eventEntity: EventEntity,
+        attendeeEntities: List<AttendeeEntity>,
+        photoEntities: List<PhotoEntity>
+    ) {
         db.apply {
 
             db.eventDao.upsertEvent(eventEntity)
             db.eventDao.upsertAttendees(attendeeEntities)
+            db.eventDao.upsertPhotos(photoEntities)
         }
     }
 

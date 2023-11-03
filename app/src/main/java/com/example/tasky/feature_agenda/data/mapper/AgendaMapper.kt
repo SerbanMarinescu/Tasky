@@ -2,9 +2,10 @@ package com.example.tasky.feature_agenda.data.mapper
 
 import com.example.tasky.feature_agenda.data.local.entity.AttendeeEntity
 import com.example.tasky.feature_agenda.data.local.entity.EventEntity
+import com.example.tasky.feature_agenda.data.local.entity.PhotoEntity
 import com.example.tasky.feature_agenda.data.local.entity.ReminderEntity
 import com.example.tasky.feature_agenda.data.local.entity.TaskEntity
-import com.example.tasky.feature_agenda.data.local.relations.EventWithAttendee
+import com.example.tasky.feature_agenda.data.local.relations.EventWithAttendeesAndPhotos
 import com.example.tasky.feature_agenda.data.remote.dto.AttendeeDto
 import com.example.tasky.feature_agenda.data.remote.dto.AttendeesDto
 import com.example.tasky.feature_agenda.data.remote.dto.EventDto
@@ -101,14 +102,28 @@ fun AttendeeEntity.toAttendee(): Attendee {
     )
 }
 
-fun EventWithAttendee.toEvent(): AgendaItem.Event {
+fun PhotoEntity.toPhoto(): Photo {
+    return Photo(
+        key = key,
+        url = url
+    )
+}
+
+fun Photo.toPhotoEntity(eventId: String): PhotoEntity {
+    return PhotoEntity(
+        key = key,
+        url = url,
+        eventId = eventId
+    )
+}
+fun EventWithAttendeesAndPhotos.toEvent(): AgendaItem.Event {
     return AgendaItem.Event(
         eventId = event.eventId.toString(),
         eventTitle = event.title,
         eventDescription = event.description,
         from = event.from.toZonedDateTime(),
         to = event.from.toZonedDateTime(),
-        photos = emptyList(),
+        photos = photos.map { it.toPhoto() },
         attendees = attendees.map { it.toAttendee() },
         isUserEventCreator = event.isUserEventCreator,
         host = event.host,

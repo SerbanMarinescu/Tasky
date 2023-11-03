@@ -23,7 +23,7 @@ class UpdateEvent(
                     ErrorType.HTTP -> Result.Error(result.message ?: "Unknown Error")
 
                     ErrorType.IO -> {
-                        taskScheduler.scheduleEventTask(event, OperationType.UPDATE, deletedPhotos)
+                        taskScheduler.scheduleItemToBeSynced(event, OperationType.UPDATE)
                         Result.Success()
                     }
 

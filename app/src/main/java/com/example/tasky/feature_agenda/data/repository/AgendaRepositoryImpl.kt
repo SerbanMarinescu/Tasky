@@ -24,9 +24,9 @@ class AgendaRepositoryImpl(
 ) : AgendaRepository {
 
     override suspend fun logout(): Resource<Unit> {
-
         return try {
             api.logout()
+            db.agendaDao.clearCache(db)
             Resource.Success()
         } catch(e: HttpException) {
             Resource.Error(message = e.message ?: "Invalid Response", errorType = ErrorType.HTTP)
@@ -41,15 +41,12 @@ class AgendaRepositoryImpl(
         val endOfDay = zonedDateTime.with(LocalTime.MAX).toUtcTimestamp()
 
         return combine(
-            db.eventDao.getEventsForSpecificDay(startOfDay, endOfDay),
+            db.eventDao.getEventsForASpecificDay(startOfDay, endOfDay),
             db.reminderDao.getRemindersForSpecificDay(startOfDay, endOfDay),
-            db.taskDao.getTasksForSpecificDay(startOfDay, endOfDay)) { events, reminders, tasks ->
+            db.taskDao.getTasksForSpecificDay(startOfDay, endOfDay)
+        ) { events, reminders, tasks ->
 
-            val eventWithAttendees = events.map {
-                db.eventDao.getEventWithAttendees(it.eventId)
-            }
-
-            val localEvents = eventWithAttendees.mapNotNull { it?.toEvent() }
+            val localEvents = events.map { it.toEvent() }
             val localReminders = reminders.map { it.toReminder() }
             val localTasks = tasks.map { it.toTask() }
 
