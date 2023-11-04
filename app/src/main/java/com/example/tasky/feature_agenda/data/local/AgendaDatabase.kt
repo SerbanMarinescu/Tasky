@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.tasky.feature_agenda.data.local.entity.AttendeeEntity
 import com.example.tasky.feature_agenda.data.local.entity.EventEntity
+import com.example.tasky.feature_agenda.data.local.entity.PhotoEntity
 import com.example.tasky.feature_agenda.data.local.entity.ReminderEntity
 import com.example.tasky.feature_agenda.data.local.entity.SyncItemEntity
 import com.example.tasky.feature_agenda.data.local.entity.TaskEntity
@@ -12,6 +13,7 @@ import com.example.tasky.feature_agenda.data.local.entity.TaskEntity
 @Database(
     entities = [
         AttendeeEntity::class,
+        PhotoEntity::class,
         EventEntity::class,
         ReminderEntity::class,
         TaskEntity::class,

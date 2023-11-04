@@ -12,30 +12,34 @@ import com.example.tasky.feature_agenda.domain.util.AgendaItemType.EVENT
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType.REMINDER
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType.TASK
 import com.example.tasky.feature_agenda.domain.util.OperationType
-import com.squareup.moshi.Moshi
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 
 class SyncWorker(
     private val context: Context,
     private val workerParams: WorkerParameters,
-    private val moshi: Moshi,
     private val repositories: AgendaRepositories,
     private val db: AgendaDatabase
 ) : CoroutineWorker(context, workerParams) {
     override suspend fun doWork(): Result {
 
-        val syncItems = db.agendaDao.getItemsToBeSynced().first()
+        val syncItems = db.agendaDao.getItemsToBeSynced().firstOrNull()
 
-        syncItems.forEach { item ->
+        syncItems?.forEach { item ->
             val result = when (item.itemType) {
                 EVENT -> {
-                    val eventEntity = db.eventDao.getEventWithAttendees(item.itemId)
+                    val eventEntity = db.eventDao.getEventById(item.itemId)
                     val event = eventEntity?.toEvent()
 
                     event?.let {
                         when (item.operation) {
-                            OperationType.CREATE -> Result.failure()
-                            OperationType.UPDATE -> Result.failure()
+                            OperationType.CREATE -> {
+                                val result = repositories.eventRepository.syncCreatedEvent(event)
+                                getWorkerResult(result)
+                            }
+                            OperationType.UPDATE -> {
+                                val result = repositories.eventRepository.syncUpdatedEvent(event)
+                                getWorkerResult(result)
+                            }
                             OperationType.DELETE -> {
                                 val result = repositories.eventRepository.syncDeletedEvent(event)
                                 getWorkerResult(result)
@@ -45,7 +49,7 @@ class SyncWorker(
                 }
 
                 REMINDER -> {
-                    val reminderEntity = db.reminderDao.getReminder(item.itemId)
+                    val reminderEntity = db.reminderDao.getReminderById(item.itemId)
                     val reminder = reminderEntity?.toReminder()
 
                     reminder?.let {
@@ -69,7 +73,7 @@ class SyncWorker(
                 }
 
                 TASK -> {
-                    val taskEntity = db.taskDao.getTask(item.itemId)
+                    val taskEntity = db.taskDao.getTaskById(item.itemId)
                     val task = taskEntity?.toTask()
 
                     task?.let {
@@ -98,7 +102,7 @@ class SyncWorker(
             }
         }
 
-        return if(syncItems.isEmpty()) {
+        return if(syncItems.isNullOrEmpty()) {
             Result.success()
         } else {
             Result.retry()

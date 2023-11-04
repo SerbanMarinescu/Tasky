@@ -5,7 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "Attendee",
+    tableName = "Photo",
     foreignKeys = [
         ForeignKey(
             entity = EventEntity::class,
@@ -15,11 +15,10 @@ import androidx.room.PrimaryKey
         )
     ]
 )
-data class AttendeeEntity(
-    val email: String,
-    val fullName: String,
-    val userId: String,
-    val eventId: Int,
+data class PhotoEntity(
+    val key: String,
+    val url: String,
+    val eventId: String,
     @PrimaryKey(autoGenerate = true)
-    val attendeeId: Int = 0
+    val photoId: Int = 0
 )

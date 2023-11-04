@@ -2,7 +2,6 @@ package com.example.tasky.feature_agenda.domain.use_case
 
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.TaskRepository
-import com.example.tasky.feature_agenda.domain.util.AgendaItemType
 import com.example.tasky.feature_agenda.domain.util.OperationType
 import com.example.tasky.feature_agenda.domain.util.TaskScheduler
 import com.example.tasky.util.ErrorType
@@ -23,7 +22,7 @@ class UpdateTask(
                     ErrorType.HTTP -> Result.Error(result.message ?: "Unknown Error")
 
                     ErrorType.IO -> {
-                        taskScheduler.scheduleItemToBeSynced(task, AgendaItemType.TASK, OperationType.UPDATE)
+                        taskScheduler.scheduleItemToBeSynced(task, OperationType.UPDATE)
                         Result.Success()
                     }
 
