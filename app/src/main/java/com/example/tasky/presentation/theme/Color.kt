@@ -20,3 +20,10 @@ val BtnNavRegScreen = Color(0xFF8E97FD)
 val VisibilityIcon = Color(0xFFBEBEBE)
 val GreenValid = Color(0xFF279F70)
 val RedInvalid = Color(0xFFFF7272)
+
+val BackgroundAccBubble = Color(0xFFEEF6FF)
+val AccountText = Color(0xFFB7C6DE)
+val SelectedDayColor = Color(0xFFFDEFA8)
+
+val DarkGray = Color(0xFF5C5D5A)
+val Gray = Color(0xFFA9B4BE)

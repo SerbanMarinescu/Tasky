@@ -23,4 +23,10 @@
     <string name="RegisterScreenTitle">Create your account</string>
     <string name="SignUpBtn">GET STARTED</string>
     <string name="FullNameHint">Name</string>
+
+    <string name="PositiveBtnText">OK</string>
+    <string name="NegativeBtnText">Cancel</string>
+    <string name="DateDialogTitle">Select a Date</string>
+    <string name="Logout">Logout</string>
+    <string name="DatePicker">Click to select a date</string>
 </resources>
