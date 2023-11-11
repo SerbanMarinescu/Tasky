@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "com.example.tasky"
-    compileSdk = 33
+    compileSdk = 34
 
     buildFeatures {
         buildConfig = true
@@ -80,6 +80,9 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    //Compose Icons Extended
+    implementation("androidx.compose.material:material-icons-extended:1.5.4")
 
     //Dagger - Hilt
     implementation("com.google.dagger:hilt-android:2.48")

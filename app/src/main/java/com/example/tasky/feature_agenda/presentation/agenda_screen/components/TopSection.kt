@@ -79,7 +79,7 @@ fun TopSection(
                 color = AccountText
             )
             DropdownMenu(
-                expanded = state.showLogoutOption,
+                expanded = state.isLogoutBtnVisible,
                 onDismissRequest = {
                     showMenuOptions(false)
                 }

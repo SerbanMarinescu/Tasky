@@ -29,4 +29,11 @@
     <string name="DateDialogTitle">Select a Date</string>
     <string name="Logout">Logout</string>
     <string name="DatePicker">Click to select a date</string>
+    <string name="CreateAgendaItem">Click to create agenda item</string>
+    <string name="AgendaMenu_Open">Open</string>
+    <string name="AgendaMenu_Edit">Edit</string>
+    <string name="AgendaMenu_Delete">Delete</string>
+    <string name="AgendaMenu_Event">Event</string>
+    <string name="AgendaMenu_Reminder">Reminder</string>
+    <string name="AgendaMenu_Task">Task</string>
 </resources>

@@ -106,18 +106,11 @@ class SyncWorker(
         }
 
         if(deletedEventIds.isNotEmpty() || deletedReminderIds.isNotEmpty() || deletedTaskIds.isNotEmpty()) {
-            val syncDeletedItemsApiResult = repositories.agendaRepository.syncAgenda(
+            repositories.agendaRepository.syncAgenda(
                 deletedEventIds = deletedEventIds,
                 deletedReminderIds = deletedReminderIds,
                 deletedTaskIds = deletedTaskIds
             )
-            val syncDeletedItemsWorkerResult = getWorkerResult(syncDeletedItemsApiResult)
-
-            if(syncDeletedItemsWorkerResult is Result.Success) {
-                deletedEventIds.clear()
-                deletedReminderIds.clear()
-                deletedTaskIds.clear()
-            }
         }
 
         return if(syncItems.isEmpty()) {

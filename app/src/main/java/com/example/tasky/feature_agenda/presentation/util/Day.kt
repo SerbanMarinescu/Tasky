@@ -9,21 +9,11 @@ data class Day(
 )
 
 fun generateNextDays(currentDate: ZonedDateTime): List<Day> {
-
-    val nextDays = mutableListOf<Day>()
-
-    nextDays.add(Day(
-        dayOfWeek = currentDate.dayOfWeek,
-        dayOfMonth = currentDate.dayOfMonth
-    ))
-
-    for(i in 1..5) {
-        val nextDay = currentDate.plusDays(1)
-        nextDays.add(Day(
-            dayOfWeek = nextDay.dayOfWeek,
-            dayOfMonth = nextDay.dayOfMonth
-        ))
+    return (0..5).map {
+        val day = currentDate.plusDays(it.toLong())
+        Day(
+            dayOfWeek = day.dayOfWeek,
+            dayOfMonth = day.dayOfMonth
+        )
     }
-
-    return nextDays
 }
