@@ -12,7 +12,7 @@ import com.example.tasky.feature_agenda.domain.util.AgendaItemType.EVENT
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType.REMINDER
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType.TASK
 import com.example.tasky.feature_agenda.domain.util.OperationType
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.first
 
 class SyncWorker(
     private val context: Context,
@@ -22,9 +22,12 @@ class SyncWorker(
 ) : CoroutineWorker(context, workerParams) {
     override suspend fun doWork(): Result {
 
-        val syncItems = db.agendaDao.getItemsToBeSynced().firstOrNull()
+        val deletedEventIds = mutableListOf<String>()
+        val deletedReminderIds = mutableListOf<String>()
+        val deletedTaskIds = mutableListOf<String>()
+        val syncItems = db.agendaDao.getItemsToBeSynced().first()
 
-        syncItems?.forEach { item ->
+        syncItems.forEach { item ->
             val result = when (item.itemType) {
                 EVENT -> {
                     val eventEntity = db.eventDao.getEventById(item.itemId)
@@ -41,8 +44,8 @@ class SyncWorker(
                                 getWorkerResult(result)
                             }
                             OperationType.DELETE -> {
-                                val result = repositories.eventRepository.syncDeletedEvent(event)
-                                getWorkerResult(result)
+                                deletedEventIds.add(event.eventId)
+                                Result.success()
                             }
                         }
                     } ?: Result.failure()
@@ -65,8 +68,8 @@ class SyncWorker(
                             }
 
                             OperationType.DELETE -> {
-                                val result = repositories.reminderRepository.syncDeletedReminder(reminder)
-                                getWorkerResult(result)
+                                deletedReminderIds.add(reminder.reminderId)
+                                Result.success()
                             }
                         }
                     } ?: Result.failure()
@@ -89,8 +92,8 @@ class SyncWorker(
                             }
 
                             OperationType.DELETE -> {
-                                val result = repositories.taskRepository.syncDeletedTask(task)
-                                getWorkerResult(result)
+                                deletedTaskIds.add(task.taskId)
+                                Result.success()
                             }
                         }
                     } ?: Result.failure()
@@ -102,7 +105,22 @@ class SyncWorker(
             }
         }
 
-        return if(syncItems.isNullOrEmpty()) {
+        if(deletedEventIds.isNotEmpty() || deletedReminderIds.isNotEmpty() || deletedTaskIds.isNotEmpty()) {
+            val syncDeletedItemsApiResult = repositories.agendaRepository.syncAgenda(
+                deletedEventIds = deletedEventIds,
+                deletedReminderIds = deletedReminderIds,
+                deletedTaskIds = deletedTaskIds
+            )
+            val syncDeletedItemsWorkerResult = getWorkerResult(syncDeletedItemsApiResult)
+
+            if(syncDeletedItemsWorkerResult is Result.Success) {
+                deletedEventIds.clear()
+                deletedReminderIds.clear()
+                deletedTaskIds.clear()
+            }
+        }
+
+        return if(syncItems.isEmpty()) {
             Result.success()
         } else {
             Result.retry()

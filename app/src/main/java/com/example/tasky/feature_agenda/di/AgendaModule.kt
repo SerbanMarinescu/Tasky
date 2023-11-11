@@ -15,6 +15,20 @@ import com.example.tasky.feature_agenda.data.repository.TaskRepositoryImpl
 import com.example.tasky.feature_agenda.data.util.MoshiSerializer
 import com.example.tasky.feature_agenda.data.util.TaskSchedulerImpl
 import com.example.tasky.feature_agenda.domain.repository.AgendaRepositories
+import com.example.tasky.feature_agenda.domain.use_case.AgendaUseCases
+import com.example.tasky.feature_agenda.domain.use_case.CreateEvent
+import com.example.tasky.feature_agenda.domain.use_case.CreateReminder
+import com.example.tasky.feature_agenda.domain.use_case.CreateTask
+import com.example.tasky.feature_agenda.domain.use_case.DeleteEvent
+import com.example.tasky.feature_agenda.domain.use_case.DeleteReminder
+import com.example.tasky.feature_agenda.domain.use_case.DeleteTask
+import com.example.tasky.feature_agenda.domain.use_case.Event
+import com.example.tasky.feature_agenda.domain.use_case.Logout
+import com.example.tasky.feature_agenda.domain.use_case.Reminder
+import com.example.tasky.feature_agenda.domain.use_case.Task
+import com.example.tasky.feature_agenda.domain.use_case.UpdateEvent
+import com.example.tasky.feature_agenda.domain.use_case.UpdateReminder
+import com.example.tasky.feature_agenda.domain.use_case.UpdateTask
 import com.example.tasky.feature_agenda.domain.util.JsonSerializer
 import com.example.tasky.feature_agenda.domain.util.TaskScheduler
 import com.example.tasky.feature_authentication.domain.util.UserPreferences
@@ -85,5 +99,61 @@ object AgendaModule {
     @Singleton
     fun provideTaskScheduler(db: AgendaDatabase): TaskScheduler {
         return TaskSchedulerImpl(db)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEventUseCases(
+        repositories: AgendaRepositories,
+        taskScheduler: TaskScheduler
+    ): Event {
+        return Event(
+            createEvent = CreateEvent(repositories.eventRepository, taskScheduler),
+            updateEvent = UpdateEvent(repositories.eventRepository, taskScheduler),
+            deleteEvent = DeleteEvent(repositories.eventRepository, taskScheduler)
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideReminderUseCases(
+        repositories: AgendaRepositories,
+        taskScheduler: TaskScheduler
+    ): Reminder {
+        return Reminder(
+            createReminder = CreateReminder(repositories.reminderRepository, taskScheduler),
+            updateReminder = UpdateReminder(repositories.reminderRepository, taskScheduler),
+            deleteReminder = DeleteReminder(repositories.reminderRepository, taskScheduler)
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideTaskUseCases(
+        repositories: AgendaRepositories,
+        taskScheduler: TaskScheduler
+    ): Task {
+        return Task(
+            createTask = CreateTask(repositories.taskRepository, taskScheduler),
+            updateTask = UpdateTask(repositories.taskRepository, taskScheduler),
+            deleteTask = DeleteTask(repositories.taskRepository, taskScheduler)
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideAgendaUseCases(
+        repositories: AgendaRepositories,
+        userPrefs: UserPreferences,
+        event: Event,
+        reminder: Reminder,
+        task: Task
+    ): AgendaUseCases {
+        return AgendaUseCases(
+            event = event,
+            reminder = reminder,
+            task = task,
+            logout = Logout(repositories.agendaRepository, userPrefs)
+        )
     }
 }

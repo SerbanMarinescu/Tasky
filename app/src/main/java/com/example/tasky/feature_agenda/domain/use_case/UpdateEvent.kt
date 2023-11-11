@@ -15,7 +15,7 @@ class UpdateEvent(
 ) {
 
     suspend operator fun invoke(event: AgendaItem.Event, deletedPhotos: List<Photo> = emptyList()): Result<Unit> {
-        val result = repository.updateEvent(event)
+        val result = repository.updateEvent(event, deletedPhotos)
 
         return when (result) {
             is Resource.Error -> {
