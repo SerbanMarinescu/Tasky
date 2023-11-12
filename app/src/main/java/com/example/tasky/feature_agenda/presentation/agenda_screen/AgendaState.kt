@@ -1,6 +1,7 @@
 package com.example.tasky.feature_agenda.presentation.agenda_screen
 
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
+import com.example.tasky.feature_agenda.domain.util.AgendaItemKey
 import com.example.tasky.feature_agenda.presentation.util.Day
 import com.example.tasky.feature_agenda.presentation.util.generateNextDays
 import java.time.Month
@@ -12,5 +13,7 @@ data class AgendaState(
     val currentMonth: Month = ZonedDateTime.now().month,
     val daysList: List<Day> = generateNextDays(ZonedDateTime.now()),
     val currentDate: ZonedDateTime = ZonedDateTime.now(),
-    val showLogoutOption: Boolean = false
+    val isLogoutBtnVisible: Boolean = false,
+    val isItemCreationMenuVisible: Boolean = false,
+    val isItemMenuVisible: Map<AgendaItemKey, Boolean> = emptyMap()
 )

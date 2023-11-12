@@ -10,99 +10,224 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.example.tasky.R
+import com.example.tasky.feature_agenda.domain.model.AgendaItem
+import com.example.tasky.feature_agenda.domain.util.AgendaItemKey
+import com.example.tasky.feature_agenda.domain.util.toAgendaItemType
+import com.example.tasky.feature_agenda.presentation.agenda_screen.components.AgendaItemCard
 import com.example.tasky.feature_agenda.presentation.agenda_screen.components.DatePickerDialog
 import com.example.tasky.feature_agenda.presentation.agenda_screen.components.DayChip
 import com.example.tasky.feature_agenda.presentation.agenda_screen.components.TopSection
+import com.example.tasky.feature_agenda.presentation.util.formatDateTimeOfPattern
 import com.example.tasky.presentation.theme.BackgroundBlack
 import com.example.tasky.presentation.theme.BackgroundWhite
+import com.example.tasky.util.ObserveAsEvents
 import com.example.tasky.util.Result
 import com.example.tasky.util.Screen
-import com.vanpra.composematerialdialogs.rememberMaterialDialogState
+import com.vanpra.composematerialdialogs.MaterialDialogState
+import kotlinx.coroutines.flow.Flow
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AgendaScreen(
     navController: NavController,
-    viewModel: AgendaViewModel = hiltViewModel()
+    state: AgendaState,
+    onEvent: (AgendaEvent) -> Unit,
+    dateDialogState: MaterialDialogState,
+    username: String,
+    logoutEventsChannelFlow: Flow<Result<Unit>>
 ) {
-    viewModel.dateDialogState = rememberMaterialDialogState()
-    val state by viewModel.state.collectAsStateWithLifecycle()
-
     val context = LocalContext.current
 
-    LaunchedEffect(key1 = true) {
-        viewModel.logoutResult.collect { result ->
-            when(result) {
-                is Result.Error -> Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
-                is Result.Success -> navController.navigate(Screen.LoginScreen.route)
-            }
+    ObserveAsEvents(logoutEventsChannelFlow) { result ->
+        when(result) {
+            is Result.Error -> Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
+            is Result.Success -> navController.navigate(Screen.LoginScreen.route)
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundBlack)
-    ) {
-        TopSection(
-            state = state,
-            dateDialogState = viewModel.dateDialogState,
-            username = viewModel.username,
-           showMenuOptions = {
-                viewModel.onEvent(AgendaEvent.ToggleLogoutBtn(it))
-            },
-            logout = {
-                viewModel.onEvent(AgendaEvent.Logout)
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    onEvent(AgendaEvent.ToggleItemCreationMenu(!state.isItemCreationMenuVisible))
             }
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Box(
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(id = R.string.CreateAgendaItem)
+                )
+                DropdownMenu(
+                    expanded = state.isItemCreationMenuVisible,
+                    onDismissRequest = {
+                        onEvent(AgendaEvent.ToggleItemCreationMenu(false))
+                    }
+                ) {
+                    DropdownMenuItem(
+                        text = {
+                            Text(text = stringResource(id = R.string.AgendaMenu_Event))
+                    },
+                        onClick = {
+                            TODO("Navigate to EventDetailScreen")
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Text(text = stringResource(id = R.string.AgendaMenu_Reminder))
+                        },
+                        onClick = {
+                            TODO("Navigate to ReminderDetailScreen")
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Text(text = stringResource(id = R.string.AgendaMenu_Task))
+                        },
+                        onClick = {
+                            TODO("Navigate to TaskDetailScreen")
+                        }
+                    )
+                }
+            }
+        }
+    ) { paddingValues ->
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(
-                    RoundedCornerShape(
-                        topStart = 30.dp,
-                        topEnd = 30.dp
-                    )
-                )
-                .background(BackgroundWhite)
+                .padding(paddingValues)
+                .background(BackgroundBlack)
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    state.daysList.forEachIndexed { index, day ->
-                        DayChip(
-                            dayOfWeek = day.dayOfWeek.toString(),
-                            dayOfMonth = day.dayOfMonth.toString(),
-                            selected = state.selectedDayIndex == index,
-                            onClick = {
-                                viewModel.onEvent(AgendaEvent.SelectDayIndex(index))
-                            }
-                        )
-                    }
+            TopSection(
+                state = state,
+                dateDialogState = dateDialogState,
+                username = username,
+                showMenuOptions = {
+                    onEvent(AgendaEvent.ToggleLogoutBtn(it))
+                },
+                logout = {
+                    onEvent(AgendaEvent.Logout)
                 }
-                Spacer(modifier = Modifier.height(20.dp))
-                Text(text = state.currentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")))
-                Spacer(modifier = Modifier.height(20.dp))
-                LazyColumn(modifier = Modifier.fillMaxWidth()) {
-
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 30.dp,
+                            topEnd = 30.dp
+                        )
+                    )
+                    .background(BackgroundWhite)
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        state.daysList.forEachIndexed { index, day ->
+                            DayChip(
+                                dayOfWeek = day.dayOfWeek.toString(),
+                                dayOfMonth = day.dayOfMonth.toString(),
+                                selected = state.selectedDayIndex == index,
+                                onClick = {
+                                    onEvent(AgendaEvent.SelectDayIndex(index))
+                                }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(text = formatDateTimeOfPattern(state.currentDate, "dd MMMM yyyy"))
+                    Spacer(modifier = Modifier.height(20.dp))
+                    LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                        items(state.itemList) { agendaItem ->
+                            when(agendaItem) {
+                                is AgendaItem.Event -> {
+                                    AgendaItemCard(
+                                        item = agendaItem,
+                                        timeRange = "${formatDateTimeOfPattern(agendaItem.from, "MMM d, HH:mm")} - ${formatDateTimeOfPattern(agendaItem.to, "MMM d, HH:mm")}",
+                                        onOpenClick = {
+                                            TODO("Navigate to EventDetailScreen")
+                                        },
+                                        onEditClick = {
+                                            TODO("Navigate to EventDetailScreen")
+                                        },
+                                        onDeleteClick = {
+                                            onEvent(AgendaEvent.DeleteItem(agendaItem))
+                                        },
+                                        isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.id)] ?: false,
+                                        onMenuClick = { itemKey, isVisible ->
+                                            onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
+                                        }
+                                    )
+                                }
+                                is AgendaItem.Reminder -> {
+                                    AgendaItemCard(
+                                        item = agendaItem,
+                                        timeRange = formatDateTimeOfPattern(agendaItem.time, "MMM d, HH:mm"),
+                                        onOpenClick = {
+                                            TODO("Navigate to ReminderDetailScreen")
+                                        },
+                                        onEditClick = {
+                                            TODO("Navigate to ReminderDetailScreen")
+                                        },
+                                        onDeleteClick = {
+                                            onEvent(AgendaEvent.DeleteItem(agendaItem))
+                                        },
+                                        isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.id)] ?: false,
+                                        onMenuClick = { itemKey, isVisible ->
+                                            onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
+                                        }
+                                    )
+                                }
+                                is AgendaItem.Task -> {
+                                    AgendaItemCard(
+                                        item = agendaItem,
+                                        timeRange = formatDateTimeOfPattern(agendaItem.time, "MMM d, HH:mm"),
+                                        onOpenClick = {
+                                            TODO("Navigate to TaskDetailScreen")
+                                        },
+                                        onEditClick = {
+                                            TODO("Navigate to TaskDetailScreen")
+                                        },
+                                        onDeleteClick = {
+                                            onEvent(AgendaEvent.DeleteItem(agendaItem))
+                                        },
+                                        isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.id)] ?: false,
+                                        onMenuClick = { itemKey, isVisible ->
+                                            onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
+                                        },
+                                        selected = agendaItem.isDone,
+                                        toggleIsDone = {
+                                            onEvent(AgendaEvent.ToggleIsDone(!agendaItem.isDone))
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -110,10 +235,10 @@ fun AgendaScreen(
 
     DatePickerDialog(
         state = state,
-        dialogState = viewModel.dateDialogState,
+        dialogState = dateDialogState,
         onClick = {
             val date = it.atStartOfDay(ZoneId.systemDefault())
-            viewModel.onEvent(AgendaEvent.SelectDate(date))
+            onEvent(AgendaEvent.SelectDate(date))
         }
     )
 }

@@ -27,3 +27,6 @@ val SelectedDayColor = Color(0xFFFDEFA8)
 
 val DarkGray = Color(0xFF5C5D5A)
 val Gray = Color(0xFFA9B4BE)
+val Green = Color(0xFF279F70)
+val LightGreen = Color(0xFFCAEF45)
+val Light2 = Color(0xFFF2F3F7)
