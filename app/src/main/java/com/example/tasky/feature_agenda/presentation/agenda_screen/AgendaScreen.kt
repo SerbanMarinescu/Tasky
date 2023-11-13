@@ -29,7 +29,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.example.tasky.R
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.util.AgendaItemKey
@@ -51,19 +50,19 @@ import java.time.ZoneId
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AgendaScreen(
-    navController: NavController,
     state: AgendaState,
     onEvent: (AgendaEvent) -> Unit,
     dateDialogState: MaterialDialogState,
     username: String,
-    logoutEventsChannelFlow: Flow<Result<Unit>>
+    logoutEventsChannelFlow: Flow<Result<Unit>>,
+    navigateTo: (String) -> Unit
 ) {
     val context = LocalContext.current
 
     ObserveAsEvents(logoutEventsChannelFlow) { result ->
         when(result) {
             is Result.Error -> Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
-            is Result.Success -> navController.navigate(Screen.LoginScreen.route)
+            is Result.Success -> navigateTo(Screen.LoginScreen.route)
         }
     }
 
@@ -71,7 +70,7 @@ fun AgendaScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    onEvent(AgendaEvent.ToggleItemCreationMenu(!state.isItemCreationMenuVisible))
+                    onEvent(AgendaEvent.ToggleItemCreationMenu)
             }
             ) {
                 Icon(
@@ -81,7 +80,7 @@ fun AgendaScreen(
                 DropdownMenu(
                     expanded = state.isItemCreationMenuVisible,
                     onDismissRequest = {
-                        onEvent(AgendaEvent.ToggleItemCreationMenu(false))
+                        onEvent(AgendaEvent.ToggleItemCreationMenu)
                     }
                 ) {
                     DropdownMenuItem(
@@ -123,7 +122,7 @@ fun AgendaScreen(
                 dateDialogState = dateDialogState,
                 username = username,
                 showMenuOptions = {
-                    onEvent(AgendaEvent.ToggleLogoutBtn(it))
+                    onEvent(AgendaEvent.ToggleLogoutBtn)
                 },
                 logout = {
                     onEvent(AgendaEvent.Logout)
@@ -180,6 +179,10 @@ fun AgendaScreen(
                                         isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.id)] ?: false,
                                         onMenuClick = { itemKey, isVisible ->
                                             onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
+                                        },
+                                        isDeletionDialogVisible = state.isDeletionDialogVisible,
+                                        toggleDeletionDialog = {
+                                            onEvent(AgendaEvent.ToggleDeletionDialog)
                                         }
                                     )
                                 }
@@ -199,6 +202,10 @@ fun AgendaScreen(
                                         isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.id)] ?: false,
                                         onMenuClick = { itemKey, isVisible ->
                                             onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
+                                        },
+                                        isDeletionDialogVisible = state.isDeletionDialogVisible,
+                                        toggleDeletionDialog = {
+                                            onEvent(AgendaEvent.ToggleDeletionDialog)
                                         }
                                     )
                                 }
@@ -219,9 +226,13 @@ fun AgendaScreen(
                                         onMenuClick = { itemKey, isVisible ->
                                             onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
                                         },
+                                        isDeletionDialogVisible = state.isDeletionDialogVisible,
+                                        toggleDeletionDialog = {
+                                            onEvent(AgendaEvent.ToggleDeletionDialog)
+                                        },
                                         selected = agendaItem.isDone,
                                         toggleIsDone = {
-                                            onEvent(AgendaEvent.ToggleIsDone(!agendaItem.isDone))
+                                            onEvent(AgendaEvent.ToggleIsDone(agendaItem))
                                         }
                                     )
                                 }

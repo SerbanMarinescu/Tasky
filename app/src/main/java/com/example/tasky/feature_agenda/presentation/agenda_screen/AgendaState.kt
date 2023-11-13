@@ -15,5 +15,6 @@ data class AgendaState(
     val currentDate: ZonedDateTime = ZonedDateTime.now(),
     val isLogoutBtnVisible: Boolean = false,
     val isItemCreationMenuVisible: Boolean = false,
-    val isItemMenuVisible: Map<AgendaItemKey, Boolean> = emptyMap()
+    val isItemMenuVisible: Map<AgendaItemKey, Boolean> = emptyMap(),
+    val isDeletionDialogVisible: Boolean = false
 )

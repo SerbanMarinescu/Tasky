@@ -35,7 +35,7 @@ fun TopSection(
     state: AgendaState,
     dateDialogState: MaterialDialogState,
     username: String,
-    showMenuOptions: (Boolean) -> Unit,
+    showMenuOptions: () -> Unit,
     logout: () -> Unit
 ) {
     Row(
@@ -69,7 +69,7 @@ fun TopSection(
                 .clip(CircleShape)
                 .background(BackgroundAccBubble)
                 .clickable {
-                    showMenuOptions(true)
+                    showMenuOptions()
                 }
         ) {
             Text(
@@ -81,7 +81,7 @@ fun TopSection(
             DropdownMenu(
                 expanded = state.isLogoutBtnVisible,
                 onDismissRequest = {
-                    showMenuOptions(false)
+                    showMenuOptions()
                 }
             ) {
                 DropdownMenuItem(
