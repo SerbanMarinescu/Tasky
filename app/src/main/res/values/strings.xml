@@ -36,4 +36,23 @@
     <string name="AgendaMenu_Event">Event</string>
     <string name="AgendaMenu_Reminder">Reminder</string>
     <string name="AgendaMenu_Task">Task</string>
+    <string name="DeleteEvent">Delete event</string>
+    <string name="DeleteReminder">Delete reminder</string>
+    <string name="DeleteTask">Delete task</string>
+    <string name="DeleteDialogDescription">Are you sure you want to delete</string>
+    <string name="Ok">OK</string>
+    <string name="Cancel">CANCEL</string>
+
+    <string name="EditTask">EDIT TASK</string>
+    <string name="Save">Save</string>
+    <string name="At">At</string>
+    <string name="Task">Task</string>
+    <string name="TenMinBefore">10 minutes before</string>
+    <string name="ThirtyMinBefore">30 minutes before</string>
+    <string name="OneHourBefore">1 hour before</string>
+    <string name="SixHoursBefore">6 hours before</string>
+    <string name="OneDayBefore">1 day before</string>
+    <string name="DELETE_TASK">DELETE TASK</string>
+    <string name="EditTitle">EDIT TITLE</string>
+    <string name="EditDescription">EDIT DESCRIPTION</string>
 </resources>

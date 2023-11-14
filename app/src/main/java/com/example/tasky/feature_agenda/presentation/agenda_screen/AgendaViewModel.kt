@@ -15,7 +15,9 @@ import com.example.tasky.feature_authentication.domain.util.UserPreferences
 import com.example.tasky.util.Result
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -42,6 +44,8 @@ class AgendaViewModel @Inject constructor(
     val logoutResult = resultChannel.receiveAsFlow()
 
     private val menuVisibilityOptions = mutableMapOf<AgendaItemKey, Boolean>()
+
+    private var debounceTaskJob: Job? = null
 
     init {
         val user = userPreferences.getAuthenticatedUser()
@@ -92,18 +96,23 @@ class AgendaViewModel @Inject constructor(
             is AgendaEvent.ToggleLogoutBtn -> {
                 _state.update {
                     it.copy(
-                        isLogoutBtnVisible = event.showOption
+                        isLogoutBtnVisible = !state.value.isLogoutBtnVisible
                     )
                 }
             }
 
             is AgendaEvent.ToggleIsDone -> {
-                //TODO Update the task's isDoneValue
+                debounceTaskJob?.cancel()
+                val task = event.task
+                debounceTaskJob = viewModelScope.launch {
+                    delay(500L)
+                    useCases.task.updateTask(task.copy(isDone = !task.isDone))
+                }
             }
 
             is AgendaEvent.ToggleItemCreationMenu -> {
                 _state.update {
-                    it.copy(isItemCreationMenuVisible = event.showMenu)
+                    it.copy(isItemCreationMenuVisible = !state.value.isItemCreationMenuVisible)
                 }
             }
 
@@ -123,6 +132,12 @@ class AgendaViewModel @Inject constructor(
                         is AgendaItem.Reminder -> useCases.reminder.deleteReminder(event.item)
                         is AgendaItem.Task -> useCases.task.deleteTask(event.item)
                     }
+                }
+            }
+
+            AgendaEvent.ToggleDeletionDialog -> {
+                _state.update {
+                    it.copy(isDeletionDialogVisible = !state.value.isDeletionDialogVisible)
                 }
             }
         }

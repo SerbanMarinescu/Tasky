@@ -16,6 +16,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.outlined.Circle
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -46,9 +48,49 @@ fun AgendaItemCard(
     onDeleteClick: (AgendaItem) -> Unit,
     isMenuVisible: Boolean,
     onMenuClick: (AgendaItemKey, Boolean) -> Unit,
+    isDeletionDialogVisible: Boolean,
+    toggleDeletionDialog: () -> Unit,
     selected: Boolean = false,
     toggleIsDone: () -> Unit = {}
 ) {
+    if(isDeletionDialogVisible) {
+        AlertDialog(
+            onDismissRequest = {
+                toggleDeletionDialog()
+            },
+            title = {
+                when(item) {
+                    is AgendaItem.Event -> Text(text = stringResource(id = R.string.DeleteEvent))
+                    is AgendaItem.Reminder -> Text(text = stringResource(id = R.string.DeleteReminder))
+                    is AgendaItem.Task -> Text(text = stringResource(id = R.string.DeleteTask))
+                }
+            },
+            text = {
+                Text(text = stringResource(id = R.string.DeleteDialogDescription) + " \"${item.title}\"?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDeleteClick(item)
+                        toggleDeletionDialog()
+                }
+                ) {
+                    Text(text = stringResource(id = R.string.Ok))
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        toggleDeletionDialog()
+                    }
+                ) {
+                    Text(text = stringResource(id = R.string.Cancel))
+                }
+            }
+        )
+    }
+
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -124,7 +166,7 @@ fun AgendaItemCard(
                             Text(text = stringResource(id = R.string.AgendaMenu_Delete))
                         },
                         onClick = {
-                            onDeleteClick(item)
+                            toggleDeletionDialog()
                         }
                     )
                 }
