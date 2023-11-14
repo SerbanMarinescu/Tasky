@@ -1,5 +1,6 @@
 package com.example.tasky.feature_agenda.presentation.agenda_screen.components
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -136,12 +137,17 @@ fun AgendaItemCard(
                     imageVector = Icons.Default.MoreHoriz,
                     contentDescription = null,
                     modifier = Modifier.clickable {
-                        onMenuClick(AgendaItemKey(item.toAgendaItemType(), item.id), true)
+                        Log.d("MENU", "Clicked the menu button")
+                        Log.d("MENU", "Is menu visible before change: $isMenuVisible")
+                        Log.d("MENU", "The sent key to update the map is ${AgendaItemKey(item.toAgendaItemType(), item.id)} and the value ${!isMenuVisible}")
+                        onMenuClick(AgendaItemKey(item.toAgendaItemType(), item.id), !isMenuVisible)
                     }
                 )
                 DropdownMenu(
                     expanded = isMenuVisible,
                     onDismissRequest = {
+                        Log.d("MENU", "Requested dismiss for the menu")
+                        Log.d("MENU", "The value for isVISIBLE: $isMenuVisible")
                         onMenuClick(AgendaItemKey(item.toAgendaItemType(), item.id), false)
                     }
                 ) {

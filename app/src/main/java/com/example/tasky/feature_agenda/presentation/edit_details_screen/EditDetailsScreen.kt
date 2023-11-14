@@ -17,7 +17,6 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,28 +30,14 @@ import com.example.tasky.R
 import com.example.tasky.presentation.theme.Green
 import com.example.tasky.presentation.theme.Light
 import com.example.tasky.presentation.theme.interFont
-import com.example.tasky.util.ArgumentTypeEnum
-import com.example.tasky.util.Screen
 
 @Composable
 fun EditDetailsScreen(
     state: EditDetailsState,
     onEvent: (EditDetailsEvent) -> Unit,
-    type: String,
-    text: String,
-    navigateTo: (String) -> Unit
+    navigateBack: () -> Unit
 ) {
     val context = LocalContext.current
-
-    LaunchedEffect(key1 = Unit) {
-        if(type == ArgumentTypeEnum.TITLE.name) {
-            onEvent(EditDetailsEvent.SetPageTitle(context.getString(R.string.EditTitle)))
-        }
-        if(type == ArgumentTypeEnum.DESCRIPTION.name) {
-            onEvent(EditDetailsEvent.SetPageTitle(context.getString(R.string.EditDescription)))
-        }
-        onEvent(EditDetailsEvent.ContentChanged(text))
-    }
 
     Column(
         modifier = Modifier
@@ -70,11 +55,12 @@ fun EditDetailsScreen(
                 imageVector = Icons.Default.KeyboardArrowLeft,
                 contentDescription = null,
                 modifier = Modifier.clickable {
-                    TODO("NAVIGATE BACK")
+                    onEvent(EditDetailsEvent.SaveChangedState)
+                    navigateBack()
                 }
             )
             Text(
-                text = state.pageTitle,
+                text = state.pageTitle?.asString(context) ?: "",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 fontFamily = interFont
@@ -85,9 +71,8 @@ fun EditDetailsScreen(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.clickable {
-                    navigateTo(
-                        Screen.TaskDetailScreen.route + "/$type=${state.content}"
-                    )
+                    onEvent(EditDetailsEvent.SaveChangedState)
+                    navigateBack()
                 }
             )
         }

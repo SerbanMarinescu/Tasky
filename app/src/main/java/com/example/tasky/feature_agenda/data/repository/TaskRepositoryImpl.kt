@@ -57,7 +57,7 @@ class TaskRepositoryImpl(
 
     override suspend fun getTask(taskId: String): Resource<AgendaItem.Task> {
 
-        val localTask = db.taskDao.getTaskById(taskId.toInt())
+        val localTask = db.taskDao.getTaskById(taskId)
 
         localTask?.let {
             return Resource.Success(it.toTask())
@@ -70,7 +70,7 @@ class TaskRepositoryImpl(
 
             val taskEntity = task.toTaskEntity()
             db.taskDao.upsertTask(taskEntity)
-            val newTask = db.taskDao.getTaskById(taskId.toInt()) ?: return Resource.Error(message = "No such task was found!", errorType = ErrorType.OTHER)
+            val newTask = db.taskDao.getTaskById(taskId) ?: return Resource.Error(message = "No such task was found!", errorType = ErrorType.OTHER)
 
             Resource.Success(newTask.toTask())
         } catch(e: HttpException) {
@@ -80,14 +80,14 @@ class TaskRepositoryImpl(
         }
     }
 
-    override suspend fun deleteTask(task: AgendaItem.Task): Resource<Unit> {
-        db.taskDao.deleteTaskById(task.taskId.toInt())
-        return syncDeletedTask(task)
+    override suspend fun deleteTask(taskId: String): Resource<Unit> {
+        db.taskDao.deleteTaskById(taskId)
+        return syncDeletedTask(taskId)
     }
 
-    override suspend fun syncDeletedTask(task: AgendaItem.Task): Resource<Unit> {
+    override suspend fun syncDeletedTask(taskId: String): Resource<Unit> {
         return try {
-            api.deleteTask(task.taskId)
+            api.deleteTask(taskId)
             Resource.Success()
         } catch(e: HttpException) {
             Resource.Error(message = e.message ?: "Invalid Response", errorType = ErrorType.HTTP)

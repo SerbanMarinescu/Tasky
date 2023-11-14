@@ -30,7 +30,7 @@ class SyncWorker(
         syncItems.forEach { item ->
             val result = when (item.itemType) {
                 EVENT -> {
-                    val eventEntity = db.eventDao.getEventById(item.itemId)
+                    val eventEntity = db.eventDao.getEventById(item.itemId.toInt())
                     val event = eventEntity?.toEvent()
 
                     event?.let {
@@ -52,7 +52,7 @@ class SyncWorker(
                 }
 
                 REMINDER -> {
-                    val reminderEntity = db.reminderDao.getReminderById(item.itemId)
+                    val reminderEntity = db.reminderDao.getReminderById(item.itemId.toInt())
                     val reminder = reminderEntity?.toReminder()
 
                     reminder?.let {

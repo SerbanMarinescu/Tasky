@@ -1,11 +1,14 @@
 package com.example.tasky.feature_agenda.presentation.task_detail_screen
 
+import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.AgendaRepositories
 import com.example.tasky.feature_agenda.domain.use_case.AgendaUseCases
 import com.example.tasky.feature_agenda.domain.util.ReminderType
+import com.example.tasky.util.ArgumentTypeEnum
 import com.example.tasky.util.Resource
 import com.example.tasky.util.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,7 +26,8 @@ import javax.inject.Inject
 @HiltViewModel
 class TaskDetailViewModel @Inject constructor(
     private val useCases: AgendaUseCases,
-    private val repositories: AgendaRepositories
+    private val repositories: AgendaRepositories,
+    private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
 
     private val _state = MutableStateFlow(TaskDetailState())
@@ -32,6 +36,43 @@ class TaskDetailViewModel @Inject constructor(
     private val resultChannel = Channel<Result<Unit>>()
     val logoutResult = resultChannel.receiveAsFlow()
 
+    private val content = savedStateHandle.getStateFlow(ArgumentTypeEnum.TEXT.name,"")
+
+    private fun collectUpdatedValue() {
+        viewModelScope.launch {
+            content.collect {
+                Log.d("NAV", "VALUE COLLECTED: $it")
+            }
+        }
+    }
+
+    init {
+        Log.d("NAV", "Initialized VM in task detail")
+        val taskId = savedStateHandle.get<String>(ArgumentTypeEnum.TASK_ID.name)
+        val type = savedStateHandle.get<String>(ArgumentTypeEnum.TITLE.name)
+        val text = savedStateHandle.get<String>(ArgumentTypeEnum.TEXT.name)
+
+        Log.d("NAV", "SSH taskId: $taskId")
+        Log.d("NAV", "SSH type: $type")
+        Log.d("NAV", "SSH text: $text")
+
+        //collectUpdatedValue()
+
+        taskId?.let {
+            getSelectedTask(it)
+        }
+
+        type?.let {
+        text?.let {
+            if(type == ArgumentTypeEnum.TITLE.name) {
+                _state.update { it.copy(taskTitle = text) }
+            }
+            if(type == ArgumentTypeEnum.DESCRIPTION.name) {
+                _state.update { it.copy(taskDescription = text) }
+            }
+        }
+        }
+    }
     fun onEvent(event: TaskDetailEvent) {
         when(event) {
             is TaskDetailEvent.AtDateChanged -> {
@@ -68,23 +109,11 @@ class TaskDetailViewModel @Inject constructor(
                 }
             }
 
-            is TaskDetailEvent.GetOpenedTask -> {
-                getSelectedTask(event.taskId)
-            }
-
-            is TaskDetailEvent.DeleteTask -> {
-                val taskId = event.taskId
+            TaskDetailEvent.DeleteTask -> {
+                val taskId = savedStateHandle.get<String>(ArgumentTypeEnum.TASK_ID.name)
                 taskId?.let {
                     viewModelScope.launch {
-                        val result = repositories.taskRepository.getTask(it)
-                        when(result) {
-                            is Resource.Error -> resultChannel.send(Result.Error(result.message ?: "Unknown Error"))
-                            is Resource.Success -> {
-                                val task = result.data ?: return@launch
-                                repositories.taskRepository.deleteTask(task)
-                            }
-                            else -> resultChannel.send(Result.Error(result.message ?: "Unknown Error"))
-                        }
+                        repositories.taskRepository.deleteTask(it)
                     }
                 }
             }
@@ -124,6 +153,7 @@ class TaskDetailViewModel @Inject constructor(
                     val task = result.data ?: return@launch
                     _state.update {
                         it.copy(
+                            taskId = taskId,
                             editMode = false,
                             currentDate = task.time,
                             taskTitle = task.taskTitle,

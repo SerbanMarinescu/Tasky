@@ -15,7 +15,7 @@ interface TaskRepository {
 
     suspend fun getTask(taskId: String): Resource<AgendaItem.Task>
 
-    suspend fun deleteTask(task: AgendaItem.Task): Resource<Unit>
+    suspend fun deleteTask(taskId: String): Resource<Unit>
 
-    suspend fun syncDeletedTask(task: AgendaItem.Task): Resource<Unit>
+    suspend fun syncDeletedTask(taskId: String): Resource<Unit>
 }

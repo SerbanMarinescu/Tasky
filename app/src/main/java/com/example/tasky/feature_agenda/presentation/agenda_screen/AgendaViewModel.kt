@@ -1,5 +1,6 @@
 package com.example.tasky.feature_agenda.presentation.agenda_screen
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -69,7 +70,7 @@ class AgendaViewModel @Inject constructor(
     fun onEvent(event: AgendaEvent) {
 
         when(event) {
-            is AgendaEvent.Logout -> {
+            AgendaEvent.Logout -> {
                 logout()
             }
             is AgendaEvent.SelectDate -> {
@@ -82,7 +83,7 @@ class AgendaViewModel @Inject constructor(
                 }
                 getAgenda()
             }
-            is AgendaEvent.SwipeToRefresh -> {
+            AgendaEvent.SwipeToRefresh -> {
                 getRemoteAgenda()
             }
 
@@ -93,7 +94,7 @@ class AgendaViewModel @Inject constructor(
                 getAgenda()
             }
 
-            is AgendaEvent.ToggleLogoutBtn -> {
+            AgendaEvent.ToggleLogoutBtn -> {
                 _state.update {
                     it.copy(
                         isLogoutBtnVisible = !state.value.isLogoutBtnVisible
@@ -110,19 +111,23 @@ class AgendaViewModel @Inject constructor(
                 }
             }
 
-            is AgendaEvent.ToggleItemCreationMenu -> {
+            AgendaEvent.ToggleItemCreationMenu -> {
                 _state.update {
                     it.copy(isItemCreationMenuVisible = !state.value.isItemCreationMenuVisible)
                 }
+                Log.d("MENU", "The updated state is ${state.value}")
             }
 
             is AgendaEvent.ToggleIndividualItemMenu -> {
+                Log.d("MENU", "ToggleItemVisibility triggered in viewModel")
                 menuVisibilityOptions[event.itemKey] = event.showIndividualMenu
+                Log.d("MENU", "The updated map is: $menuVisibilityOptions")
                 _state.update {
                     it.copy(
                         isItemMenuVisible = menuVisibilityOptions
                     )
                 }
+                Log.d("MENU", "The updated state is ${state.value}")
             }
 
             is AgendaEvent.DeleteItem -> {
@@ -130,7 +135,7 @@ class AgendaViewModel @Inject constructor(
                     when(event.item) {
                         is AgendaItem.Event -> useCases.event.deleteEvent(event.item)
                         is AgendaItem.Reminder -> useCases.reminder.deleteReminder(event.item)
-                        is AgendaItem.Task -> useCases.task.deleteTask(event.item)
+                        is AgendaItem.Task -> useCases.task.deleteTask(event.item.taskId)
                     }
                 }
             }
@@ -155,6 +160,9 @@ class AgendaViewModel @Inject constructor(
                         isItemMenuVisible = menuVisibilityOptions
                     )
                 }
+                Log.d("MENU", "The state was initialized")
+                Log.d("MENU", "The state is ${state.value}")
+                Log.d("MENU", "The map is $menuVisibilityOptions")
             }
         }
     }

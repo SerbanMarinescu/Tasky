@@ -19,6 +19,9 @@ object Constants {
 
     const val WORK_DATA_KEY = "workDataKey"
 
+    const val TYPE_KEY = "TypeKey"
+    const val TEXT_KEY = "TextKey"
+
     const val ROUTE_REGISTER = "RegisterScreen"
     const val ROUTE_LOGIN = "LoginScreen"
     const val ROUTE_AGENDA = "AgendaScreen"

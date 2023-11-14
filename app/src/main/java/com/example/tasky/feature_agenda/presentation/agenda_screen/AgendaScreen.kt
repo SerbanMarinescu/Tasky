@@ -1,5 +1,6 @@
 package com.example.tasky.feature_agenda.presentation.agenda_screen
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -40,6 +41,7 @@ import com.example.tasky.feature_agenda.presentation.agenda_screen.components.To
 import com.example.tasky.feature_agenda.presentation.util.formatDateTimeOfPattern
 import com.example.tasky.presentation.theme.BackgroundBlack
 import com.example.tasky.presentation.theme.BackgroundWhite
+import com.example.tasky.util.ArgumentTypeEnum
 import com.example.tasky.util.ObserveAsEvents
 import com.example.tasky.util.Result
 import com.example.tasky.util.Screen
@@ -104,7 +106,8 @@ fun AgendaScreen(
                             Text(text = stringResource(id = R.string.AgendaMenu_Task))
                         },
                         onClick = {
-                            TODO("Navigate to TaskDetailScreen")
+                            Log.d("NAV", "Clicked on create new task")
+                            navigateTo(Screen.TaskDetailScreen.route)
                         }
                     )
                 }
@@ -148,7 +151,7 @@ fun AgendaScreen(
                     ) {
                         state.daysList.forEachIndexed { index, day ->
                             DayChip(
-                                dayOfWeek = day.dayOfWeek.toString(),
+                                dayOfWeek = day.dayOfWeek.toString().take(1),
                                 dayOfMonth = day.dayOfMonth.toString(),
                                 selected = state.selectedDayIndex == index,
                                 onClick = {
@@ -210,11 +213,16 @@ fun AgendaScreen(
                                     )
                                 }
                                 is AgendaItem.Task -> {
+                                    Log.d("MENU", "Composition triggered for task")
                                     AgendaItemCard(
                                         item = agendaItem,
                                         timeRange = formatDateTimeOfPattern(agendaItem.time, "MMM d, HH:mm"),
                                         onOpenClick = {
-                                            TODO("Navigate to TaskDetailScreen")
+                                            Log.d("NAV", "Clicked on open task")
+                                            navigateTo(
+                                                Screen.TaskDetailScreen.route +
+                                                "?${ArgumentTypeEnum.TASK_ID.name}=${agendaItem.taskId}"
+                                            )
                                         },
                                         onEditClick = {
                                             TODO("Navigate to TaskDetailScreen")
@@ -222,8 +230,9 @@ fun AgendaScreen(
                                         onDeleteClick = {
                                             onEvent(AgendaEvent.DeleteItem(agendaItem))
                                         },
-                                        isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.id)] ?: false,
+                                        isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.taskId)] ?: false,
                                         onMenuClick = { itemKey, isVisible ->
+                                            Log.d("MENU", "On menu click triggered")
                                             onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
                                         },
                                         isDeletionDialogVisible = state.isDeletionDialogVisible,

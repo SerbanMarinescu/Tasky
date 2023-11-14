@@ -13,13 +13,13 @@ interface TaskDao {
     suspend fun upsertTask(task: TaskEntity)
 
     @Query("SELECT * FROM Task WHERE taskId = :taskId")
-    suspend fun getTaskById(taskId: Int): TaskEntity?
+    suspend fun getTaskById(taskId: String): TaskEntity?
 
     @Query("SELECT * FROM Task WHERE time BETWEEN :startOfDay AND :endOfDay")
     fun getTasksForSpecificDay(startOfDay: Long, endOfDay: Long): Flow<List<TaskEntity>>
 
     @Query("DELETE FROM Task WHERE taskId = :taskId")
-    suspend fun deleteTaskById(taskId: Int)
+    suspend fun deleteTaskById(taskId: String)
 
     @Query("DELETE FROM Task WHERE time BETWEEN :startOfDay AND :endOfDay")
     suspend fun deleteTasksForSpecificDay(startOfDay: Long, endOfDay: Long)

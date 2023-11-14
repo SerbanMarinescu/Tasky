@@ -11,7 +11,6 @@ sealed class TaskDetailEvent {
     data class AtTimeChanged(val time: LocalTime): TaskDetailEvent()
     data class AtDateChanged(val date: LocalDate): TaskDetailEvent()
     data class ReminderTypeChanged(val reminderType: ReminderType): TaskDetailEvent()
-    data class GetOpenedTask(val taskId: String): TaskDetailEvent()
-    data class DeleteTask(val taskId: String?): TaskDetailEvent()
+    data object DeleteTask: TaskDetailEvent()
     data object CreateTask: TaskDetailEvent()
 }
