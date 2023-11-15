@@ -21,20 +21,24 @@ class EditDetailsViewModel @Inject constructor(
     val state = _state.asStateFlow()
 
     init {
-        Log.d("NAV", "Edit details viewModel initialized")
         val type = savedStateHandle.get<String>(ArgumentTypeEnum.TYPE.name) ?: ""
         val text = savedStateHandle.get<String>(ArgumentTypeEnum.TEXT.name) ?: ""
-        Log.d("NAV", "Values from savedStateHandle type: $type")
-        Log.d("NAV", "Values from savedStateHandle text: $text")
+
+        Log.d("NAV", "EDIT DETAILS SCREEN")
+        Log.d("NAV", "TYPE: $type")
+        Log.d("NAV", "TEXT: $text")
 
         _state.update {
             it.copy(
                 pageTitle = when (type) {
-                    ArgumentTypeEnum.TITLE.name -> UiText.StringResource(R.string.EditTitle)
+                    ArgumentTypeEnum.TITLE.name -> {
+                        UiText.StringResource(R.string.EditTitle)
+                    }
                     ArgumentTypeEnum.DESCRIPTION.name -> UiText.StringResource(R.string.EditDescription)
                     else -> null
                 },
-                content = text
+                content = text,
+                type = type
             )
         }
     }
@@ -48,7 +52,9 @@ class EditDetailsViewModel @Inject constructor(
             }
 
             EditDetailsEvent.SaveChangedState -> {
-                savedStateHandle[ArgumentTypeEnum.TEXT.name] = state.value.content
+                _state.update {
+                    it.copy(contentSaved = !it.contentSaved)
+                }
             }
         }
     }

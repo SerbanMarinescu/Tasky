@@ -57,7 +57,7 @@ class ReminderRepositoryImpl(
 
     override suspend fun getReminder(reminderId: String): Resource<AgendaItem.Reminder> {
 
-        val localReminder = db.reminderDao.getReminderById(reminderId.toInt())
+        val localReminder = db.reminderDao.getReminderById(reminderId)
 
         localReminder?.let {
             return Resource.Success(localReminder.toReminder())
@@ -70,7 +70,7 @@ class ReminderRepositoryImpl(
 
             val reminderEntity = reminder.toReminderEntity()
             db.reminderDao.upsertReminder(reminderEntity)
-            val newReminder = db.reminderDao.getReminderById(reminderId.toInt()) ?: return Resource.Error(message = "No such reminder was found!", errorType = ErrorType.OTHER)
+            val newReminder = db.reminderDao.getReminderById(reminderId) ?: return Resource.Error(message = "No such reminder was found!", errorType = ErrorType.OTHER)
 
             Resource.Success(newReminder.toReminder())
         } catch(e: HttpException) {
@@ -80,14 +80,14 @@ class ReminderRepositoryImpl(
         }
     }
 
-    override suspend fun deleteReminder(reminder: AgendaItem.Reminder): Resource<Unit> {
-        db.reminderDao.deleteReminderById(reminder.reminderId.toInt())
-        return syncDeletedReminder(reminder)
+    override suspend fun deleteReminder(reminderId: String): Resource<Unit> {
+        db.reminderDao.deleteReminderById(reminderId)
+        return syncDeletedReminder(reminderId)
     }
 
-    override suspend fun syncDeletedReminder(reminder: AgendaItem.Reminder): Resource<Unit> {
+    override suspend fun syncDeletedReminder(reminderId: String): Resource<Unit> {
         return try {
-            api.deleteReminder(reminder.reminderId)
+            api.deleteReminder(reminderId)
             Resource.Success()
         } catch(e: HttpException) {
             Resource.Error(message = e.message ?: "Invalid Response", ErrorType.HTTP)

@@ -1,7 +1,7 @@
 package com.example.tasky.feature_agenda.presentation.agenda_screen
 
-import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -44,7 +44,7 @@ class AgendaViewModel @Inject constructor(
     private val resultChannel = Channel<Result<Unit>>()
     val logoutResult = resultChannel.receiveAsFlow()
 
-    private val menuVisibilityOptions = mutableMapOf<AgendaItemKey, Boolean>()
+    private val stateMap = mutableStateMapOf<AgendaItemKey, Boolean>()
 
     private var debounceTaskJob: Job? = null
 
@@ -78,7 +78,8 @@ class AgendaViewModel @Inject constructor(
                     it.copy(
                         currentMonth = event.date.month,
                         daysList = generateNextDays(event.date),
-                        currentDate = event.date
+                        currentDate = event.date,
+                        selectedDayIndex = 0
                     )
                 }
                 getAgenda()
@@ -88,8 +89,15 @@ class AgendaViewModel @Inject constructor(
             }
 
             is AgendaEvent.SelectDayIndex -> {
+                val selectedDay = state.value.daysList[event.index].dayOfMonth
+                val currentDay = state.value.currentDate.dayOfMonth
+                val daysToAdd = selectedDay - currentDay
+
                 _state.update {
-                    it.copy(selectedDayIndex = event.index)
+                    it.copy(
+                        selectedDayIndex = event.index,
+                        currentDate = state.value.currentDate.plusDays(daysToAdd.toLong())
+                    )
                 }
                 getAgenda()
             }
@@ -106,35 +114,31 @@ class AgendaViewModel @Inject constructor(
                 debounceTaskJob?.cancel()
                 val task = event.task
                 debounceTaskJob = viewModelScope.launch {
-                    delay(500L)
+                    delay(200L)
                     useCases.task.updateTask(task.copy(isDone = !task.isDone))
                 }
             }
 
             AgendaEvent.ToggleItemCreationMenu -> {
                 _state.update {
-                    it.copy(isItemCreationMenuVisible = !state.value.isItemCreationMenuVisible)
+                    it.copy(isItemCreationMenuVisible = !it.isItemCreationMenuVisible)
                 }
-                Log.d("MENU", "The updated state is ${state.value}")
             }
 
             is AgendaEvent.ToggleIndividualItemMenu -> {
-                Log.d("MENU", "ToggleItemVisibility triggered in viewModel")
-                menuVisibilityOptions[event.itemKey] = event.showIndividualMenu
-                Log.d("MENU", "The updated map is: $menuVisibilityOptions")
+                stateMap[event.itemKey] = event.showIndividualMenu
                 _state.update {
                     it.copy(
-                        isItemMenuVisible = menuVisibilityOptions
+                        isItemMenuVisible = stateMap
                     )
                 }
-                Log.d("MENU", "The updated state is ${state.value}")
             }
 
             is AgendaEvent.DeleteItem -> {
                 viewModelScope.launch {
                     when(event.item) {
                         is AgendaItem.Event -> useCases.event.deleteEvent(event.item)
-                        is AgendaItem.Reminder -> useCases.reminder.deleteReminder(event.item)
+                        is AgendaItem.Reminder -> useCases.reminder.deleteReminder(event.item.reminderId)
                         is AgendaItem.Task -> useCases.task.deleteTask(event.item.taskId)
                     }
                 }
@@ -142,7 +146,7 @@ class AgendaViewModel @Inject constructor(
 
             AgendaEvent.ToggleDeletionDialog -> {
                 _state.update {
-                    it.copy(isDeletionDialogVisible = !state.value.isDeletionDialogVisible)
+                    it.copy(isDeletionDialogVisible = !it.isDeletionDialogVisible)
                 }
             }
         }
@@ -152,17 +156,14 @@ class AgendaViewModel @Inject constructor(
         viewModelScope.launch {
             repositories.agendaRepository.getAgendaForSpecificDay(state.value.currentDate).collect { agendaItems ->
                 agendaItems.forEach {
-                    menuVisibilityOptions[AgendaItemKey(it.toAgendaItemType(), it.id)] = false
+                    stateMap[AgendaItemKey(it.toAgendaItemType(), it.id)] = false
                 }
                 _state.update {
                     it.copy(
                         itemList = agendaItems,
-                        isItemMenuVisible = menuVisibilityOptions
+                        isItemMenuVisible = stateMap
                     )
                 }
-                Log.d("MENU", "The state was initialized")
-                Log.d("MENU", "The state is ${state.value}")
-                Log.d("MENU", "The map is $menuVisibilityOptions")
             }
         }
     }

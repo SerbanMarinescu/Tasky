@@ -55,7 +55,6 @@ fun EditDetailsScreen(
                 imageVector = Icons.Default.KeyboardArrowLeft,
                 contentDescription = null,
                 modifier = Modifier.clickable {
-                    onEvent(EditDetailsEvent.SaveChangedState)
                     navigateBack()
                 }
             )
@@ -72,7 +71,6 @@ fun EditDetailsScreen(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.clickable {
                     onEvent(EditDetailsEvent.SaveChangedState)
-                    navigateBack()
                 }
             )
         }

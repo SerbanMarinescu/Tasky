@@ -52,7 +52,7 @@ class SyncWorker(
                 }
 
                 REMINDER -> {
-                    val reminderEntity = db.reminderDao.getReminderById(item.itemId.toInt())
+                    val reminderEntity = db.reminderDao.getReminderById(item.itemId)
                     val reminder = reminderEntity?.toReminder()
 
                     reminder?.let {

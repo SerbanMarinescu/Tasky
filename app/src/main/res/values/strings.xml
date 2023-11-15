@@ -42,6 +42,7 @@
     <string name="DeleteDialogDescription">Are you sure you want to delete</string>
     <string name="Ok">OK</string>
     <string name="Cancel">CANCEL</string>
+    <string name="SelectTime">Select a Time</string>
 
     <string name="EditTask">EDIT TASK</string>
     <string name="Save">Save</string>
@@ -55,4 +56,8 @@
     <string name="DELETE_TASK">DELETE TASK</string>
     <string name="EditTitle">EDIT TITLE</string>
     <string name="EditDescription">EDIT DESCRIPTION</string>
+
+    <string name="EditReminder">EDIT REMINDER</string>
+    <string name="Reminder">Reminder</string>
+    <string name="DeleteReminderCaps">DELETE REMINDER</string>
 </resources>

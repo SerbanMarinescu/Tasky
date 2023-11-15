@@ -26,5 +26,6 @@ object Constants {
     const val ROUTE_LOGIN = "LoginScreen"
     const val ROUTE_AGENDA = "AgendaScreen"
     const val ROUTE_TASK_DETAIL = "TaskDetailScreen"
+    const val ROUTE_REMINDER_DETAIL = "ReminderDetailScreen"
     const val ROUTE_EDIT_DETAILS = "EditDetailsScreen"
 }
