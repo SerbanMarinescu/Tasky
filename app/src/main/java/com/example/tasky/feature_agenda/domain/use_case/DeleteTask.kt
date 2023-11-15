@@ -1,7 +1,7 @@
 package com.example.tasky.feature_agenda.domain.use_case
 
-import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.TaskRepository
+import com.example.tasky.feature_agenda.domain.util.AgendaItemType
 import com.example.tasky.feature_agenda.domain.util.OperationType
 import com.example.tasky.feature_agenda.domain.util.TaskScheduler
 import com.example.tasky.util.ErrorType
@@ -13,8 +13,8 @@ class DeleteTask(
     private val taskScheduler: TaskScheduler
 ) {
 
-    suspend operator fun invoke(task: AgendaItem.Task): Result<Unit> {
-        val result = repository.deleteTask(task)
+    suspend operator fun invoke(taskId: String): Result<Unit> {
+        val result = repository.deleteTask(taskId)
 
         return when (result) {
             is Resource.Error -> {
@@ -22,7 +22,7 @@ class DeleteTask(
                     ErrorType.HTTP -> Result.Error(result.message ?: "Unknown Error")
 
                     ErrorType.IO -> {
-                        taskScheduler.scheduleItemToBeSynced(task, OperationType.DELETE)
+                        taskScheduler.scheduleItemToBeSynced(taskId, AgendaItemType.TASK, OperationType.DELETE)
                         Result.Success()
                     }
 

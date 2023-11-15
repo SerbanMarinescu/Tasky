@@ -6,6 +6,7 @@ import java.time.LocalTime
 import java.time.ZonedDateTime
 
 data class TaskDetailState(
+    val taskId: String? = null,
     val editMode: Boolean = true,
     val currentDate: ZonedDateTime = ZonedDateTime.now(),
     val taskTitle: String = "New Task",

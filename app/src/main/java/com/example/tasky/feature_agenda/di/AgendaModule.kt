@@ -3,7 +3,6 @@ package com.example.tasky.feature_agenda.di
 import android.content.Context
 import androidx.room.Room
 import androidx.work.WorkManager
-import com.example.tasky.TaskyApp
 import com.example.tasky.common.Constants
 import com.example.tasky.common.Constants.DATABASE_NAME
 import com.example.tasky.feature_agenda.data.local.AgendaDatabase
@@ -60,9 +59,9 @@ object AgendaModule {
 
     @Provides
     @Singleton
-    fun provideAgendaDatabase(app: TaskyApp) : AgendaDatabase {
+    fun provideAgendaDatabase(@ApplicationContext context: Context) : AgendaDatabase {
         return Room.databaseBuilder(
-            app,
+            context,
             AgendaDatabase::class.java,
             DATABASE_NAME
         ).build()

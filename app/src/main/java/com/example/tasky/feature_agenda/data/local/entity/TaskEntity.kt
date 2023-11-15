@@ -2,7 +2,6 @@ package com.example.tasky.feature_agenda.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.time.LocalDateTime
 
 @Entity(tableName = "Task")
 data class TaskEntity(
@@ -11,6 +10,6 @@ data class TaskEntity(
     val time: Long,
     val remindAt: Long,
     val isDone: Boolean,
-    @PrimaryKey(autoGenerate = true)
-    val taskId: Int = 0
+    @PrimaryKey
+    val taskId: String = ""
 )

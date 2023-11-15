@@ -2,6 +2,7 @@ package com.example.tasky.feature_agenda.domain.use_case
 
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.EventRepository
+import com.example.tasky.feature_agenda.domain.util.AgendaItemType
 import com.example.tasky.feature_agenda.domain.util.OperationType
 import com.example.tasky.feature_agenda.domain.util.TaskScheduler
 import com.example.tasky.util.ErrorType.HTTP
@@ -24,7 +25,11 @@ class CreateEvent(
                     HTTP -> Result.Error(result.message ?: "Unknown Error")
 
                     IO -> {
-                        taskScheduler.scheduleItemToBeSynced(event, OperationType.CREATE)
+                        taskScheduler.scheduleItemToBeSynced(
+                            itemId = event.eventId,
+                            itemType = AgendaItemType.EVENT,
+                            operation = OperationType.CREATE
+                        )
                         Result.Success()
                     }
 

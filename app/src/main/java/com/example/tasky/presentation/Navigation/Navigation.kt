@@ -49,9 +49,9 @@ fun Navigation(navController: NavHostController) {
         }
         composable(
             route = Screen.TaskDetailScreen.route +
-                    "/?${ArgumentTypeEnum.TASK_ID.name}={${ArgumentTypeEnum.TASK_ID.name}}" +
-                    "/?${ArgumentTypeEnum.TITLE.name}={${ArgumentTypeEnum.TITLE.name}}" +
-                    "/?${ArgumentTypeEnum.DESCRIPTION.name}={${ArgumentTypeEnum.DESCRIPTION.name}}",
+                    "?${ArgumentTypeEnum.TASK_ID.name}={${ArgumentTypeEnum.TASK_ID.name}}" +
+                    "&${ArgumentTypeEnum.TITLE.name}={${ArgumentTypeEnum.TITLE.name}}" +
+                    "&${ArgumentTypeEnum.DESCRIPTION.name}={${ArgumentTypeEnum.DESCRIPTION.name}}",
             arguments = listOf(
                 navArgument(name = ArgumentTypeEnum.TASK_ID.name) {
                     type = NavType.StringType
@@ -69,22 +69,18 @@ fun Navigation(navController: NavHostController) {
                     nullable = true
                 }
             )
-        ) { entry ->
-            val taskId = entry.arguments?.getString(ArgumentTypeEnum.TASK_ID.name)
-            val title = entry.arguments?.getString(ArgumentTypeEnum.TITLE.name)
-            val description = entry.arguments?.getString(ArgumentTypeEnum.DESCRIPTION.name)
-
+        ) {
             val viewModel = hiltViewModel<TaskDetailViewModel>()
             val state by viewModel.state.collectAsStateWithLifecycle()
 
             TaskDetailScreen(
                 state = state,
                 onEvent = viewModel::onEvent,
-                taskId = taskId,
-                newTitle = title,
-                newDescription = description,
                 navigateTo = {
                     navController.navigate(it)
+                },
+                goBack = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -100,20 +96,15 @@ fun Navigation(navController: NavHostController) {
                     type = NavType.StringType
                 }
             )
-        ) { entry ->
-            val type = entry.arguments?.getString(ArgumentTypeEnum.TYPE.name) ?: ""
-            val text = entry.arguments?.getString(ArgumentTypeEnum.TEXT.name) ?: ""
-
+        ) {
             val viewModel = hiltViewModel<EditDetailsViewModel>()
             val state by viewModel.state.collectAsStateWithLifecycle()
 
             EditDetailsScreen(
                 state = state,
                 onEvent = viewModel::onEvent,
-                type = type,
-                text = text,
-                navigateTo = {
-                    navController.navigate(it)
+                navigateBack = {
+                    navController.popBackStack()
                 }
             )
         }

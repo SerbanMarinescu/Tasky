@@ -134,7 +134,7 @@ fun EventWithAttendeesAndPhotos.toEvent(): AgendaItem.Event {
 
 fun TaskEntity.toTask(): AgendaItem.Task {
     return AgendaItem.Task(
-        taskId = taskId.toString(),
+        taskId = taskId,
         taskTitle = title,
         taskDescription = description,
         time = time.toZonedDateTime(),
@@ -175,7 +175,7 @@ fun AgendaItem.Task.toTaskEntity(): TaskEntity {
         time = time.toUtcTimestamp(),
         remindAt = remindAtTime.toUtcTimestamp(),
         isDone = isDone,
-        taskId = taskId.toInt()
+        taskId = taskId
     )
 }
 

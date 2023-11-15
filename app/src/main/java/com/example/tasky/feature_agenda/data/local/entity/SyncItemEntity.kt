@@ -8,11 +8,11 @@ import com.example.tasky.feature_agenda.domain.util.OperationType
 
 @Entity(tableName = "SyncItems")
 data class SyncItemEntity(
-    val itemId: Int,
+    val itemId: String,
     val itemType: AgendaItemType,
     val operation: OperationType,
-    @PrimaryKey(autoGenerate = true)
-    val tableId: Int = 0
+    @PrimaryKey
+    val tableId: String = ""
 ) {
     class Converters {
 

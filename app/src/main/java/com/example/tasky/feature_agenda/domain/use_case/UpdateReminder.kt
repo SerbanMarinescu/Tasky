@@ -2,6 +2,7 @@ package com.example.tasky.feature_agenda.domain.use_case
 
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.ReminderRepository
+import com.example.tasky.feature_agenda.domain.util.AgendaItemType
 import com.example.tasky.feature_agenda.domain.util.OperationType
 import com.example.tasky.feature_agenda.domain.util.TaskScheduler
 import com.example.tasky.util.ErrorType
@@ -22,7 +23,11 @@ class UpdateReminder(
                     ErrorType.HTTP -> Result.Error(result.message ?: "Unknown Error")
 
                     ErrorType.IO -> {
-                        taskScheduler.scheduleItemToBeSynced(reminder, OperationType.UPDATE)
+                        taskScheduler.scheduleItemToBeSynced(
+                            itemId = reminder.reminderId,
+                            itemType = AgendaItemType.REMINDER,
+                            operation = OperationType.UPDATE
+                        )
                         Result.Success()
                     }
 

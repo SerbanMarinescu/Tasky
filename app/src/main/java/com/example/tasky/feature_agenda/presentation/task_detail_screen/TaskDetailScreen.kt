@@ -1,5 +1,6 @@
 package com.example.tasky.feature_agenda.presentation.task_detail_screen
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,23 +50,9 @@ import java.time.format.DateTimeFormatter
 fun TaskDetailScreen(
     state: TaskDetailState,
     onEvent: (TaskDetailEvent) -> Unit,
-    taskId: String?,
-    newTitle: String?,
-    newDescription: String?,
-    navigateTo: (String) -> Unit
+    navigateTo: (String) -> Unit,
+    goBack: () -> Unit
 ) {
-    LaunchedEffect(key1 = Unit) {
-        taskId?.let {
-            onEvent(TaskDetailEvent.GetOpenedTask(it))
-        }
-        newTitle?.let {
-            onEvent(TaskDetailEvent.TitleChanged(it))
-        }
-        newDescription?.let {
-            onEvent(TaskDetailEvent.DescriptionChanged(it))
-        }
-    }
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -81,7 +67,7 @@ fun TaskDetailScreen(
         ) {
             IconButton(
                 onClick = {
-                    navigateTo(Screen.AgendaScreen.route)
+                    goBack()
                 }
             ) {
                 Icon(
@@ -107,6 +93,7 @@ fun TaskDetailScreen(
                     fontSize = 16.sp,
                     modifier = Modifier.clickable {
                         onEvent(TaskDetailEvent.CreateTask)
+                        goBack()
                     }
                 )
             } else {
@@ -158,10 +145,11 @@ fun TaskDetailScreen(
                         .run {
                             if (state.editMode) {
                                 clickable {
+                                    Log.d("NAV", "Clicked on title to edit it")
                                     navigateTo(
                                         Screen.EditDetailsScreen.route +
-                                                "/${ArgumentTypeEnum.TYPE.name}=${ArgumentTypeEnum.TITLE.name}" +
-                                                "/${ArgumentTypeEnum.TEXT.name}=${state.taskTitle}"
+                                                "/${ArgumentTypeEnum.TITLE.name}" +
+                                                "/${state.taskTitle}"
                                     )
                                 }
                             } else {
@@ -200,8 +188,8 @@ fun TaskDetailScreen(
                                 clickable {
                                     navigateTo(
                                         Screen.EditDetailsScreen.route +
-                                                "/${ArgumentTypeEnum.TYPE.name}=${ArgumentTypeEnum.DESCRIPTION.name}" +
-                                                "/${ArgumentTypeEnum.TEXT.name}=${state.taskDescription}"
+                                                "/${ArgumentTypeEnum.DESCRIPTION.name}" +
+                                                "/${state.taskDescription}"
                                     )
                                 }
                             } else {
@@ -336,8 +324,8 @@ fun TaskDetailScreen(
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 70.dp)
                     .clickable {
-                        onEvent(TaskDetailEvent.DeleteTask(taskId))
-                        navigateTo(Screen.AgendaScreen.route)
+                        onEvent(TaskDetailEvent.DeleteTask)
+                        goBack()
                     },
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
