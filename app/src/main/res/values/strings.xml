@@ -60,4 +60,17 @@
     <string name="EditReminder">EDIT REMINDER</string>
     <string name="Reminder">Reminder</string>
     <string name="DeleteReminderCaps">DELETE REMINDER</string>
+
+    <string name="EditEvent">EDIT EVENT</string>
+    <string name="Event">Event</string>
+    <string name="AddPhotos">Add Photos</string>
+    <string name="Photos">Photos</string>
+    <string name="From">From</string>
+    <string name="To">To</string>
+    <string name="Visitors">Visitors</string>
+    <string name="All">All</string>
+    <string name="Going">Going</string>
+    <string name="NotGoing">Not going</string>
+    <string name="Creator">Creator</string>
+    <string name="Photo">Photo</string>
 </resources>
