@@ -15,7 +15,7 @@ interface ReminderRepository {
 
     suspend fun getReminder(reminderId: String): Resource<AgendaItem.Reminder>
 
-    suspend fun deleteReminder(reminder: AgendaItem.Reminder): Resource<Unit>
+    suspend fun deleteReminder(reminderId: String): Resource<Unit>
 
-    suspend fun syncDeletedReminder(reminder: AgendaItem.Reminder): Resource<Unit>
+    suspend fun syncDeletedReminder(reminderId: String): Resource<Unit>
 }

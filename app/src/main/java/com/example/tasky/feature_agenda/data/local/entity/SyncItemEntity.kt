@@ -5,6 +5,7 @@ import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType
 import com.example.tasky.feature_agenda.domain.util.OperationType
+import com.example.tasky.feature_agenda.domain.util.ReminderType
 
 @Entity(tableName = "SyncItems")
 data class SyncItemEntity(
@@ -34,6 +35,16 @@ data class SyncItemEntity(
         @TypeConverter
         fun operationTypeToString(value: OperationType): String {
             return value.name
+        }
+
+        @TypeConverter
+        fun reminderTypeToString(value: ReminderType): String {
+            return value.name
+        }
+
+        @TypeConverter
+        fun stringToReminderType(value: String): ReminderType {
+            return enumValueOf(value)
         }
     }
 }

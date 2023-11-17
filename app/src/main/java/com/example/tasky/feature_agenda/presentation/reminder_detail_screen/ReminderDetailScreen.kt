@@ -1,4 +1,4 @@
-package com.example.tasky.feature_agenda.presentation.task_detail_screen
+package com.example.tasky.feature_agenda.presentation.reminder_detail_screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,7 +41,6 @@ import com.example.tasky.feature_agenda.presentation.util.formatDateTimeOfPatter
 import com.example.tasky.presentation.theme.BackgroundBlack
 import com.example.tasky.presentation.theme.BackgroundWhite
 import com.example.tasky.presentation.theme.Gray
-import com.example.tasky.presentation.theme.Green
 import com.example.tasky.presentation.theme.Light
 import com.example.tasky.presentation.theme.Light2
 import com.example.tasky.presentation.theme.interFont
@@ -51,11 +50,11 @@ import com.vanpra.composematerialdialogs.MaterialDialogState
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun TaskDetailScreen(
-    state: TaskDetailState,
+fun ReminderDetailScreen(
+    state: ReminderDetailState,
+    onEvent: (ReminderDetailEvent) -> Unit,
     dateDialogState: MaterialDialogState,
     timeDialogState: MaterialDialogState,
-    onEvent: (TaskDetailEvent) -> Unit,
     navigateTo: (String) -> Unit,
     goBack: () -> Unit
 ) {
@@ -83,7 +82,7 @@ fun TaskDetailScreen(
                 )
             }
             Text(
-                text = if (state.editMode) stringResource(id = R.string.EditTask)
+                text = if (state.editMode) stringResource(id = R.string.EditReminder)
                 else formatDateTimeOfPattern(state.currentDate, "dd MMMM yyyy"),
                 color = Color.White,
                 fontSize = 16.sp,
@@ -98,14 +97,14 @@ fun TaskDetailScreen(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
                     modifier = Modifier.clickable {
-                        onEvent(TaskDetailEvent.SaveTask)
+                        onEvent(ReminderDetailEvent.SaveReminder)
                         goBack()
                     }
                 )
             } else {
                 IconButton(
                     onClick = {
-                        onEvent(TaskDetailEvent.ToggleEditMode)
+                        onEvent(ReminderDetailEvent.ToggleEditMode)
                     }
                 ) {
                     Icon(
@@ -136,10 +135,10 @@ fun TaskDetailScreen(
                     Icon(
                         imageVector = Icons.Default.Square,
                         contentDescription = null,
-                        tint = Green
+                        tint = Light2
                     )
                     Text(
-                        text = stringResource(id = R.string.Task),
+                        text = stringResource(id = R.string.Reminder),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -154,7 +153,7 @@ fun TaskDetailScreen(
                                     navigateTo(
                                         Screen.EditDetailsScreen.route +
                                                 "/${ArgumentTypeEnum.TITLE.name}" +
-                                                "/${state.taskTitle}"
+                                                "/${state.reminderTitle}"
                                     )
                                 }
                             } else {
@@ -169,7 +168,7 @@ fun TaskDetailScreen(
                     ) {
                         Icon(imageVector = Icons.Outlined.Circle, contentDescription = null)
                         Text(
-                            text = state.taskTitle,
+                            text = state.reminderTitle,
                             fontSize = 26.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -194,7 +193,7 @@ fun TaskDetailScreen(
                                     navigateTo(
                                         Screen.EditDetailsScreen.route +
                                                 "/${ArgumentTypeEnum.DESCRIPTION.name}" +
-                                                "/${state.taskDescription}"
+                                                "/${state.reminderDescription}"
                                     )
                                 }
                             } else {
@@ -207,7 +206,7 @@ fun TaskDetailScreen(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = state.taskDescription,
+                            text = state.reminderDescription,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                             fontWeight = FontWeight.Normal,
@@ -281,7 +280,7 @@ fun TaskDetailScreen(
                         .run {
                             if (state.editMode) {
                                 clickable {
-                                    onEvent(TaskDetailEvent.ToggleReminderMenu)
+                                    onEvent(ReminderDetailEvent.ToggleReminderMenu)
                                 }
                             } else {
                                 this
@@ -316,7 +315,7 @@ fun TaskDetailScreen(
                     DropdownMenu(
                         expanded = state.isReminderMenuVisible,
                         onDismissRequest = {
-                            onEvent(TaskDetailEvent.ToggleReminderMenu)
+                            onEvent(ReminderDetailEvent.ToggleReminderMenu)
                         }
                     ) {
                         DropdownMenuItem(
@@ -324,8 +323,8 @@ fun TaskDetailScreen(
                                 Text(text = ReminderType.TEN_MINUTES_BEFORE.name)
                             },
                             onClick = {
-                                onEvent(TaskDetailEvent.ReminderTypeChanged(ReminderType.TEN_MINUTES_BEFORE))
-                                onEvent(TaskDetailEvent.ToggleReminderMenu)
+                                onEvent(ReminderDetailEvent.ReminderTypeChanged(ReminderType.TEN_MINUTES_BEFORE))
+                                onEvent(ReminderDetailEvent.ToggleReminderMenu)
                             }
                         )
                         DropdownMenuItem(
@@ -333,8 +332,8 @@ fun TaskDetailScreen(
                                 Text(text = ReminderType.THIRTY_MINUTES_BEFORE.name)
                             },
                             onClick = {
-                                onEvent(TaskDetailEvent.ReminderTypeChanged(ReminderType.THIRTY_MINUTES_BEFORE))
-                                onEvent(TaskDetailEvent.ToggleReminderMenu)
+                                onEvent(ReminderDetailEvent.ReminderTypeChanged(ReminderType.THIRTY_MINUTES_BEFORE))
+                                onEvent(ReminderDetailEvent.ToggleReminderMenu)
                             }
                         )
                         DropdownMenuItem(
@@ -342,8 +341,8 @@ fun TaskDetailScreen(
                                 Text(text = ReminderType.ONE_HOUR_BEFORE.name)
                             },
                             onClick = {
-                                onEvent(TaskDetailEvent.ReminderTypeChanged(ReminderType.ONE_HOUR_BEFORE))
-                                onEvent(TaskDetailEvent.ToggleReminderMenu)
+                                onEvent(ReminderDetailEvent.ReminderTypeChanged(ReminderType.ONE_HOUR_BEFORE))
+                                onEvent(ReminderDetailEvent.ToggleReminderMenu)
                             }
                         )
                         DropdownMenuItem(
@@ -351,8 +350,8 @@ fun TaskDetailScreen(
                                 Text(text = ReminderType.SIX_HOURS_BEFORE.name)
                             },
                             onClick = {
-                                onEvent(TaskDetailEvent.ReminderTypeChanged(ReminderType.SIX_HOURS_BEFORE))
-                                onEvent(TaskDetailEvent.ToggleReminderMenu)
+                                onEvent(ReminderDetailEvent.ReminderTypeChanged(ReminderType.SIX_HOURS_BEFORE))
+                                onEvent(ReminderDetailEvent.ToggleReminderMenu)
                             }
                         )
                         DropdownMenuItem(
@@ -360,8 +359,8 @@ fun TaskDetailScreen(
                                 Text(text = ReminderType.ONE_DAY_BEFORE.name)
                             },
                             onClick = {
-                                onEvent(TaskDetailEvent.ReminderTypeChanged(ReminderType.ONE_DAY_BEFORE))
-                                onEvent(TaskDetailEvent.ToggleReminderMenu)
+                                onEvent(ReminderDetailEvent.ReminderTypeChanged(ReminderType.ONE_DAY_BEFORE))
+                                onEvent(ReminderDetailEvent.ToggleReminderMenu)
                             }
                         )
                     }
@@ -383,7 +382,7 @@ fun TaskDetailScreen(
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 70.dp)
                     .clickable {
-                        onEvent(TaskDetailEvent.DeleteTask)
+                        onEvent(ReminderDetailEvent.DeleteReminder)
                         goBack()
                     },
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -396,7 +395,7 @@ fun TaskDetailScreen(
                     color = Light
                 )
                 Text(
-                    text = stringResource(id = R.string.DELETE_TASK),
+                    text = stringResource(id = R.string.DeleteReminderCaps),
                     color = Gray,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
@@ -409,14 +408,14 @@ fun TaskDetailScreen(
         initialDate = state.atDate,
         dialogState = dateDialogState,
         onClick = {
-            onEvent(TaskDetailEvent.AtDateChanged(it))
+            onEvent(ReminderDetailEvent.AtDateChanged(it))
         }
     )
     TimePickerDialog(
         initialTime = state.atTime,
         dialogState = timeDialogState,
         onClick = {
-            onEvent(TaskDetailEvent.AtTimeChanged(it))
+            onEvent(ReminderDetailEvent.AtTimeChanged(it))
         }
     )
 }

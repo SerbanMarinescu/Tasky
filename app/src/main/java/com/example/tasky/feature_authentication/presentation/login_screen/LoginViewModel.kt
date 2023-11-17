@@ -34,7 +34,7 @@ class LoginViewModel @Inject constructor(
 
     init {
         authenticate()
-        _isLoading.value = false
+        //_isLoading.value = false
     }
 
     fun onEvent(event: LoginEvent) {
@@ -157,6 +157,7 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             val result = useCases.authenticate()
             resultChannel.send(result)
+            _isLoading.value = false
         }
     }
 }

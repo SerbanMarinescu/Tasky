@@ -1,6 +1,5 @@
 package com.example.tasky.feature_agenda.domain.use_case
 
-import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.ReminderRepository
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType
 import com.example.tasky.feature_agenda.domain.util.OperationType
@@ -14,8 +13,8 @@ class DeleteReminder(
     private val taskScheduler: TaskScheduler
 ) {
 
-    suspend operator fun invoke(reminder: AgendaItem.Reminder): Result<Unit> {
-        val result = repository.deleteReminder(reminder)
+    suspend operator fun invoke(reminderId: String): Result<Unit> {
+        val result = repository.deleteReminder(reminderId)
 
         return when (result) {
             is Resource.Error -> {
@@ -24,7 +23,7 @@ class DeleteReminder(
 
                     ErrorType.IO -> {
                         taskScheduler.scheduleItemToBeSynced(
-                            itemId = reminder.reminderId,
+                            itemId = reminderId,
                             itemType = AgendaItemType.REMINDER,
                             operation = OperationType.DELETE
                         )

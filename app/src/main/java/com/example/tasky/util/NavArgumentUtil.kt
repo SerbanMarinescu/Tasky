@@ -1,9 +1,10 @@
 package com.example.tasky.util
 
 enum class ArgumentTypeEnum {
-    TASK_ID,
+    ITEM_ID,
     TITLE,
     DESCRIPTION,
     TEXT,
-    TYPE
+    TYPE,
+    EDIT_MODE
 }

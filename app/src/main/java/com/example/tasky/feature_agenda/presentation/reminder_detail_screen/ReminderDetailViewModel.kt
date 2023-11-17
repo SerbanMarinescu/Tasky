@@ -1,4 +1,4 @@
-package com.example.tasky.feature_agenda.presentation.task_detail_screen
+package com.example.tasky.feature_agenda.presentation.reminder_detail_screen
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,13 +27,13 @@ import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
-class TaskDetailViewModel @Inject constructor(
+class ReminderDetailViewModel @Inject constructor(
     private val useCases: AgendaUseCases,
     private val repositories: AgendaRepositories,
     private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
 
-    private val _state = MutableStateFlow(TaskDetailState())
+    private val _state = MutableStateFlow(ReminderDetailState())
     val state = _state.asStateFlow()
 
     private val resultChannel = Channel<Result<Unit>>()
@@ -44,60 +44,60 @@ class TaskDetailViewModel @Inject constructor(
 
 
     init {
-        val taskId = savedStateHandle.get<String>(ArgumentTypeEnum.ITEM_ID.name)
+        val reminderId = savedStateHandle.get<String>(ArgumentTypeEnum.ITEM_ID.name)
         val editMode = savedStateHandle.get<String>(ArgumentTypeEnum.EDIT_MODE.name)
 
-        taskId?.let {
+        reminderId?.let { id ->
             val editable = editMode != null
-            getSelectedTask(it, editable)
+            getSelectedReminder(id, editable)
         }
     }
-    fun onEvent(event: TaskDetailEvent) {
+    fun onEvent(event: ReminderDetailEvent) {
         when(event) {
-            is TaskDetailEvent.AtDateChanged -> {
+            is ReminderDetailEvent.AtDateChanged -> {
                 _state.update {
                     it.copy(atDate = event.date)
                 }
             }
-            is TaskDetailEvent.AtTimeChanged -> {
+            is ReminderDetailEvent.AtTimeChanged -> {
                 _state.update {
                     it.copy(atTime = event.time)
                 }
             }
-            TaskDetailEvent.SaveTask -> {
-                createOrUpdateTask()
+            ReminderDetailEvent.SaveReminder -> {
+                createOrUpdateReminder()
             }
-            is TaskDetailEvent.DescriptionChanged -> {
+            is ReminderDetailEvent.DescriptionChanged -> {
                 _state.update {
-                    it.copy(taskDescription = event.description)
+                    it.copy(reminderDescription = event.description)
                 }
             }
-            is TaskDetailEvent.ReminderTypeChanged -> {
+            is ReminderDetailEvent.ReminderTypeChanged -> {
                 _state.update {
                     it.copy(reminderType = event.reminderType)
                 }
             }
-            is TaskDetailEvent.TitleChanged -> {
+            is ReminderDetailEvent.TitleChanged -> {
                 _state.update {
-                    it.copy(taskTitle = event.title)
+                    it.copy(reminderTitle = event.title)
                 }
             }
-            TaskDetailEvent.ToggleEditMode -> {
+            ReminderDetailEvent.ToggleEditMode -> {
                 _state.update {
                     it.copy(editMode = !it.editMode)
                 }
             }
 
-            TaskDetailEvent.DeleteTask -> {
-                val taskId = savedStateHandle.get<String>(ArgumentTypeEnum.ITEM_ID.name)
-                taskId?.let {
+            ReminderDetailEvent.DeleteReminder -> {
+                val reminderId = savedStateHandle.get<String>(ArgumentTypeEnum.ITEM_ID.name)
+                reminderId?.let {
                     viewModelScope.launch {
-                        useCases.task.deleteTask(it)
+                        useCases.reminder.deleteReminder(it)
                     }
                 }
             }
 
-            TaskDetailEvent.ToggleReminderMenu -> {
+            ReminderDetailEvent.ToggleReminderMenu -> {
                 _state.update {
                     it.copy(isReminderMenuVisible = !it.isReminderMenuVisible)
                 }
@@ -105,16 +105,15 @@ class TaskDetailViewModel @Inject constructor(
         }
     }
 
-    private fun createOrUpdateTask() {
+    private fun createOrUpdateReminder() {
         viewModelScope.launch {
             val dateTime = ZonedDateTime.of(state.value.atDate, state.value.atTime, ZoneId.systemDefault())
 
-            val taskToBeCreated = AgendaItem.Task(
-                taskId = UUID.randomUUID().toString() ,
-                taskTitle = state.value.taskTitle,
-                taskDescription = state.value.taskDescription,
+            val reminderToBeCreated = AgendaItem.Reminder(
+                reminderId = UUID.randomUUID().toString() ,
+                reminderTitle = state.value.reminderTitle,
+                reminderDescription = state.value.reminderDescription,
                 time = dateTime,
-                isDone = false,
                 remindAtTime = when(state.value.reminderType) {
                     ReminderType.TEN_MINUTES_BEFORE -> dateTime.minusMinutes(10)
                     ReminderType.THIRTY_MINUTES_BEFORE -> dateTime.minusMinutes(30)
@@ -122,37 +121,37 @@ class TaskDetailViewModel @Inject constructor(
                     ReminderType.SIX_HOURS_BEFORE -> dateTime.minusHours(6)
                     ReminderType.ONE_DAY_BEFORE -> dateTime.minusDays(1)
                 },
-                taskReminderType = state.value.reminderType
+                typeOfReminder = state.value.reminderType
             )
 
-            val existingTaskId = state.value.taskId
-            existingTaskId?.let {
-                val taskToBeUpdate = taskToBeCreated.copy(taskId = it)
-                useCases.task.updateTask(taskToBeUpdate)
+            val existingReminderId = state.value.reminderId
+            existingReminderId?.let {
+                val reminderToBeUpdated = reminderToBeCreated.copy(reminderId = it)
+                useCases.reminder.updateReminder(reminderToBeUpdated)
                 return@launch
             }
 
-            useCases.task.createTask(taskToBeCreated)
+            useCases.reminder.createReminder(reminderToBeCreated)
         }
     }
 
-    private fun getSelectedTask(taskId: String, editable: Boolean) {
+    private fun getSelectedReminder(reminderId: String, editable: Boolean) {
         viewModelScope.launch {
-            val result = repositories.taskRepository.getTask(taskId)
+            val result = repositories.reminderRepository.getReminder(reminderId)
             when(result) {
                 is Resource.Error -> resultChannel.send(Result.Error(result.message ?: "Unknown Error"))
                 is Resource.Success -> {
-                    val task = result.data ?: return@launch
+                    val reminder = result.data ?: return@launch
                     _state.update {
                         it.copy(
-                            taskId = taskId,
+                            reminderId = reminderId,
                             editMode = editable,
-                            currentDate = task.time,
-                            taskTitle = task.taskTitle,
-                            taskDescription = task.taskDescription ?: "Task Description",
-                            atTime = task.time.toLocalTime(),
-                            atDate = task.time.toLocalDate(),
-                            reminderType = task.taskReminderType
+                            currentDate = reminder.time,
+                            reminderTitle = reminder.reminderTitle,
+                            reminderDescription = reminder.reminderDescription ?: "Task Description",
+                            atTime = reminder.time.toLocalTime(),
+                            atDate = reminder.time.toLocalDate(),
+                            reminderType = reminder.typeOfReminder
                         )
                     }
                 }

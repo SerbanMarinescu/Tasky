@@ -140,7 +140,7 @@ fun TaskEntity.toTask(): AgendaItem.Task {
         time = time.toZonedDateTime(),
         isDone = isDone,
         remindAtTime = remindAt.toZonedDateTime(),
-        taskReminderType = ReminderType.ONE_HOUR_BEFORE
+        taskReminderType = reminderType
     )
 }
 
@@ -151,7 +151,7 @@ fun ReminderEntity.toReminder(): AgendaItem.Reminder {
         reminderDescription = description,
         time = time.toZonedDateTime(),
         remindAtTime = remindAt.toZonedDateTime(),
-        typeOfReminder = ReminderType.ONE_HOUR_BEFORE
+        typeOfReminder = reminderType
     )
 }
 
@@ -175,7 +175,8 @@ fun AgendaItem.Task.toTaskEntity(): TaskEntity {
         time = time.toUtcTimestamp(),
         remindAt = remindAtTime.toUtcTimestamp(),
         isDone = isDone,
-        taskId = taskId
+        taskId = taskId,
+        reminderType = reminderType
     )
 }
 
@@ -185,7 +186,8 @@ fun AgendaItem.Reminder.toReminderEntity(): ReminderEntity {
         description = reminderDescription ?: "",
         time = time.toUtcTimestamp(),
         remindAt = remindAtTime.toUtcTimestamp(),
-        reminderId = reminderId.toInt()
+        reminderId = reminderId,
+        reminderType = typeOfReminder
     )
 }
 
