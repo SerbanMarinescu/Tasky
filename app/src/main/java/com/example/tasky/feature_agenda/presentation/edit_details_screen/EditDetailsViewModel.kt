@@ -1,6 +1,5 @@
 package com.example.tasky.feature_agenda.presentation.edit_details_screen
 
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.example.tasky.R
@@ -23,10 +22,6 @@ class EditDetailsViewModel @Inject constructor(
     init {
         val type = savedStateHandle.get<String>(ArgumentTypeEnum.TYPE.name) ?: ""
         val text = savedStateHandle.get<String>(ArgumentTypeEnum.TEXT.name) ?: ""
-
-        Log.d("NAV", "EDIT DETAILS SCREEN")
-        Log.d("NAV", "TYPE: $type")
-        Log.d("NAV", "TEXT: $text")
 
         _state.update {
             it.copy(

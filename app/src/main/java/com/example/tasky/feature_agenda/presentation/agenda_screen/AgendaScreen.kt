@@ -89,7 +89,7 @@ fun AgendaScreen(
                             Text(text = stringResource(id = R.string.AgendaMenu_Event))
                     },
                         onClick = {
-                            TODO("Navigate to EventDetailScreen")
+                            navigateTo(Screen.EventDetailScreen.route)
                         }
                     )
                     DropdownMenuItem(
@@ -169,10 +169,17 @@ fun AgendaScreen(
                                         item = agendaItem,
                                         timeRange = "${formatDateTimeOfPattern(agendaItem.from, "MMM d, HH:mm")} - ${formatDateTimeOfPattern(agendaItem.to, "MMM d, HH:mm")}",
                                         onOpenClick = {
-                                            TODO("Navigate to EventDetailScreen")
+                                            navigateTo(
+                                                Screen.EventDetailScreen.route +
+                                                        "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.eventId}"
+                                            )
                                         },
                                         onEditClick = {
-                                            TODO("Navigate to EventDetailScreen")
+                                            navigateTo(
+                                                Screen.ReminderDetailScreen.route +
+                                                        "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.eventId}" +
+                                                        "&${ArgumentTypeEnum.EDIT_MODE.name}=edit"
+                                            )
                                         },
                                         onDeleteClick = {
                                             onEvent(AgendaEvent.DeleteItem(agendaItem))

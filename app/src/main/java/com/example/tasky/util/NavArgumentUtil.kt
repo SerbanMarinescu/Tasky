@@ -6,5 +6,7 @@ enum class ArgumentTypeEnum {
     DESCRIPTION,
     TEXT,
     TYPE,
-    EDIT_MODE
+    EDIT_MODE,
+    PHOTO_KEY,
+    PHOTO_URL
 }

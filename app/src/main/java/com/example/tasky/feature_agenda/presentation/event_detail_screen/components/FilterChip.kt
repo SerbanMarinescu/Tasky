@@ -3,7 +3,7 @@ package com.example.tasky.feature_agenda.presentation.event_detail_screen.compon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,11 +23,12 @@ import com.example.tasky.presentation.theme.interFont
 fun FilterChip(
     selected: Boolean,
     text: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = Modifier
-            .size(width = 100.dp, height = 30.dp)
+        modifier = modifier
+            .height(30.dp)
             .clip(RoundedCornerShape(30.dp))
             .background(if (selected) BackgroundBlack else Light2)
             .clickable {

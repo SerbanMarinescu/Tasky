@@ -19,9 +19,11 @@ data class EventDetailState(
     val toDate: LocalDate = LocalDate.now(),
     val toTime: LocalTime = LocalTime.now().plusMinutes(30),
     val reminderType: ReminderType = ReminderType.ONE_HOUR_BEFORE,
-    val addingPhotos: Boolean = false,
-    val photoList: List<Photo> = emptyList(),
-    val attendees: List<Attendee> = emptyList(),
+    val isReminderMenuVisible: Boolean = false,
     val selectedChipIndex: Int = 0,
-    val selectedChip: SelectableChipOptions = SelectableChipOptions.ALL
+    val selectedChip: SelectableChipOptions = SelectableChipOptions.ALL,
+    val addingPhotos: Boolean = false,
+    val addingAttendees: Boolean = false,
+    val photoList: List<Photo> = emptyList(),
+    val attendees: List<Attendee> = emptyList()
 )
