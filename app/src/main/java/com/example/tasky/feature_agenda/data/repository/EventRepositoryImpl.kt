@@ -1,6 +1,7 @@
 package com.example.tasky.feature_agenda.data.repository
 
 import com.example.tasky.feature_agenda.data.local.AgendaDatabase
+import com.example.tasky.feature_agenda.data.mapper.toAttendee
 import com.example.tasky.feature_agenda.data.mapper.toAttendeeEntity
 import com.example.tasky.feature_agenda.data.mapper.toEvent
 import com.example.tasky.feature_agenda.data.mapper.toEventEntity
@@ -30,14 +31,14 @@ class EventRepositoryImpl(
     private val userPrefs: UserPreferences
 ) : EventRepository {
 
-    override suspend fun doesAttendeeExist(attendee: Attendee): Resource<Unit> {
+    override suspend fun doesAttendeeExist(email: String): Resource<Attendee> {
         return try {
-            val email = attendee.email
             val response = api.getAttendee(email)
             val doesUserExist = response.body()?.doesUserExist ?: return Resource.Error(message = "User not found!", errorType = ErrorType.OTHER)
+            val attendee = response.body()?.attendee?.toAttendee() ?: return Resource.Error(message = "User not found!", errorType = ErrorType.OTHER)
 
             if (doesUserExist) {
-                Resource.Success()
+                Resource.Success(attendee)
             } else {
                 Resource.Error(message = "User not found!", errorType = ErrorType.OTHER)
             }
@@ -90,7 +91,7 @@ class EventRepositoryImpl(
 
     override suspend fun getEvent(eventId: String): Resource<AgendaItem.Event> {
 
-        val localEvent = db.eventDao.getEventById(eventId.toInt())
+        val localEvent = db.eventDao.getEventById(eventId)
 
         localEvent?.let {
             return Resource.Success(localEvent.toEvent())
@@ -102,7 +103,7 @@ class EventRepositoryImpl(
 
             val eventEntity = event.toEventEntity()
             db.eventDao.upsertEvent(eventEntity)
-            val newEvent = db.eventDao.getEventById(eventId.toInt()) ?: return Resource.Error(message = "No such event found!", errorType = ErrorType.OTHER)
+            val newEvent = db.eventDao.getEventById(eventId) ?: return Resource.Error(message = "No such event found!", errorType = ErrorType.OTHER)
 
             Resource.Success(newEvent.toEvent())
         } catch(e: HttpException) {
@@ -163,9 +164,9 @@ class EventRepositoryImpl(
     override suspend fun deleteEvent(event: AgendaItem.Event): Resource<Unit> {
 
         if(event.isUserEventCreator) {
-            db.eventDao.deleteEventById(event.eventId.toInt())
+            db.eventDao.deleteEventById(event.eventId)
         } else {
-            db.eventDao.deleteAttendeeByEventId(event.eventId.toInt())
+            db.eventDao.deleteAttendeeByEventId(event.eventId)
         }
 
         return syncDeletedEvent(event)

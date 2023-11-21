@@ -34,7 +34,10 @@ fun AttendeesDto.toAttendee(): Attendee {
     return Attendee(
         email = email,
         fullName = fullName,
-        userId = userId
+        userId = userId,
+        eventId = eventId,
+        isGoing = isGoing,
+        remindAt = remindAt.toZonedDateTime()
     )
 }
 
@@ -42,7 +45,10 @@ fun AttendeeDto.toAttendee(): Attendee {
     return Attendee(
         email = email,
         fullName = fullName,
-        userId = userId
+        userId = userId,
+        eventId = "",
+        isGoing = true,
+        remindAt = ZonedDateTime.now()
     )
 }
 
@@ -98,7 +104,10 @@ fun AttendeeEntity.toAttendee(): Attendee {
     return Attendee(
         email = email,
         fullName = fullName,
-        userId = userId
+        userId = userId,
+        eventId = eventId,
+        isGoing = isGoing,
+        remindAt = remindAt.toZonedDateTime()
     )
 }
 
@@ -146,7 +155,7 @@ fun TaskEntity.toTask(): AgendaItem.Task {
 
 fun ReminderEntity.toReminder(): AgendaItem.Reminder {
     return AgendaItem.Reminder(
-        reminderId = reminderId.toString(),
+        reminderId = reminderId,
         reminderTitle = title,
         reminderDescription = description,
         time = time.toZonedDateTime(),
@@ -164,7 +173,7 @@ fun AgendaItem.Event.toEventEntity(): EventEntity {
         remindAt = remindAtTime.toUtcTimestamp(),
         isUserEventCreator = isUserEventCreator,
         host = host ?: "",
-        eventId = eventId.toInt()
+        eventId = eventId
     )
 }
 
@@ -196,7 +205,9 @@ fun Attendee.toAttendeeEntity(eventId: String): AttendeeEntity {
         email = email,
         fullName = fullName,
         userId = userId,
-        eventId = eventId.toInt()
+        eventId = eventId,
+        isGoing = isGoing,
+        remindAt = remindAt.toUtcTimestamp()
     )
 }
 

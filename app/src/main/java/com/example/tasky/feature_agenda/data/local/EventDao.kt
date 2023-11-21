@@ -24,7 +24,7 @@ interface EventDao {
 
     @Transaction
     @Query("SELECT * FROM Event WHERE eventId = :eventId")
-    suspend fun getEventById(eventId: Int): EventWithAttendeesAndPhotos?
+    suspend fun getEventById(eventId: String): EventWithAttendeesAndPhotos?
 
     @Transaction
     @Query("SELECT * FROM Event WHERE `from` >= :startOfDay AND `to` <= :endOfDay")
@@ -32,10 +32,10 @@ interface EventDao {
 
     @Transaction
     @Query("DELETE FROM Event WHERE eventId = :eventId")
-    suspend fun deleteEventById(eventId: Int)
+    suspend fun deleteEventById(eventId: String)
 
     @Query("DELETE FROM Attendee WHERE eventId = :eventId")
-    suspend fun deleteAttendeeByEventId(eventId: Int)
+    suspend fun deleteAttendeeByEventId(eventId: String)
 
     @Transaction
     @Query("DELETE FROM Event WHERE `from` >= :startOfDay AND `to` <= :endOfDay")

@@ -7,7 +7,7 @@ import com.example.tasky.util.Resource
 
 interface EventRepository {
 
-    suspend fun doesAttendeeExist(attendee: Attendee): Resource<Unit>
+    suspend fun doesAttendeeExist(email: String): Resource<Attendee>
 
     suspend fun createEvent(event: AgendaItem.Event): Resource<Unit>
 

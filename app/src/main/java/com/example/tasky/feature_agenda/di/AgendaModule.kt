@@ -28,9 +28,11 @@ import com.example.tasky.feature_agenda.domain.use_case.Task
 import com.example.tasky.feature_agenda.domain.use_case.UpdateEvent
 import com.example.tasky.feature_agenda.domain.use_case.UpdateReminder
 import com.example.tasky.feature_agenda.domain.use_case.UpdateTask
+import com.example.tasky.feature_agenda.domain.use_case.ValidateAttendee
 import com.example.tasky.feature_agenda.domain.util.JsonSerializer
 import com.example.tasky.feature_agenda.domain.util.TaskScheduler
 import com.example.tasky.feature_authentication.domain.util.UserPreferences
+import com.example.tasky.feature_authentication.domain.validation.UserDataValidator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -104,12 +106,14 @@ object AgendaModule {
     @Singleton
     fun provideEventUseCases(
         repositories: AgendaRepositories,
-        taskScheduler: TaskScheduler
+        taskScheduler: TaskScheduler,
+        userDataValidator: UserDataValidator
     ): Event {
         return Event(
             createEvent = CreateEvent(repositories.eventRepository, taskScheduler),
             updateEvent = UpdateEvent(repositories.eventRepository, taskScheduler),
-            deleteEvent = DeleteEvent(repositories.eventRepository, taskScheduler)
+            deleteEvent = DeleteEvent(repositories.eventRepository, taskScheduler),
+            validateAttendee = ValidateAttendee(userDataValidator, repositories.eventRepository)
         )
     }
 

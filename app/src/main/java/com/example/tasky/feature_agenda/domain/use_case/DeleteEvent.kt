@@ -5,7 +5,10 @@ import com.example.tasky.feature_agenda.domain.repository.EventRepository
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType
 import com.example.tasky.feature_agenda.domain.util.OperationType
 import com.example.tasky.feature_agenda.domain.util.TaskScheduler
-import com.example.tasky.util.ErrorType
+import com.example.tasky.util.ErrorType.HTTP
+import com.example.tasky.util.ErrorType.IO
+import com.example.tasky.util.ErrorType.OTHER
+import com.example.tasky.util.ErrorType.VALIDATION_ERROR
 import com.example.tasky.util.Resource
 import com.example.tasky.util.Result
 
@@ -20,9 +23,9 @@ class DeleteEvent(
         return when (result) {
             is Resource.Error -> {
                 when (result.errorType) {
-                    ErrorType.HTTP -> Result.Error(result.message ?: "Unknown Error")
+                    HTTP -> Result.Error(result.message ?: "Unknown Error")
 
-                    ErrorType.IO -> {
+                    IO -> {
                         taskScheduler.scheduleItemToBeSynced(
                             itemId = event.eventId,
                             itemType = AgendaItemType.EVENT,
@@ -31,9 +34,10 @@ class DeleteEvent(
                         Result.Success()
                     }
 
-                    ErrorType.OTHER -> Result.Error(result.message ?: "Unknown Error")
+                    VALIDATION_ERROR,OTHER -> Result.Error(result.message ?: "Unknown Error")
 
                     null -> Result.Error(result.message ?: "Unknown Error")
+
                 }
             }
 

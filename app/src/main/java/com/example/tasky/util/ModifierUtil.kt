@@ -2,9 +2,9 @@ package com.example.tasky.util
 
 import androidx.compose.ui.Modifier
 
-fun Modifier.conditionalModifier(condition: Boolean, modifierType: Modifier): Modifier {
+fun Modifier.applyIf(condition: Boolean, modifier: Modifier): Modifier {
     return if(condition) {
-        then(modifierType)
+        then(modifier)
     } else {
         this
     }

@@ -234,6 +234,11 @@ fun Navigation(navController: NavHostController) {
                 }
             )
 
+            viewModel.dateDialogState = rememberMaterialDialogState()
+            viewModel.timeDialogState = rememberMaterialDialogState()
+
+            val validationResult = viewModel.validationResult
+
 //            val type = entry.savedStateHandle.getStateFlow<String?>(ArgumentTypeEnum.TYPE.name, null)
 //            val text = entry.savedStateHandle.getStateFlow<String?>(ArgumentTypeEnum.TEXT.name, null)
 //
@@ -265,6 +270,10 @@ fun Navigation(navController: NavHostController) {
                 state = state,
                 onEvent = viewModel::onEvent,
                 photoPicker = photoPicker,
+                dateDialogState = viewModel.dateDialogState,
+                timeDialogState = viewModel.timeDialogState,
+                validationResult = validationResult,
+                attendeeList = viewModel.attendeeList,
                 navigateBack = {
                     navController.popBackStack()
                 },
