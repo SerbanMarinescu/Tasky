@@ -1,5 +1,9 @@
 package com.example.tasky.feature_agenda.presentation.event_detail_screen
 
+import android.net.Uri
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,11 +39,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
+import coil.compose.AsyncImage
 import com.example.tasky.R
 import com.example.tasky.feature_agenda.domain.util.ReminderType
 import com.example.tasky.feature_agenda.presentation.event_detail_screen.components.FilterChip
@@ -54,12 +61,19 @@ import com.example.tasky.presentation.theme.Light2
 import com.example.tasky.presentation.theme.LightBlue
 import com.example.tasky.presentation.theme.LightGreen
 import com.example.tasky.presentation.theme.interFont
+import com.example.tasky.util.ArgumentTypeEnum
+import com.example.tasky.util.Screen
+import com.example.tasky.util.conditionalModifier
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EventDetailScreen(
-    state: EventDetailState
+    state: EventDetailState,
+    onEvent: (EventDetailOnClick) -> Unit,
+    photoPicker: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>,
+    navigateBack: () -> Unit,
+    navigateTo: (String) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -75,7 +89,7 @@ fun EventDetailScreen(
         ) {
             IconButton(
                 onClick = {
-                    TODO("Navigate Back")
+                    navigateBack()
                 }
             ) {
                 Icon(
@@ -100,13 +114,14 @@ fun EventDetailScreen(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
                     modifier = Modifier.clickable {
-                        TODO("Save event and navigate back")
+                        onEvent(EventDetailOnClick.SaveEvent)
+                        navigateBack()
                     }
                 )
             } else {
                 IconButton(
                     onClick = {
-                        TODO("Toggle edit mode")
+                        onEvent(EventDetailOnClick.ToggleEditMode)
                     }
                 ) {
                     Icon(
@@ -150,15 +165,16 @@ fun EventDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 20.dp, top = 8.dp, end = 17.dp)
-                        .run {
-                            if (state.editMode) {
-                                clickable {
-                                    TODO("Navigate to Edit Details Screen for Title")
-                                }
-                            } else {
-                                this
+                        .conditionalModifier(
+                            condition = state.editMode,
+                            modifierType = Modifier.clickable {
+                                navigateTo(
+                                    Screen.EditDetailsScreen.route +
+                                            "/${ArgumentTypeEnum.TITLE.name}" +
+                                            "/${state.eventTitle}"
+                                )
                             }
-                        }
+                        )
                     ,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -188,15 +204,16 @@ fun EventDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 25.dp, start = 17.dp, end = 17.dp)
-                        .run {
-                            if (state.editMode) {
-                                clickable {
-                                    TODO("Navigate to Edit Details Screen for Description")
-                                }
-                            } else {
-                                this
+                        .conditionalModifier(
+                            condition = state.editMode,
+                            modifierType = Modifier.clickable {
+                                navigateTo(
+                                    Screen.EditDetailsScreen.route +
+                                            "/${ArgumentTypeEnum.DESCRIPTION.name}" +
+                                            "/${state.eventDescription}"
+                                )
                             }
-                        }
+                        )
                     ,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -240,7 +257,7 @@ fun EventDetailScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                state.photoList.forEach {
+                                state.photoList.forEach { photo ->
                                     Box(
                                         modifier = Modifier
                                             .size(60.dp)
@@ -250,15 +267,21 @@ fun EventDetailScreen(
                                                 shape = RoundedCornerShape(10.dp)
                                             )
                                     ) {
-//                                        Image(
-//                                            painter = painterResource(id = ),
-//                                            contentDescription = null,
-//                                            contentScale = ContentScale.Crop,
-//                                            modifier = Modifier
-//                                                .fillMaxSize()
-//                                                .clip(RoundedCornerShape(10.dp))
-//                                        )
-                                        TODO("Set the image from the list and OnClick to navigate to PhotoDetailScreen")
+                                        AsyncImage(
+                                            model = photo.url.toUri(),
+                                            contentDescription = null,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .clickable {
+                                                    navigateTo(
+                                                        Screen.PhotoDetailsScreen.route +
+                                                                "/${photo.key}" +
+                                                                "/${Uri.encode(photo.url)}"
+                                                    )
+                                                }
+                                        )
                                     }
                                 }
                                 if(state.photoList.size < 10) {
@@ -278,7 +301,9 @@ fun EventDetailScreen(
                                                 .background(Light2)
                                                 .align(Alignment.Center)
                                                 .clickable {
-                                                    TODO("Open device gallery and add photo")
+                                                    photoPicker.launch(
+                                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                                    )
                                                 }
                                             ,
                                             tint = Gray
@@ -296,15 +321,15 @@ fun EventDetailScreen(
                             .fillMaxWidth()
                             .height(100.dp)
                             .background(Light2)
-                            .run {
-                                if(state.editMode) {
-                                    clickable {
-                                        TODO("Toggle addingPhotos mode and Open device gallery and add photo")
-                                    }
-                                } else {
-                                    this
+                            .conditionalModifier(
+                                condition = state.editMode,
+                                modifierType = Modifier.clickable {
+                                    photoPicker.launch(
+                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                    )
+                                    onEvent(EventDetailOnClick.ToggleAddingPhotos)
                                 }
-                            }
+                            )
                     ) {
                         Row(
                             modifier = Modifier
@@ -357,7 +382,14 @@ fun EventDetailScreen(
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Normal,
                             fontFamily = interFont,
-                            modifier = Modifier.align(Alignment.TopCenter)
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .conditionalModifier(
+                                    condition = state.editMode,
+                                    modifierType = Modifier.clickable {
+                                        TODO("Open from time dialog")
+                                    }
+                                )
                         )
                         if(state.editMode) {
                             Icon(
@@ -375,7 +407,13 @@ fun EventDetailScreen(
                             text = state.fromDate.format(DateTimeFormatter.ofPattern("MMM d yyyy")),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Normal,
-                            fontFamily = interFont
+                            fontFamily = interFont,
+                            modifier = Modifier.conditionalModifier(
+                                    condition = state.editMode,
+                                    modifierType = Modifier.clickable {
+                                        TODO("Open from date dialog")
+                                    }
+                                )
                         )
                         if(state.editMode) {
                             Icon(
@@ -417,7 +455,14 @@ fun EventDetailScreen(
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Normal,
                             fontFamily = interFont,
-                            modifier = Modifier.align(Alignment.TopCenter)
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .conditionalModifier(
+                                    condition = state.editMode,
+                                    modifierType = Modifier.clickable {
+                                        TODO("Open to time dialog")
+                                    }
+                                )
                         )
                         if(state.editMode) {
                             Icon(
@@ -435,7 +480,13 @@ fun EventDetailScreen(
                             text = state.toDate.format(DateTimeFormatter.ofPattern("MMM d yyyy")),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Normal,
-                            fontFamily = interFont
+                            fontFamily = interFont,
+                            modifier = Modifier.conditionalModifier(
+                                condition = state.editMode,
+                                modifierType = Modifier.clickable {
+                                    TODO("Open to date dialog")
+                                }
+                            )
                         )
                         if(state.editMode) {
                             Icon(
@@ -455,15 +506,12 @@ fun EventDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 25.dp, start = 17.dp, end = 17.dp)
-                        .run {
-                            if (state.editMode) {
-                                clickable {
-                                    TODO("Toggle reminder menu")
-                                }
-                            } else {
-                                this
+                        .conditionalModifier(
+                            condition = state.editMode ,
+                            modifierType = Modifier.clickable {
+                                onEvent(EventDetailOnClick.ToggleReminderMenu)
                             }
-                        }
+                        )
                     ,
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
@@ -512,23 +560,15 @@ fun EventDetailScreen(
                         fontWeight = FontWeight.Bold,
                         fontFamily = interFont
                     )
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .background(Light2)
-                            .run {
-                                if(state.editMode) {
-                                    clickable {
-                                        TODO("Open Dialog To Add Attendee")
-                                    }
-                                } else {
-                                    this
-                                }
-                            }
-                        ,
-                        tint = Gray
-                    )
+                    if(state.editMode) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.background(Light2)
+                            ,
+                            tint = Gray
+                        )
+                    }
                 }
 
                 if(state.attendees.isNotEmpty()) {
@@ -554,8 +594,9 @@ fun EventDetailScreen(
                                             SelectableChipOptions.GOING -> stringResource(id = R.string.Going)
                                             SelectableChipOptions.NOT_GOING -> stringResource(id = R.string.NotGoing)
                                         },
+                                        modifier = Modifier.weight(1f),
                                         onClick = {
-                                            TODO("Select the corresponding chip")
+                                            onEvent(EventDetailOnClick.SelectFilterOption(chip))
                                         }
                                     )
                                 }
@@ -638,7 +679,6 @@ fun EventDetailScreen(
                         color = Gray,
                         modifier = Modifier.align(Alignment.Center)
                     )
-                    TODO("Select DeleteEvent or Join Event or Leave Event")
                 }
             }
         }

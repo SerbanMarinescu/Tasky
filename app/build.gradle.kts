@@ -113,6 +113,9 @@ dependencies {
     //FlowLayouts Compose
     implementation("androidx.compose.foundation:foundation:1.4.3")
 
+    //Coil
+    implementation("io.coil-kt:coil-compose:2.5.0")
+
     //Splash Screen
     implementation("androidx.core:core-splashscreen:1.0.1")
 

@@ -1,5 +1,7 @@
 package com.example.tasky.presentation.Navigation
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -14,6 +16,11 @@ import com.example.tasky.feature_agenda.presentation.agenda_screen.AgendaScreen
 import com.example.tasky.feature_agenda.presentation.agenda_screen.AgendaViewModel
 import com.example.tasky.feature_agenda.presentation.edit_details_screen.EditDetailsScreen
 import com.example.tasky.feature_agenda.presentation.edit_details_screen.EditDetailsViewModel
+import com.example.tasky.feature_agenda.presentation.event_detail_screen.EventDetailOnClick
+import com.example.tasky.feature_agenda.presentation.event_detail_screen.EventDetailScreen
+import com.example.tasky.feature_agenda.presentation.event_detail_screen.EventDetailViewModel
+import com.example.tasky.feature_agenda.presentation.photo_detail_screen.PhotoDetailScreen
+import com.example.tasky.feature_agenda.presentation.photo_detail_screen.PhotoDetailViewModel
 import com.example.tasky.feature_agenda.presentation.reminder_detail_screen.ReminderDetailEvent
 import com.example.tasky.feature_agenda.presentation.reminder_detail_screen.ReminderDetailScreen
 import com.example.tasky.feature_agenda.presentation.reminder_detail_screen.ReminderDetailViewModel
@@ -179,6 +186,129 @@ fun Navigation(navController: NavHostController) {
                     navController.popBackStack()
                 }
             )
+        }
+        composable(
+            route = Screen.EventDetailScreen.route +
+                    "?${ArgumentTypeEnum.ITEM_ID.name}={${ArgumentTypeEnum.ITEM_ID.name}}" +
+                    "&${ArgumentTypeEnum.TYPE.name}={${ArgumentTypeEnum.TYPE.name}}" +
+                    "&${ArgumentTypeEnum.TEXT.name}={${ArgumentTypeEnum.TEXT.name}}" +
+                    "&${ArgumentTypeEnum.EDIT_MODE.name}={${ArgumentTypeEnum.EDIT_MODE.name}}" +
+                    "&${ArgumentTypeEnum.PHOTO_KEY.name}={${ArgumentTypeEnum.PHOTO_KEY.name}}"
+            ,
+            arguments = listOf(
+                navArgument(name = ArgumentTypeEnum.ITEM_ID.name) {
+                    type = NavType.StringType
+                    defaultValue = null
+                    nullable = true
+                },
+                navArgument(name = ArgumentTypeEnum.TYPE.name) {
+                    type = NavType.StringType
+                    defaultValue = null
+                    nullable = true
+                },
+                navArgument(name = ArgumentTypeEnum.TEXT.name) {
+                    type = NavType.StringType
+                    defaultValue = null
+                    nullable = true
+                },
+                navArgument(name = ArgumentTypeEnum.EDIT_MODE.name) {
+                    type = NavType.StringType
+                    defaultValue = null
+                    nullable = true
+                },
+                navArgument(name = ArgumentTypeEnum.PHOTO_KEY.name) {
+                    type = NavType.StringType
+                    defaultValue = null
+                    nullable = true
+                }
+            )
+        ) { entry ->
+
+            val viewModel = hiltViewModel<EventDetailViewModel>()
+            val state by viewModel.state.collectAsStateWithLifecycle()
+
+            val photoPicker = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.PickVisualMedia(),
+                onResult = {
+                    viewModel.onEvent(EventDetailOnClick.AddPhoto(it))
+                }
+            )
+
+//            val type = entry.savedStateHandle.getStateFlow<String?>(ArgumentTypeEnum.TYPE.name, null)
+//            val text = entry.savedStateHandle.getStateFlow<String?>(ArgumentTypeEnum.TEXT.name, null)
+//
+//            LaunchedEffect(type, text) {
+//
+//            }
+
+            LaunchedEffect(key1 = entry.savedStateHandle) {
+                val type = entry.savedStateHandle.get<String>(ArgumentTypeEnum.TYPE.name)
+                val text = entry.savedStateHandle.get<String>(ArgumentTypeEnum.TEXT.name)
+                val photoUrl = entry.savedStateHandle.get<String>(ArgumentTypeEnum.PHOTO_KEY.name)
+
+                type?.let {
+                    text?.let {
+                        if(type == ArgumentTypeEnum.TITLE.name) {
+                            viewModel.onEvent(EventDetailOnClick.TitleChanged(text))
+                        }
+                        if(type == ArgumentTypeEnum.DESCRIPTION.name) {
+                            viewModel.onEvent(EventDetailOnClick.DescriptionChanged(text))
+                        }
+                    }
+                }
+                photoUrl?.let {
+                    viewModel.onEvent(EventDetailOnClick.DeletePhoto(it))
+                }
+            }
+
+            EventDetailScreen(
+                state = state,
+                onEvent = viewModel::onEvent,
+                photoPicker = photoPicker,
+                navigateBack = {
+                    navController.popBackStack()
+                },
+                navigateTo = {
+                    navController.navigate(it)
+                }
+            )
+        }
+        composable(
+            route = Screen.PhotoDetailsScreen.route +
+            "/{${ArgumentTypeEnum.PHOTO_KEY}}" +
+            "/{${ArgumentTypeEnum.PHOTO_URL}}"
+            ,
+            arguments = listOf(
+                navArgument(name = ArgumentTypeEnum.PHOTO_KEY.name) {
+                    type = NavType.StringType
+                    defaultValue = null
+                    nullable = true
+                },
+                navArgument(name = ArgumentTypeEnum.PHOTO_URL.name) {
+                    type = NavType.StringType
+                    defaultValue = null
+                    nullable = true
+                }
+            )
+        ) {
+            val viewModel = hiltViewModel<PhotoDetailViewModel>()
+            val state by viewModel.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(key1 = state.photoKey) {
+                if(state.photoKey != null) {
+                    navController.previousBackStackEntry?.savedStateHandle?.set(ArgumentTypeEnum.PHOTO_KEY.name, state.photoKey)
+                    navController.popBackStack()
+                }
+            }
+
+            PhotoDetailScreen(
+                state = state,
+                onEvent = viewModel::onEvent,
+                navigateBack = {
+                    navController.popBackStack()
+                }
+            )
+
         }
         composable(
             route = Screen.EditDetailsScreen.route +

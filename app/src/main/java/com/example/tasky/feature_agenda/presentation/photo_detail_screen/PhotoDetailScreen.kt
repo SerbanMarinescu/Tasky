@@ -20,16 +20,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.tasky.R
 import com.example.tasky.presentation.theme.BackgroundBlack
 import com.example.tasky.presentation.theme.interFont
 
-@Preview(showBackground = true)
 @Composable
-fun PhotoDetailScreen() {
+fun PhotoDetailScreen(
+    state: PhotoDetailState,
+    onEvent: (PhotoDetailEvent) -> Unit,
+    navigateBack: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -45,7 +48,7 @@ fun PhotoDetailScreen() {
         ) {
             IconButton(
                 onClick = {
-                    TODO("Navigate Back")
+                    navigateBack()
                 }
             ) {
                 Icon(
@@ -65,7 +68,7 @@ fun PhotoDetailScreen() {
             )
             IconButton(
                 onClick = {
-                    TODO("DeletePhoto")
+                    onEvent(PhotoDetailEvent.DeletePhoto)
                 }
             ) {
                 Icon(
@@ -76,10 +79,10 @@ fun PhotoDetailScreen() {
                 )
             }
         }
-//        Image(
-//            painter = ,
-//            contentDescription = null,
-//            modifier = Modifier.align(Alignment.Center)
-//        )
+        AsyncImage(
+            model = state.photoUri,
+            contentDescription = null,
+            modifier = Modifier.align(Alignment.Center)
+        )
     }
 }
