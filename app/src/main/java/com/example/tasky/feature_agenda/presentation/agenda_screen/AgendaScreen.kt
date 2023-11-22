@@ -176,7 +176,7 @@ fun AgendaScreen(
                                         },
                                         onEditClick = {
                                             navigateTo(
-                                                Screen.ReminderDetailScreen.route +
+                                                Screen.EventDetailScreen.route +
                                                         "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.eventId}" +
                                                         "&${ArgumentTypeEnum.EDIT_MODE.name}=edit"
                                             )

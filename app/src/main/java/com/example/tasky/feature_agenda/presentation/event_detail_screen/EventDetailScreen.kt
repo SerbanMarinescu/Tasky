@@ -58,6 +58,7 @@ import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import com.example.tasky.R
 import com.example.tasky.feature_agenda.domain.model.Attendee
+import com.example.tasky.feature_agenda.domain.model.EventPhoto
 import com.example.tasky.feature_agenda.domain.util.ReminderType
 import com.example.tasky.feature_agenda.presentation.components.DatePickerDialog
 import com.example.tasky.feature_agenda.presentation.components.TimePickerDialog
@@ -95,6 +96,7 @@ fun EventDetailScreen(
     dateDialogState: MaterialDialogState,
     timeDialogState: MaterialDialogState,
     validationResult: Flow<Result<Unit>>,
+    photoList: List<EventPhoto>,
     attendeeList: List<Attendee>,
     navigateBack: () -> Unit,
     navigateTo: (String) -> Unit
@@ -166,19 +168,6 @@ fun EventDetailScreen(
 
             },
             text = {
-//                OutlinedTextField(
-//                    value = state.attendeeEmail,
-//                    onValueChange = {
-//                        onEvent(EventDetailOnClick.AttendeeEmailChanged(it))
-//                    },
-//                    placeholder = {
-//                        Text(
-//                            text = stringResource(id = R.string.EmailHint),
-//                            fontSize = 16.sp,
-//                            fontWeight = FontWeight.Light
-//                        )
-//                    }
-//                )
                 TaskyTextField(
                     value = state.attendeeEmail,
                     onValueChanged = {
@@ -376,7 +365,7 @@ fun EventDetailScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                state.photoList.forEach { photo ->
+                                photoList.forEach { photo ->
                                     Box(
                                         modifier = Modifier
                                             .size(60.dp)
@@ -387,7 +376,10 @@ fun EventDetailScreen(
                                             )
                                     ) {
                                         AsyncImage(
-                                            model = photo.url.toUri(),
+                                            model = when(photo) {
+                                                is EventPhoto.Local -> photo.uri.toUri()
+                                                is EventPhoto.Remote -> photo.url.toUri()
+                                            },
                                             contentDescription = null,
                                             contentScale = ContentScale.Crop,
                                             modifier = Modifier
@@ -396,14 +388,21 @@ fun EventDetailScreen(
                                                 .clickable {
                                                     navigateTo(
                                                         Screen.PhotoDetailsScreen.route +
-                                                                "/${photo.key}" +
-                                                                "/${Uri.encode(photo.url)}"
+                                                                "/${ when(photo) {
+                                                                    is EventPhoto.Local -> photo.key
+                                                                    is EventPhoto.Remote -> photo.key
+                                                                }}" +
+                                                                "/${Uri.encode(when(photo) {
+                                                                    is EventPhoto.Local -> photo.uri
+                                                                    is EventPhoto.Remote -> photo.url
+                                                                })
+                                                                }"
                                                     )
                                                 }
                                         )
                                     }
                                 }
-                                if(state.photoList.size < 10) {
+                                if(photoList.size < 10 && state.editMode) {
                                     Box(
                                         modifier = Modifier
                                             .size(60.dp)
@@ -906,18 +905,20 @@ fun EventDetailScreen(
                         }
                     }
                 }
-                Box(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "DELETE EVENT",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        fontFamily = interFont,
-                        color = Gray,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+            ) {
+                Text(
+                    text = "DELETE EVENT",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = interFont,
+                    color = Gray,
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
         }
     }

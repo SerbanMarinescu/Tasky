@@ -2,7 +2,7 @@ package com.example.tasky.feature_agenda.domain.repository
 
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.model.Attendee
-import com.example.tasky.feature_agenda.domain.model.Photo
+import com.example.tasky.feature_agenda.domain.model.EventPhoto
 import com.example.tasky.util.Resource
 
 interface EventRepository {
@@ -15,9 +15,9 @@ interface EventRepository {
 
     suspend fun getEvent(eventId: String): Resource<AgendaItem.Event>
 
-    suspend fun updateEvent(event: AgendaItem.Event, deletedPhotos: List<Photo> = emptyList()): Resource<Unit>
+    suspend fun updateEvent(event: AgendaItem.Event, deletedPhotos: List<EventPhoto> = emptyList()): Resource<Unit>
 
-    suspend fun syncUpdatedEvent(event: AgendaItem.Event, deletedPhotos: List<Photo> = emptyList()): Resource<Unit>
+    suspend fun syncUpdatedEvent(event: AgendaItem.Event, deletedPhotos: List<EventPhoto> = emptyList()): Resource<Unit>
 
     suspend fun deleteEvent(event: AgendaItem.Event): Resource<Unit>
 

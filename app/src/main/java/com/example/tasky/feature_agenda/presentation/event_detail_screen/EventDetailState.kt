@@ -1,7 +1,5 @@
 package com.example.tasky.feature_agenda.presentation.event_detail_screen
 
-import com.example.tasky.feature_agenda.domain.model.Attendee
-import com.example.tasky.feature_agenda.domain.model.Photo
 import com.example.tasky.feature_agenda.domain.util.ReminderType
 import com.example.tasky.feature_agenda.presentation.util.DateTimeDialogType
 import com.example.tasky.feature_agenda.presentation.util.SelectableChipOptions
@@ -29,8 +27,6 @@ data class EventDetailState(
     val addingPhotos: Boolean = false,
     val addingAttendees: Boolean = false,
     val attendeeEmail: String = "",
-    val photoList: List<Photo> = emptyList(),
-    val attendeeList: List<Attendee> = emptyList(),
     val isLoading: Boolean = false,
     val isEmailValid: Boolean = false,
     val emailError: UiText? = null

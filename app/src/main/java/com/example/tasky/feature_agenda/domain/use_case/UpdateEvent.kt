@@ -1,7 +1,7 @@
 package com.example.tasky.feature_agenda.domain.use_case
 
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
-import com.example.tasky.feature_agenda.domain.model.Photo
+import com.example.tasky.feature_agenda.domain.model.EventPhoto
 import com.example.tasky.feature_agenda.domain.repository.EventRepository
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType
 import com.example.tasky.feature_agenda.domain.util.OperationType
@@ -18,7 +18,7 @@ class UpdateEvent(
     private val taskScheduler: TaskScheduler
 ) {
 
-    suspend operator fun invoke(event: AgendaItem.Event, deletedPhotos: List<Photo> = emptyList()): Result<Unit> {
+    suspend operator fun invoke(event: AgendaItem.Event, deletedPhotos: List<EventPhoto> = emptyList()): Result<Unit> {
         val result = repository.updateEvent(event, deletedPhotos)
 
         return when (result) {

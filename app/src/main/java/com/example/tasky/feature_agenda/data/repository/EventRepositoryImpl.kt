@@ -12,7 +12,7 @@ import com.example.tasky.feature_agenda.data.remote.request.EventRequest
 import com.example.tasky.feature_agenda.data.remote.request.UpdateEventRequest
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.model.Attendee
-import com.example.tasky.feature_agenda.domain.model.Photo
+import com.example.tasky.feature_agenda.domain.model.EventPhoto
 import com.example.tasky.feature_agenda.domain.repository.EventRepository
 import com.example.tasky.feature_authentication.domain.util.UserPreferences
 import com.example.tasky.util.ErrorType
@@ -63,7 +63,12 @@ class EventRepositoryImpl(
     override suspend fun syncCreatedEvent(event: AgendaItem.Event): Resource<Unit> {
 
         val photoList = event.photos.map { photo ->
-            val file = File(photo.url)
+            val file = File(
+                when(photo) {
+                    is EventPhoto.Local -> photo.uri
+                    is EventPhoto.Remote -> photo.url
+                }
+            )
             val requestFile: RequestBody = file.asRequestBody("image/*".toMediaTypeOrNull())
             MultipartBody.Part.createFormData("photos", file.name, requestFile)
         }
@@ -113,7 +118,7 @@ class EventRepositoryImpl(
         }
     }
 
-    override suspend fun updateEvent(event: AgendaItem.Event, deletedPhotos: List<Photo>): Resource<Unit> {
+    override suspend fun updateEvent(event: AgendaItem.Event, deletedPhotos: List<EventPhoto>): Resource<Unit> {
 
         val eventEntity = event.toEventEntity()
         val attendeeEntities = event.attendees.map { it.toAttendeeEntity(event.eventId) }
@@ -126,11 +131,16 @@ class EventRepositoryImpl(
 
     override suspend fun syncUpdatedEvent(
         event: AgendaItem.Event,
-        deletedPhotos: List<Photo>
+        deletedPhotos: List<EventPhoto>
     ): Resource<Unit> {
 
         val photoList = event.photos.map { photo ->
-            val file = File(photo.url)
+            val file = File(
+                when(photo) {
+                    is EventPhoto.Local -> photo.uri
+                    is EventPhoto.Remote -> photo.url
+                }
+            )
             val requestFile: RequestBody = file.asRequestBody("image/*".toMediaTypeOrNull())
             MultipartBody.Part.createFormData("photos", file.name, requestFile)
         }
@@ -147,7 +157,12 @@ class EventRepositoryImpl(
                     to = event.to.toUtcTimestamp(),
                     remindAt = event.remindAt.toUtcTimestamp(),
                     attendeeIds = event.attendees.map { it.userId },
-                    deletedPhotoKeys = deletedPhotos.map { it.key },
+                    deletedPhotoKeys = deletedPhotos.map {
+                        when (it) {
+                            is EventPhoto.Local -> it.key
+                            is EventPhoto.Remote -> it.key
+                        }
+                    },
                     isGoing = event.attendees.any{ it.userId == userId }
                 ),
                 photoList

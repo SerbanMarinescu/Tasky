@@ -1,5 +1,6 @@
 package com.example.tasky.feature_agenda.presentation.event_detail_screen
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -10,11 +11,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.tasky.R
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.model.Attendee
-import com.example.tasky.feature_agenda.domain.model.Photo
+import com.example.tasky.feature_agenda.domain.model.EventPhoto
 import com.example.tasky.feature_agenda.domain.repository.AgendaRepositories
 import com.example.tasky.feature_agenda.domain.use_case.AgendaUseCases
 import com.example.tasky.feature_agenda.domain.util.ReminderType
-import com.example.tasky.feature_agenda.presentation.util.validateDates
+import com.example.tasky.feature_agenda.presentation.util.validateDateRange
 import com.example.tasky.feature_authentication.domain.util.UserPreferences
 import com.example.tasky.feature_authentication.domain.validation.EmailError
 import com.example.tasky.feature_authentication.domain.validation.EmailError.EMAIL_EMPTY
@@ -56,9 +57,12 @@ class EventDetailViewModel @Inject constructor(
     private val resultChannel = Channel<Result<Unit>>()
     val validationResult = resultChannel.receiveAsFlow()
 
-    private val photoList = mutableStateListOf<Photo>()
+    var photoList = mutableStateListOf<EventPhoto>()
+        private set
     var attendeeList = mutableStateListOf<Attendee>()
         private set
+
+    private val deletedPhotos = mutableListOf<EventPhoto>()
 
     var dateDialogState by mutableStateOf(MaterialDialogState())
     var timeDialogState by mutableStateOf(MaterialDialogState())
@@ -70,13 +74,16 @@ class EventDetailViewModel @Inject constructor(
         eventId?.let {
             val editable = editMode != null
             getSelectedEvent(it, editable)
+
+            Log.d("CreatingUpdating", "PhotoList existing event: ${photoList.toList()}")
+            Log.d("CreatingUpdating", "AttendeeList existing event: ${attendeeList.toList()}")
         }
     }
 
     fun onEvent(event: EventDetailOnClick) {
         when(event) {
             EventDetailOnClick.SaveEvent -> {
-                //saveEvent()
+                saveEvent()
             }
             is EventDetailOnClick.SelectFilterOption -> {
                 _state.update {
@@ -119,33 +126,36 @@ class EventDetailViewModel @Inject constructor(
             }
 
             is EventDetailOnClick.AddPhoto -> {
-                if(event.photoUri == null && state.value.photoList.isEmpty()) {
+                if(event.photoUri == null && photoList.isEmpty()) {
                     _state.update {
                         it.copy(addingPhotos = !it.addingPhotos)
                     }
                 } else {
                     event.photoUri?.let { uri ->
                         photoList.add(
-                            Photo(
+                            EventPhoto.Local(
                                 key = UUID.randomUUID().toString(),
-                                url = uri.toString()
+                                uri = uri.toString()
                             )
                         )
-                        _state.update {
-                            it.copy(photoList = photoList)
-                        }
                     }
                 }
             }
 
             is EventDetailOnClick.DeletePhoto -> {
-                val photoToRemove = photoList.find { it.key == event.photoKey }
+                val photoToRemove = photoList.find { photo ->
+                when(photo) {
+                    is EventPhoto.Local -> photo.key == event.photoKey
+                    is EventPhoto.Remote -> photo.key == event.photoKey
+                }
+                }
 
                 photoToRemove?.let { photo ->
                     photoList.remove(photo)
+                    deletedPhotos.add(photo)
+
                     _state.update {
                         it.copy(
-                            photoList = photoList,
                             addingPhotos = photoList.isNotEmpty()
                         )
                     }
@@ -160,12 +170,20 @@ class EventDetailViewModel @Inject constructor(
 
             is EventDetailOnClick.FromDateChanged -> {
                 _state.update {
-                    it.copy(fromDate = event.fromDate)
+                    it.copy(
+                        fromDate = event.fromDate,
+                        toDate = if(!validateDateRange(event.fromDate, it.toDate))
+                            event.fromDate.plusDays(1) else it.toDate
+                    )
                 }
             }
             is EventDetailOnClick.FromTimeChanged -> {
                 _state.update {
-                    it.copy(fromTime = event.fromTime)
+                    it.copy(
+                        fromTime = event.fromTime,
+                        toTime = if(!validateDateRange(event.fromTime, it.toTime))
+                        event.fromTime.plusMinutes(30) else it.toTime
+                    )
                 }
             }
             is EventDetailOnClick.ToDateChanged -> {
@@ -194,54 +212,48 @@ class EventDetailViewModel @Inject constructor(
 
             is EventDetailOnClick.AddAttendee -> {
                 viewModelScope.launch {
-                    useCases.event.validateAttendee(event.email).collect { result ->
-                        when(result) {
-                            is Resource.Error -> {
-                                _state.update {
-                                    it.copy(
-                                        isLoading = false,
-                                        emailError = when(result.errorType) {
-                                            HTTP,IO,OTHER,null -> {
-                                                resultChannel.send(Result.Error(result.message ?: "Unknown Error"))
-                                                null
-                                            }
-                                            VALIDATION_ERROR -> {
-                                                val errorType = result.message?.let { error -> enumValueOf<EmailError>(error) }
-                                                when(errorType) {
-                                                    EMAIL_EMPTY -> UiText.StringResource(R.string.EMAIL_EMPTY)
-                                                    EMAIL_INVALID -> UiText.StringResource(R.string.EMAIL_INVALID)
-                                                    null -> null
-                                                }
+                    val result = useCases.event.validateAttendee(event.email)
+
+                    when(result) {
+                        is Resource.Error -> {
+                            _state.update {
+                                it.copy(
+                                    emailError = when(result.errorType) {
+                                        HTTP,IO,OTHER,null -> {
+                                            resultChannel.send(Result.Error(result.message ?: "Unknown Error"))
+                                            null
+                                        }
+                                        VALIDATION_ERROR -> {
+                                            val errorType = result.message?.let { error -> enumValueOf<EmailError>(error) }
+                                            when(errorType) {
+                                                EMAIL_EMPTY -> UiText.StringResource(R.string.EMAIL_EMPTY)
+                                                EMAIL_INVALID -> UiText.StringResource(R.string.EMAIL_INVALID)
+                                                null -> null
                                             }
                                         }
-                                    )
-                                }
-                            }
-                            is Resource.Loading -> {
-                                _state.update {
-                                    it.copy(isLoading = !it.isLoading)
-                                }
-                            }
-                            is Resource.Success -> {
-                                val response = result.data ?: return@collect
-                                val attendee = Attendee(
-                                    email = response.email,
-                                    fullName = response.fullName,
-                                    userId = response.userId,
-                                    eventId = state.value.eventId ?: "",
-                                    isGoing = true,
-                                    remindAt = ZonedDateTime.of(state.value.fromDate, state.value.fromTime, ZoneId.systemDefault())
+                                    }
                                 )
-                                attendeeList.add(attendee)
-                                _state.update {
-                                    it.copy(
-                                        isLoading = !it.isLoading,
-                                        addingAttendees = !it.addingAttendees,
-                                        attendeeEmail = ""
-                                    )
-                                }
                             }
                         }
+                        is Resource.Success -> {
+                            val response = result.data ?: return@launch
+                            val attendee = Attendee(
+                                email = response.email,
+                                fullName = response.fullName,
+                                userId = response.userId,
+                                eventId = state.value.eventId ?: "",
+                                isGoing = true,
+                                remindAt = ZonedDateTime.of(state.value.fromDate, state.value.fromTime, ZoneId.systemDefault())
+                            )
+                            attendeeList.add(attendee)
+                            _state.update {
+                                it.copy(
+                                    addingAttendees = !it.addingAttendees,
+                                    attendeeEmail = ""
+                                )
+                            }
+                        }
+                        else -> Unit
                     }
                 }
             }
@@ -257,13 +269,15 @@ class EventDetailViewModel @Inject constructor(
         val fromDateTime = ZonedDateTime.of(state.value.fromDate, state.value.fromTime, ZoneId.systemDefault())
         val toDateTime = ZonedDateTime.of(state.value.toDate, state.value.toTime, ZoneId.systemDefault())
 
-            val isDateValid = validateDates(fromDateTime, toDateTime)
+            val isDateValid = validateDateRange(fromDateTime, toDateTime)
             if(!isDateValid) {
                 resultChannel.send(Result.Error("\"From\" DateTime must not be after \"To\" DateTime"))
+                return@launch
             }
 
             val user = userPreferences.getAuthenticatedUser() ?: return@launch
             val eventId = UUID.randomUUID().toString()
+
             val eventCreator = Attendee(
                 email = user.email,
                 fullName = user.fullName,
@@ -279,7 +293,7 @@ class EventDetailViewModel @Inject constructor(
                 }
             )
 
-            attendeeList.add(0,eventCreator)
+            attendeeList.add(0, eventCreator)
 
             val eventToBeCreated = AgendaItem.Event(
                 eventId = eventId,
@@ -287,7 +301,7 @@ class EventDetailViewModel @Inject constructor(
                 eventDescription = state.value.eventDescription,
                 from = fromDateTime,
                 to = toDateTime,
-                photos = state.value.photoList,
+                photos = photoList.toList(),
                 attendees = attendeeList.map { it.copy(eventId = eventId) },
                 isUserEventCreator = true,
                 host = user.userId,
@@ -303,8 +317,18 @@ class EventDetailViewModel @Inject constructor(
 
             val existingEventId = state.value.eventId
             existingEventId?.let {
-                val eventToBeUpdated = eventToBeCreated.copy(eventId = it)
-                useCases.event.updateEvent(eventToBeUpdated)
+                val eventToBeUpdated = eventToBeCreated.copy(
+                    eventId = it,
+                    host = state.value.eventCreatorId,
+                    attendees = attendeeList.map { attendee ->
+                        attendee.copy(eventId = it)
+                    }.also { attendeeList ->
+                        attendeeList.distinctBy { attendee ->
+                            attendee.userId
+                        }
+                    }
+                )
+                useCases.event.updateEvent(eventToBeUpdated, deletedPhotos)
                 return@launch
             }
 
@@ -322,6 +346,13 @@ class EventDetailViewModel @Inject constructor(
                 }
                 is Resource.Success -> {
                     val event = result.data ?: return@launch
+
+                    event.photos.forEach {
+                        photoList.add(it)
+                    }
+                    event.attendees.forEach {
+                        attendeeList.add(it)
+                    }
                     _state.update {
                         it.copy(
                             eventId = eventId,
@@ -334,10 +365,12 @@ class EventDetailViewModel @Inject constructor(
                             toTime = event.to.toLocalTime(),
                             currentDate = event.from,
                             reminderType = event.eventReminderType,
-                            attendeeList = event.attendees,
-                            photoList = event.photos
+                            addingPhotos = photoList.isNotEmpty(),
+                            eventCreatorId = event.host ?: ""
                         )
                     }
+
+
                 }
                 else -> {
 

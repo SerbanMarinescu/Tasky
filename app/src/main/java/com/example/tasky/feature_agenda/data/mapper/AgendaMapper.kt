@@ -14,7 +14,7 @@ import com.example.tasky.feature_agenda.data.remote.dto.ReminderDto
 import com.example.tasky.feature_agenda.data.remote.dto.TaskDto
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.model.Attendee
-import com.example.tasky.feature_agenda.domain.model.Photo
+import com.example.tasky.feature_agenda.domain.model.EventPhoto
 import com.example.tasky.feature_agenda.domain.util.ReminderType
 import java.time.Instant
 import java.time.ZoneId
@@ -52,8 +52,8 @@ fun AttendeeDto.toAttendee(): Attendee {
     )
 }
 
-fun PhotoDto.toPhoto(): Photo {
-    return Photo(
+fun PhotoDto.toPhoto(): EventPhoto {
+    return EventPhoto.Remote(
         key = key,
         url = url
     )
@@ -111,27 +111,33 @@ fun AttendeeEntity.toAttendee(): Attendee {
     )
 }
 
-fun PhotoEntity.toPhoto(): Photo {
-    return Photo(
+fun PhotoEntity.toPhoto(): EventPhoto {
+    return EventPhoto.Local(
         key = key,
-        url = url
+        uri = uri
     )
 }
 
-fun Photo.toPhotoEntity(eventId: String): PhotoEntity {
+fun EventPhoto.toPhotoEntity(eventId: String): PhotoEntity {
     return PhotoEntity(
-        key = key,
-        url = url,
+        key = when(this) {
+            is EventPhoto.Local -> this.key
+            is EventPhoto.Remote -> this.key
+        } ,
+        uri = when(this) {
+            is EventPhoto.Local -> this.uri
+            is EventPhoto.Remote -> this.url
+        },
         eventId = eventId
     )
 }
 fun EventWithAttendeesAndPhotos.toEvent(): AgendaItem.Event {
     return AgendaItem.Event(
-        eventId = event.eventId.toString(),
+        eventId = event.eventId,
         eventTitle = event.title,
         eventDescription = event.description,
         from = event.from.toZonedDateTime(),
-        to = event.from.toZonedDateTime(),
+        to = event.to.toZonedDateTime(),
         photos = photos.map { it.toPhoto() },
         attendees = attendees.map { it.toAttendee() },
         isUserEventCreator = event.isUserEventCreator,

@@ -27,7 +27,7 @@ interface EventDao {
     suspend fun getEventById(eventId: String): EventWithAttendeesAndPhotos?
 
     @Transaction
-    @Query("SELECT * FROM Event WHERE `from` >= :startOfDay AND `to` <= :endOfDay")
+    @Query("SELECT * FROM Event WHERE `from` BETWEEN :startOfDay AND :endOfDay")
     fun getEventsForASpecificDay(startOfDay: Long, endOfDay: Long): Flow<List<EventWithAttendeesAndPhotos>>
 
     @Transaction
@@ -38,7 +38,7 @@ interface EventDao {
     suspend fun deleteAttendeeByEventId(eventId: String)
 
     @Transaction
-    @Query("DELETE FROM Event WHERE `from` >= :startOfDay AND `to` <= :endOfDay")
+    @Query("DELETE FROM Event WHERE `from` BETWEEN :startOfDay AND :endOfDay")
     fun deleteEventsForASpecificDay(startOfDay: Long, endOfDay: Long)
 
     @Transaction

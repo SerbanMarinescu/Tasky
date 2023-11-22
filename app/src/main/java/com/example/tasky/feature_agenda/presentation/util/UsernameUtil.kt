@@ -1,7 +1,9 @@
 package com.example.tasky.feature_agenda.presentation.util
 
 fun getInitials(value: String): String {
-    val names = value.split(Regex("\\s+"))
+    val names = value.split(Regex("\\s+")).filter {
+        it.isNotBlank()
+    }
 
     return when(names.size) {
         1 -> names[0].take(2)
