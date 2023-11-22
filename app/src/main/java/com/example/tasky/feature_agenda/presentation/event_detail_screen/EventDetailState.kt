@@ -3,7 +3,9 @@ package com.example.tasky.feature_agenda.presentation.event_detail_screen
 import com.example.tasky.feature_agenda.domain.model.Attendee
 import com.example.tasky.feature_agenda.domain.model.Photo
 import com.example.tasky.feature_agenda.domain.util.ReminderType
+import com.example.tasky.feature_agenda.presentation.util.DateTimeDialogType
 import com.example.tasky.feature_agenda.presentation.util.SelectableChipOptions
+import com.example.tasky.feature_authentication.presentation.util.UiText
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZonedDateTime
@@ -11,6 +13,7 @@ import java.time.ZonedDateTime
 data class EventDetailState(
     val eventId: String? = null,
     val editMode: Boolean = true,
+    val eventCreatorId: String = "",
     val currentDate: ZonedDateTime = ZonedDateTime.now(),
     val eventTitle: String = "New Event",
     val eventDescription: String = "Event Description",
@@ -22,8 +25,13 @@ data class EventDetailState(
     val isReminderMenuVisible: Boolean = false,
     val selectedChipIndex: Int = 0,
     val selectedChip: SelectableChipOptions = SelectableChipOptions.ALL,
+    val dateTimePicker: DateTimeDialogType = DateTimeDialogType.FROM_TIME,
     val addingPhotos: Boolean = false,
     val addingAttendees: Boolean = false,
+    val attendeeEmail: String = "",
     val photoList: List<Photo> = emptyList(),
-    val attendees: List<Attendee> = emptyList()
+    val attendeeList: List<Attendee> = emptyList(),
+    val isLoading: Boolean = false,
+    val isEmailValid: Boolean = false,
+    val emailError: UiText? = null
 )

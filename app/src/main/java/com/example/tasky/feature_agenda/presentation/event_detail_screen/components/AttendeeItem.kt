@@ -1,6 +1,7 @@
 package com.example.tasky.feature_agenda.presentation.event_detail_screen.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -36,7 +37,8 @@ import com.example.tasky.presentation.theme.interFont
 fun AttendeeItem(
     initials: String,
     fullName: String,
-    eventCreator: Boolean
+    eventCreator: Boolean,
+    onDeleteClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -103,7 +105,11 @@ fun AttendeeItem(
                     painter = painterResource(id = R.drawable.ic_delete),
                     contentDescription = null,
                     tint = DarkGray,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable {
+                            onDeleteClick()
+                        }
                 )
             }
 

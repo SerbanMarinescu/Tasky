@@ -9,7 +9,10 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.example.tasky.common.Constants
-import com.example.tasky.util.ErrorType
+import com.example.tasky.util.ErrorType.HTTP
+import com.example.tasky.util.ErrorType.IO
+import com.example.tasky.util.ErrorType.OTHER
+import com.example.tasky.util.ErrorType.VALIDATION_ERROR
 import com.example.tasky.util.Resource
 
 fun enqueueOneTimeWorker(
@@ -50,13 +53,16 @@ fun <T> getWorkerResult(result: Resource<T>): ListenableWorker.Result {
     return when(result) {
         is Resource.Error -> {
             when(result.errorType) {
-                ErrorType.HTTP -> {
+                HTTP -> {
                     ListenableWorker.Result.failure(workDataOf(Constants.WORK_DATA_KEY to result.message))
                 }
-                ErrorType.IO -> {
+                IO -> {
                     ListenableWorker.Result.retry()
                 }
-                ErrorType.OTHER -> {
+                OTHER -> {
+                    ListenableWorker.Result.failure(workDataOf(Constants.WORK_DATA_KEY to result.message))
+                }
+                VALIDATION_ERROR -> {
                     ListenableWorker.Result.failure(workDataOf(Constants.WORK_DATA_KEY to result.message))
                 }
                 null -> {

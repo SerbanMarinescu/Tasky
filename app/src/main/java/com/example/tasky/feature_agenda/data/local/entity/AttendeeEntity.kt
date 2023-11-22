@@ -19,7 +19,9 @@ data class AttendeeEntity(
     val email: String,
     val fullName: String,
     val userId: String,
-    val eventId: Int,
+    val eventId: String,
+    val isGoing: Boolean,
+    val remindAt: Long,
     @PrimaryKey(autoGenerate = true)
     val attendeeId: Int = 0
 )

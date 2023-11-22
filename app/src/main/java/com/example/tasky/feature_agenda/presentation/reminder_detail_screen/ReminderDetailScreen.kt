@@ -320,7 +320,7 @@ fun ReminderDetailScreen(
                     ) {
                         DropdownMenuItem(
                             text = {
-                                Text(text = ReminderType.TEN_MINUTES_BEFORE.name)
+                                Text(text = stringResource(id = R.string.TenMinBefore))
                             },
                             onClick = {
                                 onEvent(ReminderDetailEvent.ReminderTypeChanged(ReminderType.TEN_MINUTES_BEFORE))
@@ -329,7 +329,7 @@ fun ReminderDetailScreen(
                         )
                         DropdownMenuItem(
                             text = {
-                                Text(text = ReminderType.THIRTY_MINUTES_BEFORE.name)
+                                Text(text = stringResource(id = R.string.ThirtyMinBefore))
                             },
                             onClick = {
                                 onEvent(ReminderDetailEvent.ReminderTypeChanged(ReminderType.THIRTY_MINUTES_BEFORE))
@@ -338,7 +338,7 @@ fun ReminderDetailScreen(
                         )
                         DropdownMenuItem(
                             text = {
-                                Text(text = ReminderType.ONE_HOUR_BEFORE.name)
+                                Text(text = stringResource(id = R.string.OneHourBefore))
                             },
                             onClick = {
                                 onEvent(ReminderDetailEvent.ReminderTypeChanged(ReminderType.ONE_HOUR_BEFORE))
@@ -347,7 +347,7 @@ fun ReminderDetailScreen(
                         )
                         DropdownMenuItem(
                             text = {
-                                Text(text = ReminderType.SIX_HOURS_BEFORE.name)
+                                Text(text = stringResource(id = R.string.SixHoursBefore))
                             },
                             onClick = {
                                 onEvent(ReminderDetailEvent.ReminderTypeChanged(ReminderType.SIX_HOURS_BEFORE))
@@ -356,7 +356,7 @@ fun ReminderDetailScreen(
                         )
                         DropdownMenuItem(
                             text = {
-                                Text(text = ReminderType.ONE_DAY_BEFORE.name)
+                                Text(text = stringResource(id = R.string.OneDayBefore))
                             },
                             onClick = {
                                 onEvent(ReminderDetailEvent.ReminderTypeChanged(ReminderType.ONE_DAY_BEFORE))

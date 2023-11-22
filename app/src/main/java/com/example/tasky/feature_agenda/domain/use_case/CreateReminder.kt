@@ -8,6 +8,7 @@ import com.example.tasky.feature_agenda.domain.util.TaskScheduler
 import com.example.tasky.util.ErrorType.HTTP
 import com.example.tasky.util.ErrorType.IO
 import com.example.tasky.util.ErrorType.OTHER
+import com.example.tasky.util.ErrorType.VALIDATION_ERROR
 import com.example.tasky.util.Resource
 import com.example.tasky.util.Result
 
@@ -33,9 +34,10 @@ class CreateReminder(
                         Result.Success()
                     }
 
-                    OTHER -> Result.Error(result.message ?: "Unknown Error")
+                    VALIDATION_ERROR,OTHER -> Result.Error(result.message ?: "Unknown Error")
 
                     null -> Result.Error(result.message ?: "Unknown Error")
+
                 }
             }
 

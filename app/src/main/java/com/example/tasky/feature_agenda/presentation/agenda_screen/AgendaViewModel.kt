@@ -12,6 +12,7 @@ import com.example.tasky.feature_agenda.domain.use_case.AgendaUseCases
 import com.example.tasky.feature_agenda.domain.util.AgendaItemKey
 import com.example.tasky.feature_agenda.domain.util.toAgendaItemType
 import com.example.tasky.feature_agenda.presentation.util.generateNextDays
+import com.example.tasky.feature_agenda.presentation.util.getInitials
 import com.example.tasky.feature_authentication.domain.util.UserPreferences
 import com.example.tasky.util.Result
 import com.vanpra.composematerialdialogs.MaterialDialogState
@@ -51,18 +52,7 @@ class AgendaViewModel @Inject constructor(
     init {
         val user = userPreferences.getAuthenticatedUser()
         user?.let {
-            val names = it.fullName.split(Regex("\\s+"))
-            username = when(names.size) {
-                1 -> {
-                    names[0].take(2)
-                }
-
-                else -> {
-                    val firstNameInitial = names.first().take(1)
-                    val lastNameInitial = names.last().take(1)
-                    "$firstNameInitial$lastNameInitial"
-                }
-            }
+            username = getInitials(it.fullName)
         }
         getAgenda()
     }

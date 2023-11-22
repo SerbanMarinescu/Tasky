@@ -321,7 +321,7 @@ fun TaskDetailScreen(
                     ) {
                         DropdownMenuItem(
                             text = {
-                                Text(text = ReminderType.TEN_MINUTES_BEFORE.name)
+                                Text(text = stringResource(id = R.string.TenMinBefore))
                             },
                             onClick = {
                                 onEvent(TaskDetailEvent.ReminderTypeChanged(ReminderType.TEN_MINUTES_BEFORE))
@@ -330,7 +330,7 @@ fun TaskDetailScreen(
                         )
                         DropdownMenuItem(
                             text = {
-                                Text(text = ReminderType.THIRTY_MINUTES_BEFORE.name)
+                                Text(text = stringResource(id = R.string.ThirtyMinBefore))
                             },
                             onClick = {
                                 onEvent(TaskDetailEvent.ReminderTypeChanged(ReminderType.THIRTY_MINUTES_BEFORE))
@@ -339,7 +339,7 @@ fun TaskDetailScreen(
                         )
                         DropdownMenuItem(
                             text = {
-                                Text(text = ReminderType.ONE_HOUR_BEFORE.name)
+                                Text(text = stringResource(id = R.string.OneHourBefore))
                             },
                             onClick = {
                                 onEvent(TaskDetailEvent.ReminderTypeChanged(ReminderType.ONE_HOUR_BEFORE))
@@ -348,7 +348,7 @@ fun TaskDetailScreen(
                         )
                         DropdownMenuItem(
                             text = {
-                                Text(text = ReminderType.SIX_HOURS_BEFORE.name)
+                                Text(text = stringResource(id = R.string.SixHoursBefore))
                             },
                             onClick = {
                                 onEvent(TaskDetailEvent.ReminderTypeChanged(ReminderType.SIX_HOURS_BEFORE))
@@ -357,7 +357,7 @@ fun TaskDetailScreen(
                         )
                         DropdownMenuItem(
                             text = {
-                                Text(text = ReminderType.ONE_DAY_BEFORE.name)
+                                Text(text = stringResource(id = R.string.OneDayBefore))
                             },
                             onClick = {
                                 onEvent(TaskDetailEvent.ReminderTypeChanged(ReminderType.ONE_DAY_BEFORE))

@@ -1,6 +1,7 @@
 package com.example.tasky.feature_agenda.presentation.event_detail_screen
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,7 +31,13 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.filled.Square
 import androidx.compose.material.icons.outlined.Circle
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -40,18 +47,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import com.example.tasky.R
+import com.example.tasky.feature_agenda.domain.model.Attendee
 import com.example.tasky.feature_agenda.domain.util.ReminderType
+import com.example.tasky.feature_agenda.presentation.components.DatePickerDialog
+import com.example.tasky.feature_agenda.presentation.components.TimePickerDialog
+import com.example.tasky.feature_agenda.presentation.event_detail_screen.components.AttendeeItem
 import com.example.tasky.feature_agenda.presentation.event_detail_screen.components.FilterChip
+import com.example.tasky.feature_agenda.presentation.util.DateTimeDialogType
 import com.example.tasky.feature_agenda.presentation.util.SelectableChipOptions
 import com.example.tasky.feature_agenda.presentation.util.formatDateTimeOfPattern
+import com.example.tasky.feature_agenda.presentation.util.getInitials
+import com.example.tasky.feature_authentication.presentation.components.TaskyTextField
 import com.example.tasky.presentation.theme.BackgroundBlack
 import com.example.tasky.presentation.theme.BackgroundWhite
 import com.example.tasky.presentation.theme.DarkGray
@@ -62,19 +78,122 @@ import com.example.tasky.presentation.theme.LightBlue
 import com.example.tasky.presentation.theme.LightGreen
 import com.example.tasky.presentation.theme.interFont
 import com.example.tasky.util.ArgumentTypeEnum
+import com.example.tasky.util.ObserveAsEvents
+import com.example.tasky.util.Result
 import com.example.tasky.util.Screen
-import com.example.tasky.util.conditionalModifier
+import com.example.tasky.util.applyIf
+import com.vanpra.composematerialdialogs.MaterialDialogState
+import kotlinx.coroutines.flow.Flow
 import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun EventDetailScreen(
     state: EventDetailState,
     onEvent: (EventDetailOnClick) -> Unit,
     photoPicker: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>,
+    dateDialogState: MaterialDialogState,
+    timeDialogState: MaterialDialogState,
+    validationResult: Flow<Result<Unit>>,
+    attendeeList: List<Attendee>,
     navigateBack: () -> Unit,
     navigateTo: (String) -> Unit
 ) {
+    val context = LocalContext.current
+
+    ObserveAsEvents(flow = validationResult) { result ->
+        when(result) {
+            is Result.Error -> Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
+            is Result.Success -> Toast.makeText(context, "Attendee Added", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    if(state.addingAttendees) {
+        AlertDialog(
+            onDismissRequest = {
+                onEvent(EventDetailOnClick.ToggleAddingAttendeeDialog)
+                onEvent(EventDetailOnClick.AttendeeEmailChanged(""))
+            },
+            confirmButton = {
+                    Button(
+                        onClick = {
+                            onEvent(EventDetailOnClick.AddAttendee(state.attendeeEmail))
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(40.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            ,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = BackgroundBlack
+                        )
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.Add),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = interFont,
+                            color = Color.White
+                        )
+                    }
+
+
+            },
+            title = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(70.dp)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.AddVisitor),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = interFont,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .clickable {
+                                onEvent(EventDetailOnClick.ToggleAddingAttendeeDialog)
+                                onEvent(EventDetailOnClick.AttendeeEmailChanged(""))
+                            }
+                    )
+                }
+
+            },
+            text = {
+//                OutlinedTextField(
+//                    value = state.attendeeEmail,
+//                    onValueChange = {
+//                        onEvent(EventDetailOnClick.AttendeeEmailChanged(it))
+//                    },
+//                    placeholder = {
+//                        Text(
+//                            text = stringResource(id = R.string.EmailHint),
+//                            fontSize = 16.sp,
+//                            fontWeight = FontWeight.Light
+//                        )
+//                    }
+//                )
+                TaskyTextField(
+                    value = state.attendeeEmail,
+                    onValueChanged = {
+                        onEvent(EventDetailOnClick.AttendeeEmailChanged(it))
+                    },
+                    hint = stringResource(id = R.string.EmailHint),
+                    keyboardType = KeyboardType.Email,
+                    isValid = state.isEmailValid,
+                    isError = state.emailError != null,
+                    errorMessage = state.emailError?.asString(context)
+                )
+            }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -165,9 +284,9 @@ fun EventDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 20.dp, top = 8.dp, end = 17.dp)
-                        .conditionalModifier(
+                        .applyIf(
                             condition = state.editMode,
-                            modifierType = Modifier.clickable {
+                            modifier = Modifier.clickable {
                                 navigateTo(
                                     Screen.EditDetailsScreen.route +
                                             "/${ArgumentTypeEnum.TITLE.name}" +
@@ -204,9 +323,9 @@ fun EventDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 25.dp, start = 17.dp, end = 17.dp)
-                        .conditionalModifier(
+                        .applyIf(
                             condition = state.editMode,
-                            modifierType = Modifier.clickable {
+                            modifier = Modifier.clickable {
                                 navigateTo(
                                     Screen.EditDetailsScreen.route +
                                             "/${ArgumentTypeEnum.DESCRIPTION.name}" +
@@ -302,7 +421,9 @@ fun EventDetailScreen(
                                                 .align(Alignment.Center)
                                                 .clickable {
                                                     photoPicker.launch(
-                                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                                        PickVisualMediaRequest(
+                                                            ActivityResultContracts.PickVisualMedia.ImageOnly
+                                                        )
                                                     )
                                                 }
                                             ,
@@ -321,9 +442,9 @@ fun EventDetailScreen(
                             .fillMaxWidth()
                             .height(100.dp)
                             .background(Light2)
-                            .conditionalModifier(
+                            .applyIf(
                                 condition = state.editMode,
-                                modifierType = Modifier.clickable {
+                                modifier = Modifier.clickable {
                                     photoPicker.launch(
                                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                                     )
@@ -384,10 +505,15 @@ fun EventDetailScreen(
                             fontFamily = interFont,
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
-                                .conditionalModifier(
+                                .applyIf(
                                     condition = state.editMode,
-                                    modifierType = Modifier.clickable {
-                                        TODO("Open from time dialog")
+                                    modifier = Modifier.clickable {
+                                        onEvent(
+                                            EventDetailOnClick.DateTimePickerChanged(
+                                                DateTimeDialogType.FROM_TIME
+                                            )
+                                        )
+                                        timeDialogState.show()
                                     }
                                 )
                         )
@@ -399,26 +525,36 @@ fun EventDetailScreen(
                             )
                         }
                     }
-                    Row(
-                        modifier = Modifier.weight(0.5f),
-                        horizontalArrangement = Arrangement.SpaceAround
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(0.5f)
+                            .padding(start = 17.dp, end = 17.dp),
                     ) {
                         Text(
                             text = state.fromDate.format(DateTimeFormatter.ofPattern("MMM d yyyy")),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Normal,
                             fontFamily = interFont,
-                            modifier = Modifier.conditionalModifier(
+                            modifier = Modifier.applyIf(
                                     condition = state.editMode,
-                                    modifierType = Modifier.clickable {
-                                        TODO("Open from date dialog")
-                                    }
+                                    modifier = Modifier
+                                        .clickable {
+                                            onEvent(
+                                                EventDetailOnClick.DateTimePickerChanged(
+                                                    DateTimeDialogType.FROM_DATE
+                                                )
+                                            )
+                                            dateDialogState.show()
+                                        }
+                                        .align(Alignment.TopStart)
                                 )
                         )
                         if(state.editMode) {
                             Icon(
                                 imageVector = Icons.Default.ArrowRight,
-                                contentDescription = null
+                                contentDescription = null,
+                                modifier = Modifier.align(Alignment.TopEnd)
                             )
                         }
                     }
@@ -457,10 +593,15 @@ fun EventDetailScreen(
                             fontFamily = interFont,
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
-                                .conditionalModifier(
+                                .applyIf(
                                     condition = state.editMode,
-                                    modifierType = Modifier.clickable {
-                                        TODO("Open to time dialog")
+                                    modifier = Modifier.clickable {
+                                        onEvent(
+                                            EventDetailOnClick.DateTimePickerChanged(
+                                                DateTimeDialogType.TO_TIME
+                                            )
+                                        )
+                                        timeDialogState.show()
                                     }
                                 )
                         )
@@ -472,26 +613,37 @@ fun EventDetailScreen(
                             )
                         }
                     }
-                    Row(
-                        modifier = Modifier.weight(0.5f),
-                        horizontalArrangement = Arrangement.SpaceAround
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(0.5f)
+                            .padding(start = 17.dp, end = 17.dp)
+                        ,
                     ) {
                         Text(
                             text = state.toDate.format(DateTimeFormatter.ofPattern("MMM d yyyy")),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Normal,
                             fontFamily = interFont,
-                            modifier = Modifier.conditionalModifier(
+                            modifier = Modifier.applyIf(
                                 condition = state.editMode,
-                                modifierType = Modifier.clickable {
-                                    TODO("Open to date dialog")
-                                }
+                                modifier = Modifier
+                                    .clickable {
+                                        onEvent(
+                                            EventDetailOnClick.DateTimePickerChanged(
+                                                DateTimeDialogType.TO_DATE
+                                            )
+                                        )
+                                        dateDialogState.show()
+                                    }
+                                    .align(Alignment.TopStart)
                             )
                         )
                         if(state.editMode) {
                             Icon(
                                 imageVector = Icons.Default.ArrowRight,
-                                contentDescription = null
+                                contentDescription = null,
+                                modifier = Modifier.align(Alignment.TopEnd)
                             )
                         }
                     }
@@ -506,9 +658,9 @@ fun EventDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 25.dp, start = 17.dp, end = 17.dp)
-                        .conditionalModifier(
-                            condition = state.editMode ,
-                            modifierType = Modifier.clickable {
+                        .applyIf(
+                            condition = state.editMode,
+                            modifier = Modifier.clickable {
                                 onEvent(EventDetailOnClick.ToggleReminderMenu)
                             }
                         )
@@ -539,6 +691,60 @@ fun EventDetailScreen(
                             fontFamily = interFont
                         )
                     }
+
+                    DropdownMenu(
+                        expanded = state.isReminderMenuVisible,
+                        onDismissRequest = {
+                            onEvent(EventDetailOnClick.ToggleReminderMenu)
+                        }
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(text = stringResource(id = R.string.TenMinBefore))
+                            },
+                            onClick = {
+                                onEvent(EventDetailOnClick.ReminderTypeChanged(ReminderType.TEN_MINUTES_BEFORE))
+                                onEvent(EventDetailOnClick.ToggleReminderMenu)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Text(text = stringResource(id = R.string.ThirtyMinBefore))
+                            },
+                            onClick = {
+                                onEvent(EventDetailOnClick.ReminderTypeChanged(ReminderType.THIRTY_MINUTES_BEFORE))
+                                onEvent(EventDetailOnClick.ToggleReminderMenu)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Text(text = stringResource(id = R.string.OneHourBefore))
+                            },
+                            onClick = {
+                                onEvent(EventDetailOnClick.ReminderTypeChanged(ReminderType.ONE_HOUR_BEFORE))
+                                onEvent(EventDetailOnClick.ToggleReminderMenu)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Text(text = stringResource(id = R.string.SixHoursBefore))
+                            },
+                            onClick = {
+                                onEvent(EventDetailOnClick.ReminderTypeChanged(ReminderType.SIX_HOURS_BEFORE))
+                                onEvent(EventDetailOnClick.ToggleReminderMenu)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Text(text = stringResource(id = R.string.OneDayBefore))
+                            },
+                            onClick = {
+                                onEvent(EventDetailOnClick.ReminderTypeChanged(ReminderType.ONE_DAY_BEFORE))
+                                onEvent(EventDetailOnClick.ToggleReminderMenu)
+                            }
+                        )
+                    }
+
                     if(state.editMode) {
                         Icon(imageVector = Icons.Default.ArrowRight, contentDescription = null)
                     }
@@ -564,14 +770,18 @@ fun EventDetailScreen(
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = null,
-                            modifier = Modifier.background(Light2)
+                            modifier = Modifier
+                                .background(Light2)
+                                .clickable {
+                                    onEvent(EventDetailOnClick.ToggleAddingAttendeeDialog)
+                                }
                             ,
                             tint = Gray
                         )
                     }
                 }
 
-                if(state.attendees.isNotEmpty()) {
+                if(attendeeList.isNotEmpty()) {
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -596,7 +806,7 @@ fun EventDetailScreen(
                                         },
                                         modifier = Modifier.weight(1f),
                                         onClick = {
-                                            onEvent(EventDetailOnClick.SelectFilterOption(chip))
+                                            onEvent(EventDetailOnClick.SelectFilterOption(chip, index))
                                         }
                                     )
                                 }
@@ -614,8 +824,15 @@ fun EventDetailScreen(
                                         modifier = Modifier.padding(start = 12.dp, top = 15.dp)
                                     )
                                 }
-                                items(state.attendees.filter { TODO("Filter by isGoing") }) {
-                                    //AttendeeItem(initials = , fullName = , eventCreator = )
+                                items(attendeeList.filter { it.isGoing }) {
+                                    AttendeeItem(
+                                        initials = getInitials(it.fullName),
+                                        fullName = it.fullName,
+                                        eventCreator = it.userId == state.eventCreatorId,
+                                        onDeleteClick = {
+                                            onEvent(EventDetailOnClick.RemoveAttendee(it))
+                                        }
+                                    )
                                     Spacer(modifier = Modifier.height(8.dp))
                                 }
                                 item {
@@ -628,8 +845,15 @@ fun EventDetailScreen(
                                         modifier = Modifier.padding(start = 12.dp, top = 15.dp)
                                     )
                                 }
-                                items(state.attendees.filter { TODO("Filter by !isGoing") }) {
-                                    //AttendeeItem(initials = , fullName = , eventCreator = )
+                                items(attendeeList.filter { !it.isGoing }) {
+                                    AttendeeItem(
+                                        initials = getInitials(it.fullName),
+                                        fullName = it.fullName,
+                                        eventCreator = it.userId == state.eventCreatorId,
+                                        onDeleteClick = {
+                                            onEvent(EventDetailOnClick.RemoveAttendee(it))
+                                        }
+                                    )
                                     Spacer(modifier = Modifier.height(8.dp))
                                 }
                             }
@@ -644,8 +868,15 @@ fun EventDetailScreen(
                                         modifier = Modifier.padding(start = 12.dp, top = 15.dp)
                                     )
                                 }
-                                items(state.attendees.filter { TODO("Filter by isGoing") }) {
-                                    //AttendeeItem(initials = , fullName = , eventCreator = )
+                                items(attendeeList.filter { it.isGoing }) {
+                                    AttendeeItem(
+                                        initials = getInitials(it.fullName),
+                                        fullName = it.fullName,
+                                        eventCreator = it.userId == state.eventCreatorId,
+                                        onDeleteClick = {
+                                            onEvent(EventDetailOnClick.RemoveAttendee(it))
+                                        }
+                                    )
                                     Spacer(modifier = Modifier.height(8.dp))
                                 }
                             }
@@ -660,8 +891,15 @@ fun EventDetailScreen(
                                         modifier = Modifier.padding(start = 12.dp, top = 15.dp)
                                     )
                                 }
-                                items(state.attendees.filter { TODO("Filter by !isGoing") }) {
-                                    //AttendeeItem(initials = , fullName = , eventCreator = )
+                                items(attendeeList.filter { !it.isGoing}) {
+                                    AttendeeItem(
+                                        initials = getInitials(it.fullName),
+                                        fullName = it.fullName,
+                                        eventCreator = it.userId == state.eventCreatorId,
+                                        onDeleteClick = {
+                                            onEvent(EventDetailOnClick.RemoveAttendee(it))
+                                        }
+                                    )
                                     Spacer(modifier = Modifier.height(8.dp))
                                 }
                             }
@@ -683,4 +921,28 @@ fun EventDetailScreen(
             }
         }
     }
+    DatePickerDialog(
+        initialDate = state.fromDate,
+        dialogState = dateDialogState,
+        onClick = {
+            when(state.dateTimePicker) {
+                DateTimeDialogType.FROM_DATE -> onEvent(EventDetailOnClick.FromDateChanged(it))
+                DateTimeDialogType.TO_DATE -> onEvent(EventDetailOnClick.ToDateChanged(it))
+                DateTimeDialogType.FROM_TIME -> Unit
+                DateTimeDialogType.TO_TIME -> Unit
+            }
+        }
+    )
+    TimePickerDialog(
+        initialTime = state.fromTime,
+        dialogState = timeDialogState,
+        onClick = {
+            when(state.dateTimePicker) {
+                DateTimeDialogType.FROM_DATE -> Unit
+                DateTimeDialogType.TO_DATE -> Unit
+                DateTimeDialogType.FROM_TIME -> onEvent(EventDetailOnClick.FromTimeChanged(it))
+                DateTimeDialogType.TO_TIME -> onEvent(EventDetailOnClick.ToTimeChanged(it))
+            }
+        }
+    )
 }
