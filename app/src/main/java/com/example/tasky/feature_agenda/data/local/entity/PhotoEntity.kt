@@ -11,13 +11,14 @@ import androidx.room.PrimaryKey
             entity = EventEntity::class,
             parentColumns = arrayOf("eventId"),
             childColumns = arrayOf("eventId"),
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE
         )
     ]
 )
 data class PhotoEntity(
     val key: String,
-    val url: String,
+    val uri: String,
     val eventId: String,
     @PrimaryKey(autoGenerate = true)
     val photoId: Int = 0

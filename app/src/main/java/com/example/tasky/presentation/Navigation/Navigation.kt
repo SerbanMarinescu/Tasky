@@ -262,7 +262,9 @@ fun Navigation(navController: NavHostController) {
                     }
                 }
                 photoUrl?.let {
-                    viewModel.onEvent(EventDetailOnClick.DeletePhoto(it))
+                    if(state.editMode) {
+                        viewModel.onEvent(EventDetailOnClick.DeletePhoto(it))
+                    }
                 }
             }
 
@@ -273,6 +275,7 @@ fun Navigation(navController: NavHostController) {
                 dateDialogState = viewModel.dateDialogState,
                 timeDialogState = viewModel.timeDialogState,
                 validationResult = validationResult,
+                photoList = viewModel.photoList,
                 attendeeList = viewModel.attendeeList,
                 navigateBack = {
                     navController.popBackStack()

@@ -11,7 +11,8 @@ import androidx.room.PrimaryKey
             entity = EventEntity::class,
             parentColumns = arrayOf("eventId"),
             childColumns = arrayOf("eventId"),
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE
         )
     ]
 )

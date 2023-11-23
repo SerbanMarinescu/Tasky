@@ -20,7 +20,7 @@ sealed class AgendaItem(
         val eventDescription: String?,
         val from: ZonedDateTime,
         val to: ZonedDateTime,
-        val photos: List<Photo>,
+        val photos: List<EventPhoto>,
         val attendees: List<Attendee>,
         val isUserEventCreator: Boolean,
         val host: String?,
