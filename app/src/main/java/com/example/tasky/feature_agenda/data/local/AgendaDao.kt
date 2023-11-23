@@ -7,7 +7,6 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import com.example.tasky.feature_agenda.data.local.entity.AttendeeEntity
 import com.example.tasky.feature_agenda.data.local.entity.EventEntity
-import com.example.tasky.feature_agenda.data.local.entity.PhotoEntity
 import com.example.tasky.feature_agenda.data.local.entity.SyncItemEntity
 import com.example.tasky.feature_agenda.data.mapper.toAttendeeEntity
 import com.example.tasky.feature_agenda.data.mapper.toEventEntity
@@ -42,7 +41,7 @@ interface AgendaDao {
             eventList.forEach { event ->
                 val eventEntity = event.toEventEntity()
                 val attendeeEntities = event.attendees.map { it.toAttendeeEntity(event.eventId) }
-                val photoEntities = event.photos.map { it.toPhotoEntity(event.eventId) }
+                val photoEntities = event.photos.mapNotNull { it.toPhotoEntity(event.eventId) }
 
                 db.eventDao.upsertEvent(eventEntity)
                 db.eventDao.upsertAttendees(attendeeEntities)
@@ -81,7 +80,7 @@ interface AgendaDao {
             eventList.forEach { event->
                 val eventEntity = event.toEventEntity()
                 val attendeeEntities = event.attendees.map { it.toAttendeeEntity(event.eventId) }
-                val photoEntities = event.photos.map { it.toPhotoEntity(event.eventId) }
+                val photoEntities = event.photos.mapNotNull { it.toPhotoEntity(event.eventId) }
 
                 db.eventDao.upsertEvent(eventEntity)
                 db.eventDao.upsertAttendees(attendeeEntities)
@@ -101,17 +100,17 @@ interface AgendaDao {
     }
 
     @Transaction
-    suspend fun upsertEventWithAttendeesAndPhotos(
+    suspend fun upsertEventWithAttendees(
         db: AgendaDatabase,
         eventEntity: EventEntity,
         attendeeEntities: List<AttendeeEntity>,
-        photoEntities: List<PhotoEntity>
+        //photoEntities: List<PhotoEntity>
     ) {
         db.apply {
 
             db.eventDao.upsertEvent(eventEntity)
             db.eventDao.upsertAttendees(attendeeEntities)
-            db.eventDao.upsertPhotos(photoEntities)
+            //db.eventDao.upsertPhotos(photoEntities)
         }
     }
 
