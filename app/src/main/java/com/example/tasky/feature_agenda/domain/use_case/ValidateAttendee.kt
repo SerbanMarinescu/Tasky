@@ -14,11 +14,10 @@ class ValidateAttendee(
 
         val validationResult = userDataValidator.validateEmail(email)
 
-            return if(validationResult.isValid) {
-                repository.doesAttendeeExist(email)
-            } else {
-                Resource.Error(message = validationResult.emailError?.name ?: "", errorType = ErrorType.VALIDATION_ERROR)
-            }
-
+        return if(validationResult.isValid) {
+            repository.doesAttendeeExist(email)
+        } else {
+            Resource.Error(message = validationResult.emailError?.name ?: "", errorType = ErrorType.VALIDATION_ERROR)
+        }
     }
 }

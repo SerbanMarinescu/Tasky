@@ -8,8 +8,6 @@ import com.example.tasky.feature_agenda.domain.util.PhotoValidator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileOutputStream
 
 class PhotoValidatorImpl(
     private val context: Context
@@ -25,15 +23,6 @@ class PhotoValidatorImpl(
         }
     }
 
-    override suspend fun saveImageBytes(imageBytes: ByteArray, parentDirectory: File, fileName: String) {
-        withContext(Dispatchers.IO) {
-            val file = File(parentDirectory, fileName)
-            FileOutputStream(file).use {
-                it.write(imageBytes)
-            }
-        }
-    }
-
     override fun checkImageSize(imageBytes: ByteArray): Boolean {
         return imageBytes.size < 1024 * 1024
     }
@@ -45,14 +34,6 @@ class PhotoValidatorImpl(
             bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
 
             outputStream.toByteArray()
-        }
-    }
-
-    override suspend fun getDirectoryForImages(nameByEventId: String): File {
-        return withContext(Dispatchers.IO) {
-            val eventFile = File(context.filesDir, "EventPhotos for $nameByEventId")
-            eventFile.mkdir()
-            eventFile
         }
     }
 }

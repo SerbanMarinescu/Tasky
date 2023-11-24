@@ -15,6 +15,7 @@ import com.example.tasky.feature_authentication.domain.util.UserPreferences
 import com.example.tasky.feature_authentication.domain.validation.EmailPatternValidator
 import com.example.tasky.feature_authentication.domain.validation.UserDataValidator
 import com.example.tasky.feature_authentication.domain.validation.UserDataValidatorImpl
+import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,10 +32,13 @@ object AuthModule {
 
     @Provides
     @Singleton
-    fun provideAuthApi(client: OkHttpClient): TaskyAuthApi {
+    fun provideAuthApi(
+        client: OkHttpClient,
+        moshi: Moshi
+    ): TaskyAuthApi {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .addConverterFactory(MoshiConverterFactory.create())
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
             .client(client)
             .build()
             .create()

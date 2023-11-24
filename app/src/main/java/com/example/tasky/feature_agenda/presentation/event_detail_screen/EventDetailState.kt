@@ -29,5 +29,6 @@ data class EventDetailState(
     val attendeeEmail: String = "",
     val isLoading: Boolean = false,
     val isEmailValid: Boolean = false,
-    val emailError: UiText? = null
+    val emailError: UiText? = null,
+    val loadingProgress: Float = 0f
 )

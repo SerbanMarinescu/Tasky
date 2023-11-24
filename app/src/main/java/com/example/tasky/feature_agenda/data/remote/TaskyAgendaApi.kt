@@ -4,7 +4,6 @@ import com.example.tasky.feature_agenda.data.remote.dto.EventDto
 import com.example.tasky.feature_agenda.data.remote.dto.ReminderDto
 import com.example.tasky.feature_agenda.data.remote.dto.TaskDto
 import com.example.tasky.feature_agenda.data.remote.request.SyncAgendaRequest
-import com.example.tasky.feature_agenda.data.remote.request.UpdateEventRequest
 import com.example.tasky.feature_agenda.data.remote.response.AgendaResponse
 import com.example.tasky.feature_agenda.data.remote.response.AttendeeResponse
 import okhttp3.MultipartBody
@@ -58,7 +57,7 @@ interface TaskyAgendaApi {
     @Multipart
     @PUT("/event")
     suspend fun updateEvent(
-        @Part("update_event_request") updateEventRequest: UpdateEventRequest,
+        @Part("update_event_request") updateEventRequest: RequestBody,
         @Part photos: List<MultipartBody.Part>
     ): Response<EventDto>
 

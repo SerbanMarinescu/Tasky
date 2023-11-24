@@ -1,5 +1,6 @@
 package com.example.tasky.feature_agenda.data.repository
 
+import android.util.Log
 import com.example.tasky.feature_agenda.data.local.AgendaDatabase
 import com.example.tasky.feature_agenda.data.mapper.toAttendee
 import com.example.tasky.feature_agenda.data.mapper.toAttendeeEntity
@@ -22,11 +23,8 @@ import com.example.tasky.util.ErrorType
 import com.example.tasky.util.Resource
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
-import java.io.File
 import java.io.IOException
 
 class EventRepositoryImpl(
@@ -58,9 +56,7 @@ class EventRepositoryImpl(
     override suspend fun createEvent(event: AgendaItem.Event): Resource<Unit> {
 
         val eventEntity = event.toEventEntity()
-        val attendeeEntities = event.attendees.map { it.toAttendeeEntity(event.eventId) }
-
-        db.agendaDao.upsertEventWithAttendees(db, eventEntity, attendeeEntities)
+        db.eventDao.upsertEvent(eventEntity)
 
         return syncCreatedEvent(event)
     }
@@ -68,12 +64,10 @@ class EventRepositoryImpl(
     override suspend fun syncCreatedEvent(event: AgendaItem.Event): Resource<Unit> {
 
         val localPhotos = event.photos.filterIsInstance<EventPhoto.Local>()
-        val eventDirectory = photoValidator.getDirectoryForImages(event.eventId)
 
-        val photoList = List(localPhotos.size) { index ->
-            val file = File(eventDirectory, "photo$index")
-            val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-            MultipartBody.Part.createFormData("photo$index", file.name, requestFile)
+        val photoList = localPhotos.mapIndexed { index, eventPhoto ->
+            val requestFile = eventPhoto.byteArray.toRequestBody("image/*".toMediaTypeOrNull(), 0, eventPhoto.byteArray.size)
+            MultipartBody.Part.createFormData("photo$index", "photo$index.jpg", requestFile)
         }
 
         val eventRequest = EventRequest(
@@ -104,6 +98,17 @@ class EventRepositoryImpl(
             photoEntities?.let {
                 db.eventDao.upsertPhotos(it)
             }
+
+            val remoteAttendees = response.body()?.attendees?.map {
+                it.toAttendee()
+            }
+            val attendeeEntities = remoteAttendees?.map {
+                it.toAttendeeEntity(event.eventId)
+            }
+            attendeeEntities?.let {
+                db.eventDao.upsertAttendees(it)
+            }
+
             Resource.Success()
         } catch(e: HttpException) {
             Resource.Error(message = e.message ?: "Invalid Response", errorType = ErrorType.HTTP)
@@ -139,10 +144,7 @@ class EventRepositoryImpl(
     override suspend fun updateEvent(event: AgendaItem.Event, deletedPhotos: List<EventPhoto>): Resource<Unit> {
 
         val eventEntity = event.toEventEntity()
-        val attendeeEntities = event.attendees.map { it.toAttendeeEntity(event.eventId) }
-        //val photoEntities = event.photos.map { it.toPhotoEntity(event.eventId) }
-
-        db.agendaDao.upsertEventWithAttendees(db, eventEntity, attendeeEntities)
+        db.eventDao.upsertEvent(eventEntity)
 
         return syncUpdatedEvent(event, deletedPhotos)
     }
@@ -152,49 +154,68 @@ class EventRepositoryImpl(
         deletedPhotos: List<EventPhoto>
     ): Resource<Unit> {
 
-        val photoList = event.photos.map { photo ->
-            val file = File(
-                when(photo) {
-                    is EventPhoto.Local -> photo.uri
-                    is EventPhoto.Remote -> photo.url
-                }
-            )
-            val requestFile: RequestBody = file.asRequestBody("image/*".toMediaTypeOrNull())
-            MultipartBody.Part.createFormData("photos", file.name, requestFile)
+        Log.d("UpdatingEvent", "Sync update event in repo")
+        val localPhotos = event.photos.filterIsInstance<EventPhoto.Local>()
+        Log.d("UpdatingEvent", "PhotoList to add $localPhotos")
+        val photoList = localPhotos.mapIndexed { index, eventPhoto ->
+            val requestFile = eventPhoto.byteArray.toRequestBody("image/*".toMediaTypeOrNull(), 0, eventPhoto.byteArray.size)
+            MultipartBody.Part.createFormData("photo$index", "photo$index.jpg", requestFile)
         }
-
+        Log.d("UpdatingEvent", "Photo list for request $photoList")
         val userId = userPrefs.getAuthenticatedUser()?.userId ?: return Resource.Error(message = "User is not logged in!", errorType = ErrorType.OTHER)
+        Log.d("UpdatingEvent", "Attendees in repo: ${event.attendees}")
+        val updateEventRequest = UpdateEventRequest(
+            id = event.eventId,
+            title = event.title,
+            description = event.description ?: "",
+            from = event.from.toUtcTimestamp(),
+            to = event.to.toUtcTimestamp(),
+            remindAt = event.remindAt.toUtcTimestamp(),
+            attendeeIds = event.attendees.map { it.userId },
+            deletedPhotoKeys = deletedPhotos.map {
+                when (it) {
+                    is EventPhoto.Local -> it.key
+                    is EventPhoto.Remote -> it.key
+                }
+            },
+            isGoing = event.attendees.any{ it.userId == userId }
+        )
+
+        val jsonEventRequest = jsonSerializer.toJson(updateEventRequest, UpdateEventRequest::class.java)
+        val eventRequestBody = jsonEventRequest.toRequestBody()
 
         return try {
             val response = api.updateEvent(
-                UpdateEventRequest(
-                    id = event.eventId,
-                    title = event.title,
-                    description = event.description ?: "",
-                    from = event.from.toUtcTimestamp(),
-                    to = event.to.toUtcTimestamp(),
-                    remindAt = event.remindAt.toUtcTimestamp(),
-                    attendeeIds = event.attendees.map { it.userId },
-                    deletedPhotoKeys = deletedPhotos.map {
-                        when (it) {
-                            is EventPhoto.Local -> it.key
-                            is EventPhoto.Remote -> it.key
-                        }
-                    },
-                    isGoing = event.attendees.any{ it.userId == userId }
-                ),
-                photoList
+                updateEventRequest = eventRequestBody,
+                photos = photoList
             )
 
-//            val remotePhotos = response.body()?.photos?.map {
-//                it.toPhoto()
-//            }
-//            val photoEntities = remotePhotos?.map {
-//                it.toPhotoEntity(event.eventId)
-//            }
-//            photoEntities?.let {
-//                db.eventDao.upsertPhotos(it)
-//            }
+            val deletedPhotoEntities = deletedPhotos.mapNotNull {
+                it.toPhotoEntity(event.eventId)
+            }
+
+            db.eventDao.deletePhotos(deletedPhotoEntities)
+
+            val remotePhotos = response.body()?.photos?.map {
+                it.toPhoto()
+            }
+            val photoEntities = remotePhotos?.mapNotNull {
+                it.toPhotoEntity(event.eventId)
+            }
+            photoEntities?.let {
+                db.eventDao.upsertPhotos(it)
+            }
+
+            val remoteAttendees = response.body()?.attendees?.map {
+                it.toAttendee()
+            }
+
+            val attendeeEntities = remoteAttendees?.map {
+                it.toAttendeeEntity(event.eventId)
+            }
+            attendeeEntities?.let {
+                db.eventDao.updateAttendeesForAnEvent(event.eventId, it)
+            }
 
             Resource.Success()
         } catch(e: HttpException) {

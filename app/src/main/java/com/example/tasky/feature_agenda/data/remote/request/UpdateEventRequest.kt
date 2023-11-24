@@ -1,5 +1,8 @@
 package com.example.tasky.feature_agenda.data.remote.request
 
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
 data class UpdateEventRequest(
     val id: String,
     val title: String,

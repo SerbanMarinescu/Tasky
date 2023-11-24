@@ -9,6 +9,7 @@ sealed interface EventPhoto {
 
     data class Local(
         val key: String,
-        val uri: String
+        val uri: String,
+        val byteArray: ByteArray
     ): EventPhoto
 }

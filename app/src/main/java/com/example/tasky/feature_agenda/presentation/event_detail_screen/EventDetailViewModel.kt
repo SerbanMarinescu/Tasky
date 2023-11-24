@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -31,7 +32,9 @@ import com.example.tasky.util.Resource
 import com.example.tasky.util.Result
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -81,7 +84,11 @@ class EventDetailViewModel @Inject constructor(
     fun onEvent(event: EventDetailOnClick) {
         when(event) {
             EventDetailOnClick.SaveEvent -> {
-                saveEvent()
+                if(state.value.eventId == null) {
+                    createEvent()
+                } else {
+                    updateEvent()
+                }
             }
             is EventDetailOnClick.SelectFilterOption -> {
                 _state.update {
@@ -133,7 +140,8 @@ class EventDetailViewModel @Inject constructor(
                         photoList.add(
                             EventPhoto.Local(
                                 key = UUID.randomUUID().toString(),
-                                uri = uri.toString()
+                                uri = uri.toString(),
+                                byteArray = byteArrayOf()
                             )
                         )
                     }
@@ -149,8 +157,8 @@ class EventDetailViewModel @Inject constructor(
                 }
 
                 photoToRemove?.let { photo ->
-                    photoList.remove(photo)
                     deletedPhotos.add(photo)
+                    photoList.remove(photo)
 
                     _state.update {
                         it.copy(
@@ -243,6 +251,12 @@ class EventDetailViewModel @Inject constructor(
                                 isGoing = true,
                                 remindAt = ZonedDateTime.of(state.value.fromDate, state.value.fromTime, ZoneId.systemDefault())
                             )
+
+                            if(attendeeList.contains(attendee)) {
+                                resultChannel.send(Result.Error("Attendee Already Added!"))
+                                return@launch
+                            }
+
                             attendeeList.add(attendee)
                             _state.update {
                                 it.copy(
@@ -262,10 +276,101 @@ class EventDetailViewModel @Inject constructor(
         }
     }
 
-    private fun saveEvent() {
+    private suspend fun startLoading() {
+        (0..100).forEach { progress ->
+            _state.update {
+                it.copy(loadingProgress = progress.toFloat()/100)
+            }
+            delay(10L)
+        }
+    }
+
+    private fun createEvent() {
         viewModelScope.launch {
-        val fromDateTime = ZonedDateTime.of(state.value.fromDate, state.value.fromTime, ZoneId.systemDefault())
-        val toDateTime = ZonedDateTime.of(state.value.toDate, state.value.toTime, ZoneId.systemDefault())
+            val creatingEventJob = async {
+                _state.update {
+                    it.copy(isLoading = true)
+                }
+                val fromDateTime = ZonedDateTime.of(state.value.fromDate, state.value.fromTime, ZoneId.systemDefault())
+                val toDateTime = ZonedDateTime.of(state.value.toDate, state.value.toTime, ZoneId.systemDefault())
+
+                val isDateValid = validateDateRange(fromDateTime, toDateTime)
+                if (!isDateValid) {
+                    resultChannel.send(Result.Error("\"From\" DateTime must not be after \"To\" DateTime"))
+                    return@async
+                }
+
+                val user = userPreferences.getAuthenticatedUser() ?: return@async
+                val eventId = UUID.randomUUID().toString()
+
+                val eventCreator = Attendee(
+                    email = user.email,
+                    fullName = user.fullName,
+                    userId = user.userId,
+                    eventId = eventId,
+                    isGoing = true,
+                    remindAt = when (state.value.reminderType) {
+                        ReminderType.TEN_MINUTES_BEFORE -> fromDateTime.minusMinutes(10)
+                        ReminderType.THIRTY_MINUTES_BEFORE -> fromDateTime.minusMinutes(30)
+                        ReminderType.ONE_HOUR_BEFORE -> fromDateTime.minusHours(1)
+                        ReminderType.SIX_HOURS_BEFORE -> fromDateTime.minusHours(6)
+                        ReminderType.ONE_DAY_BEFORE -> fromDateTime.minusDays(1)
+                    }
+                )
+
+                if(!attendeeList.contains(eventCreator)) {
+                    attendeeList.add(0, eventCreator)
+                }
+
+                val localPhotos = photoList.filterIsInstance<EventPhoto.Local>().toMutableList()
+                val validPhotos = useCases.event.validatePhotos(localPhotos)
+                val skippedPhotosCount = localPhotos.size - validPhotos.size
+
+                if (skippedPhotosCount > 0) {
+                    resultChannel.send(Result.Error("$skippedPhotosCount Photos were skipped because they were too large!"))
+                }
+
+                val eventToBeCreated = AgendaItem.Event(
+                    eventId = eventId,
+                    eventTitle = state.value.eventTitle,
+                    eventDescription = state.value.eventDescription,
+                    from = fromDateTime,
+                    to = toDateTime,
+                    photos = validPhotos,
+                    attendees = attendeeList.map { it.copy(eventId = eventId) },
+                    isUserEventCreator = true,
+                    host = user.userId,
+                    remindAtTime = when (state.value.reminderType) {
+                        ReminderType.TEN_MINUTES_BEFORE -> fromDateTime.minusMinutes(10)
+                        ReminderType.THIRTY_MINUTES_BEFORE -> fromDateTime.minusMinutes(30)
+                        ReminderType.ONE_HOUR_BEFORE -> fromDateTime.minusHours(1)
+                        ReminderType.SIX_HOURS_BEFORE -> fromDateTime.minusHours(6)
+                        ReminderType.ONE_DAY_BEFORE -> fromDateTime.minusDays(1)
+                    },
+                    eventReminderType = state.value.reminderType
+                )
+
+                useCases.event.createEvent(eventToBeCreated)
+            }
+
+            val loadingJob = async {
+                startLoading()
+            }
+
+            creatingEventJob.await()
+            loadingJob.cancel()
+            _state.update { it.copy(loadingProgress = 1f) }
+            delay(500L)
+            _state.update { it.copy(isLoading = false) }
+            delay(50L)
+            resultChannel.send(Result.Success())
+        }
+    }
+
+    private fun updateEvent() {
+        viewModelScope.launch {
+            val fromDateTime = ZonedDateTime.of(state.value.fromDate, state.value.fromTime, ZoneId.systemDefault())
+            val toDateTime = ZonedDateTime.of(state.value.toDate, state.value.toTime, ZoneId.systemDefault())
 
             val isDateValid = validateDateRange(fromDateTime, toDateTime)
             if(!isDateValid) {
@@ -273,67 +378,37 @@ class EventDetailViewModel @Inject constructor(
                 return@launch
             }
 
-            val user = userPreferences.getAuthenticatedUser() ?: return@launch
-            val eventId = UUID.randomUUID().toString()
-
-            val eventCreator = Attendee(
-                email = user.email,
-                fullName = user.fullName,
-                userId = user.userId,
-                eventId = eventId,
-                isGoing = true,
-                remindAt = when(state.value.reminderType) {
-                    ReminderType.TEN_MINUTES_BEFORE -> fromDateTime.minusMinutes(10)
-                    ReminderType.THIRTY_MINUTES_BEFORE -> fromDateTime.minusMinutes(30)
-                    ReminderType.ONE_HOUR_BEFORE -> fromDateTime.minusHours(1)
-                    ReminderType.SIX_HOURS_BEFORE -> fromDateTime.minusHours(6)
-                    ReminderType.ONE_DAY_BEFORE -> fromDateTime.minusDays(1)
-                }
-            )
-
-            attendeeList.add(0, eventCreator)
-
             val localPhotos = photoList.filterIsInstance<EventPhoto.Local>().toMutableList()
-            useCases.event.validatePhotos(eventId, localPhotos)
+            val validPhotos = useCases.event.validatePhotos(localPhotos)
+            val skippedPhotosCount = localPhotos.size - validPhotos.size
 
-            val eventToBeCreated = AgendaItem.Event(
-                eventId = eventId,
-                eventTitle = state.value.eventTitle,
-                eventDescription = state.value.eventDescription,
-                from = fromDateTime,
-                to = toDateTime,
-                photos = localPhotos,
-                attendees = attendeeList.map { it.copy(eventId = eventId) },
-                isUserEventCreator = true,
-                host = user.userId,
-                remindAtTime = when(state.value.reminderType) {
-                    ReminderType.TEN_MINUTES_BEFORE -> fromDateTime.minusMinutes(10)
-                    ReminderType.THIRTY_MINUTES_BEFORE -> fromDateTime.minusMinutes(30)
-                    ReminderType.ONE_HOUR_BEFORE -> fromDateTime.minusHours(1)
-                    ReminderType.SIX_HOURS_BEFORE -> fromDateTime.minusHours(6)
-                    ReminderType.ONE_DAY_BEFORE -> fromDateTime.minusDays(1)
-                },
-                eventReminderType = state.value.reminderType
-            )
-
-            val existingEventId = state.value.eventId
-            existingEventId?.let {
-                val eventToBeUpdated = eventToBeCreated.copy(
-                    eventId = it,
-                    host = state.value.eventCreatorId,
-                    attendees = attendeeList.map { attendee ->
-                        attendee.copy(eventId = it)
-                    }.also { attendeeList ->
-                        attendeeList.distinctBy { attendee ->
-                            attendee.userId
-                        }
-                    }
-                )
-                useCases.event.updateEvent(eventToBeUpdated, deletedPhotos)
-                return@launch
+            if (skippedPhotosCount > 0) {
+                resultChannel.send(Result.Error("$skippedPhotosCount Photos were skipped because they were too large!"))
             }
 
-            useCases.event.createEvent(eventToBeCreated)
+            state.value.eventId?.let {
+                val eventToBeUpdated = AgendaItem.Event(
+                    eventId = it,
+                    eventTitle = state.value.eventTitle,
+                    eventDescription = state.value.eventDescription,
+                    from = fromDateTime,
+                    to = toDateTime,
+                    photos = validPhotos,
+                    attendees = attendeeList.toList(),
+                    isUserEventCreator = true,
+                    host = state.value.eventCreatorId,
+                    remindAtTime = when(state.value.reminderType) {
+                        ReminderType.TEN_MINUTES_BEFORE -> fromDateTime.minusMinutes(10)
+                        ReminderType.THIRTY_MINUTES_BEFORE -> fromDateTime.minusMinutes(30)
+                        ReminderType.ONE_HOUR_BEFORE -> fromDateTime.minusHours(1)
+                        ReminderType.SIX_HOURS_BEFORE -> fromDateTime.minusHours(6)
+                        ReminderType.ONE_DAY_BEFORE -> fromDateTime.minusDays(1)
+                    },
+                    eventReminderType = state.value.reminderType
+                )
+                useCases.event.updateEvent(eventToBeUpdated, deletedPhotos)
+                resultChannel.send(Result.Success())
+            }
         }
     }
 
@@ -354,6 +429,8 @@ class EventDetailViewModel @Inject constructor(
                     event.attendees.forEach {
                         attendeeList.add(it)
                     }
+
+                    attendeeList = attendeeList.sortedBy { it.userId != event.host }.toMutableStateList()
 
                     _state.update {
                         it.copy(

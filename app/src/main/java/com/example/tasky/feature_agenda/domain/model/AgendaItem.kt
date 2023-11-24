@@ -4,7 +4,6 @@ import com.example.tasky.feature_agenda.domain.util.ReminderType
 import com.squareup.moshi.JsonClass
 import java.time.ZonedDateTime
 
-@JsonClass(generateAdapter = true)
 sealed class AgendaItem(
     val id: String,
     val title: String,

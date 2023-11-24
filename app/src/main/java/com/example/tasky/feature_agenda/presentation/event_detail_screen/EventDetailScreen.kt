@@ -40,6 +40,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -56,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.tasky.R
 import com.example.tasky.feature_agenda.domain.model.Attendee
 import com.example.tasky.feature_agenda.domain.model.EventPhoto
@@ -106,8 +108,36 @@ fun EventDetailScreen(
     ObserveAsEvents(flow = validationResult) { result ->
         when(result) {
             is Result.Error -> Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
-            is Result.Success -> Toast.makeText(context, "Attendee Added", Toast.LENGTH_SHORT).show()
+            is Result.Success -> navigateBack()
         }
+    }
+
+    if(state.isLoading) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(70.dp)
+                        .padding(20.dp)
+                ) {
+                        LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth(),
+                            progress = state.loadingProgress
+                        )
+                }
+            },
+            text = {
+                   Text(
+                       text = "Creating Event, please wait...",
+                       fontSize = 16.sp,
+                       fontWeight = FontWeight.Bold,
+                       fontFamily = interFont,
+                   )
+            },
+            confirmButton = {}
+        )
     }
 
     if(state.addingAttendees) {
@@ -223,7 +253,6 @@ fun EventDetailScreen(
                     fontSize = 16.sp,
                     modifier = Modifier.clickable {
                         onEvent(EventDetailOnClick.SaveEvent)
-                        navigateBack()
                     }
                 )
             } else {
@@ -378,7 +407,11 @@ fun EventDetailScreen(
                                         AsyncImage(
                                             model = when(photo) {
                                                 is EventPhoto.Local -> photo.uri.toUri()
-                                                is EventPhoto.Remote -> photo.url.toUri()
+                                                is EventPhoto.Remote -> {
+                                                    ImageRequest.Builder(context)
+                                                        .data(photo.url)
+                                                        .build()
+                                                }
                                             },
                                             contentDescription = null,
                                             contentScale = ContentScale.Crop,
@@ -388,14 +421,19 @@ fun EventDetailScreen(
                                                 .clickable {
                                                     navigateTo(
                                                         Screen.PhotoDetailsScreen.route +
-                                                                "/${ when(photo) {
-                                                                    is EventPhoto.Local -> photo.key
-                                                                    is EventPhoto.Remote -> photo.key
-                                                                }}" +
-                                                                "/${Uri.encode(when(photo) {
-                                                                    is EventPhoto.Local -> photo.uri
-                                                                    is EventPhoto.Remote -> photo.url
-                                                                })
+                                                                "/${
+                                                                    when (photo) {
+                                                                        is EventPhoto.Local -> photo.key
+                                                                        is EventPhoto.Remote -> photo.key
+                                                                    }
+                                                                }" +
+                                                                "/${
+                                                                    Uri.encode(
+                                                                        when (photo) {
+                                                                            is EventPhoto.Local -> photo.uri
+                                                                            is EventPhoto.Remote -> photo.url
+                                                                        }
+                                                                    )
                                                                 }"
                                                     )
                                                 }
