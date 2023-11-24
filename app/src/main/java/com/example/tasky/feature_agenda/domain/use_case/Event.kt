@@ -4,5 +4,6 @@ data class Event(
     val createEvent: CreateEvent,
     val updateEvent: UpdateEvent,
     val deleteEvent: DeleteEvent,
-    val validateAttendee: ValidateAttendee
+    val validateAttendee: ValidateAttendee,
+    val validatePhotos: ValidatePhotos
 )

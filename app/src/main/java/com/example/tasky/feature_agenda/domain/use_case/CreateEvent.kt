@@ -1,5 +1,6 @@
 package com.example.tasky.feature_agenda.domain.use_case
 
+import android.util.Log
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.EventRepository
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType
@@ -26,6 +27,7 @@ class CreateEvent(
                     HTTP -> Result.Error(result.message ?: "Unknown Error")
 
                     IO -> {
+                        Log.d("ErrorUploading", "Error: ${result.message}")
                         taskScheduler.scheduleItemToBeSynced(
                             itemId = event.eventId,
                             itemType = AgendaItemType.EVENT,

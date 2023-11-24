@@ -12,6 +12,7 @@ import com.example.tasky.feature_agenda.data.repository.EventRepositoryImpl
 import com.example.tasky.feature_agenda.data.repository.ReminderRepositoryImpl
 import com.example.tasky.feature_agenda.data.repository.TaskRepositoryImpl
 import com.example.tasky.feature_agenda.data.util.MoshiSerializer
+import com.example.tasky.feature_agenda.data.util.PhotoValidatorImpl
 import com.example.tasky.feature_agenda.data.util.TaskSchedulerImpl
 import com.example.tasky.feature_agenda.domain.repository.AgendaRepositories
 import com.example.tasky.feature_agenda.domain.use_case.AgendaUseCases
@@ -29,7 +30,9 @@ import com.example.tasky.feature_agenda.domain.use_case.UpdateEvent
 import com.example.tasky.feature_agenda.domain.use_case.UpdateReminder
 import com.example.tasky.feature_agenda.domain.use_case.UpdateTask
 import com.example.tasky.feature_agenda.domain.use_case.ValidateAttendee
+import com.example.tasky.feature_agenda.domain.use_case.ValidatePhotos
 import com.example.tasky.feature_agenda.domain.util.JsonSerializer
+import com.example.tasky.feature_agenda.domain.util.PhotoValidator
 import com.example.tasky.feature_agenda.domain.util.TaskScheduler
 import com.example.tasky.feature_authentication.domain.util.UserPreferences
 import com.example.tasky.feature_authentication.domain.validation.UserDataValidator
@@ -74,11 +77,13 @@ object AgendaModule {
     fun provideRepositories(
         api: TaskyAgendaApi,
         db: AgendaDatabase,
-        userPrefs: UserPreferences
+        userPrefs: UserPreferences,
+        photoValidator: PhotoValidator,
+        jsonSerializer: JsonSerializer
     ): AgendaRepositories {
         return AgendaRepositories(
             agendaRepository = AgendaRepositoryImpl(api, db),
-            eventRepository = EventRepositoryImpl(api, db, userPrefs),
+            eventRepository = EventRepositoryImpl(api, db, userPrefs, photoValidator, jsonSerializer),
             reminderRepository = ReminderRepositoryImpl(api, db),
             taskRepository = TaskRepositoryImpl(api, db)
         )
@@ -104,16 +109,24 @@ object AgendaModule {
 
     @Provides
     @Singleton
+    fun providePhotoValidator(@ApplicationContext context: Context): PhotoValidator {
+        return PhotoValidatorImpl(context)
+    }
+
+    @Provides
+    @Singleton
     fun provideEventUseCases(
         repositories: AgendaRepositories,
         taskScheduler: TaskScheduler,
-        userDataValidator: UserDataValidator
+        userDataValidator: UserDataValidator,
+        photoValidator: PhotoValidator
     ): Event {
         return Event(
             createEvent = CreateEvent(repositories.eventRepository, taskScheduler),
             updateEvent = UpdateEvent(repositories.eventRepository, taskScheduler),
             deleteEvent = DeleteEvent(repositories.eventRepository, taskScheduler),
-            validateAttendee = ValidateAttendee(userDataValidator, repositories.eventRepository)
+            validateAttendee = ValidateAttendee(userDataValidator, repositories.eventRepository),
+            validatePhotos = ValidatePhotos(photoValidator)
         )
     }
 

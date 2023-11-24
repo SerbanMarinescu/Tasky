@@ -1,6 +1,5 @@
 package com.example.tasky.feature_agenda.presentation.event_detail_screen
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +13,7 @@ import com.example.tasky.feature_agenda.domain.model.Attendee
 import com.example.tasky.feature_agenda.domain.model.EventPhoto
 import com.example.tasky.feature_agenda.domain.repository.AgendaRepositories
 import com.example.tasky.feature_agenda.domain.use_case.AgendaUseCases
+import com.example.tasky.feature_agenda.domain.util.PhotoValidator
 import com.example.tasky.feature_agenda.domain.util.ReminderType
 import com.example.tasky.feature_agenda.presentation.util.validateDateRange
 import com.example.tasky.feature_authentication.domain.util.UserPreferences
@@ -48,7 +48,8 @@ class EventDetailViewModel @Inject constructor(
     private val repositories: AgendaRepositories,
     private val savedStateHandle: SavedStateHandle,
     private val userPreferences: UserPreferences,
-    private val userDataValidator: UserDataValidator
+    private val userDataValidator: UserDataValidator,
+    private val photoValidator: PhotoValidator
 ): ViewModel() {
 
     private val _state = MutableStateFlow(EventDetailState())
@@ -74,9 +75,6 @@ class EventDetailViewModel @Inject constructor(
         eventId?.let {
             val editable = editMode != null
             getSelectedEvent(it, editable)
-
-            Log.d("CreatingUpdating", "PhotoList existing event: ${photoList.toList()}")
-            Log.d("CreatingUpdating", "AttendeeList existing event: ${attendeeList.toList()}")
         }
     }
 
@@ -295,13 +293,16 @@ class EventDetailViewModel @Inject constructor(
 
             attendeeList.add(0, eventCreator)
 
+            val localPhotos = photoList.filterIsInstance<EventPhoto.Local>().toMutableList()
+            useCases.event.validatePhotos(eventId, localPhotos)
+
             val eventToBeCreated = AgendaItem.Event(
                 eventId = eventId,
                 eventTitle = state.value.eventTitle,
                 eventDescription = state.value.eventDescription,
                 from = fromDateTime,
                 to = toDateTime,
-                photos = photoList.toList(),
+                photos = localPhotos,
                 attendees = attendeeList.map { it.copy(eventId = eventId) },
                 isUserEventCreator = true,
                 host = user.userId,
@@ -353,6 +354,7 @@ class EventDetailViewModel @Inject constructor(
                     event.attendees.forEach {
                         attendeeList.add(it)
                     }
+
                     _state.update {
                         it.copy(
                             eventId = eventId,

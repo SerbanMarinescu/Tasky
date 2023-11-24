@@ -52,7 +52,7 @@ fun AttendeeDto.toAttendee(): Attendee {
     )
 }
 
-fun PhotoDto.toPhoto(): EventPhoto {
+fun PhotoDto.toPhoto(): EventPhoto.Remote {
     return EventPhoto.Remote(
         key = key,
         url = url
@@ -112,25 +112,27 @@ fun AttendeeEntity.toAttendee(): Attendee {
 }
 
 fun PhotoEntity.toPhoto(): EventPhoto {
-    return EventPhoto.Local(
+    return EventPhoto.Remote(
         key = key,
-        uri = uri
+        url = url
     )
 }
 
-fun EventPhoto.toPhotoEntity(eventId: String): PhotoEntity {
-    return PhotoEntity(
-        key = when(this) {
-            is EventPhoto.Local -> this.key
-            is EventPhoto.Remote -> this.key
-        } ,
-        uri = when(this) {
-            is EventPhoto.Local -> this.uri
-            is EventPhoto.Remote -> this.url
-        },
-        eventId = eventId
-    )
+fun EventPhoto.toPhotoEntity(eventId: String): PhotoEntity? {
+    return when(this) {
+        is EventPhoto.Local -> {
+            null
+        }
+        is EventPhoto.Remote -> {
+            PhotoEntity(
+                key = key,
+                url = url,
+                eventId = eventId
+            )
+        }
+    }
 }
+
 fun EventWithAttendeesAndPhotos.toEvent(): AgendaItem.Event {
     return AgendaItem.Event(
         eventId = event.eventId,
