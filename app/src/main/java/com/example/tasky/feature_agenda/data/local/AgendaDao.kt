@@ -5,8 +5,6 @@ import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
-import com.example.tasky.feature_agenda.data.local.entity.AttendeeEntity
-import com.example.tasky.feature_agenda.data.local.entity.EventEntity
 import com.example.tasky.feature_agenda.data.local.entity.SyncItemEntity
 import com.example.tasky.feature_agenda.data.mapper.toAttendeeEntity
 import com.example.tasky.feature_agenda.data.mapper.toEventEntity
@@ -96,21 +94,6 @@ interface AgendaDao {
                 val reminderEntity = reminder.toReminderEntity()
                 db.reminderDao.upsertReminder(reminderEntity)
             }
-        }
-    }
-
-    @Transaction
-    suspend fun upsertEventWithAttendees(
-        db: AgendaDatabase,
-        eventEntity: EventEntity,
-        attendeeEntities: List<AttendeeEntity>,
-        //photoEntities: List<PhotoEntity>
-    ) {
-        db.apply {
-
-            db.eventDao.upsertEvent(eventEntity)
-            db.eventDao.upsertAttendees(attendeeEntities)
-            //db.eventDao.upsertPhotos(photoEntities)
         }
     }
 

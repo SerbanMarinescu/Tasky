@@ -1,5 +1,6 @@
 package com.example.tasky.feature_agenda.presentation.event_detail_screen
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -16,6 +17,9 @@ import com.example.tasky.feature_agenda.domain.repository.AgendaRepositories
 import com.example.tasky.feature_agenda.domain.use_case.AgendaUseCases
 import com.example.tasky.feature_agenda.domain.util.PhotoValidator
 import com.example.tasky.feature_agenda.domain.util.ReminderType
+import com.example.tasky.feature_agenda.presentation.util.EventOptions.DELETE
+import com.example.tasky.feature_agenda.presentation.util.EventOptions.JOIN
+import com.example.tasky.feature_agenda.presentation.util.EventOptions.LEAVE
 import com.example.tasky.feature_agenda.presentation.util.validateDateRange
 import com.example.tasky.feature_authentication.domain.util.UserPreferences
 import com.example.tasky.feature_authentication.domain.validation.EmailError
@@ -32,7 +36,6 @@ import com.example.tasky.util.Resource
 import com.example.tasky.util.Result
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,6 +78,10 @@ class EventDetailViewModel @Inject constructor(
         val eventId = savedStateHandle.get<String>(ArgumentTypeEnum.ITEM_ID.name)
         val editMode = savedStateHandle.get<String>(ArgumentTypeEnum.EDIT_MODE.name)
 
+        val currentUser = userPreferences.getAuthenticatedUser()
+        val currentUserId = currentUser?.userId
+        _state.update { it.copy(currentUserId = currentUserId) }
+
         eventId?.let {
             val editable = editMode != null
             getSelectedEvent(it, editable)
@@ -110,7 +117,7 @@ class EventDetailViewModel @Inject constructor(
             }
             EventDetailOnClick.ToggleEditMode -> {
                 _state.update {
-                    it.copy(editMode = !it.editMode)
+                    it.copy(isInEditMode = !it.isInEditMode)
                 }
             }
             EventDetailOnClick.ToggleReminderMenu -> {
@@ -273,6 +280,39 @@ class EventDetailViewModel @Inject constructor(
             is EventDetailOnClick.RemoveAttendee -> {
                 attendeeList.remove(event.attendee)
             }
+
+            is EventDetailOnClick.DeleteLeaveOrJoinEvent -> {
+                when(event.eventOptions) {
+                    DELETE -> {
+
+                    }
+                    JOIN -> {
+                        val newList = attendeeList.map { attendee ->
+                            if(attendee.userId == state.value.currentUserId) {
+                                attendee.copy(isGoing = true)
+                            } else {
+                                attendee
+                            }
+                        }
+                        attendeeList.clear()
+                        attendeeList.addAll(newList)
+                        _state.update { it.copy(isCurrentUserGoing = true) }
+                    }
+                    LEAVE -> {
+                        val newList = attendeeList.map { attendee ->
+                            if(attendee.userId == state.value.currentUserId) {
+                                attendee.copy(isGoing = false)
+                            } else {
+                                attendee
+                            }
+                        }
+                        attendeeList.clear()
+                        attendeeList.addAll(newList)
+                        _state.update { it.copy(isCurrentUserGoing = false) }
+                        Log.d("attendee", attendeeList.toList().toString())
+                    }
+                }
+            }
         }
     }
 
@@ -287,7 +327,8 @@ class EventDetailViewModel @Inject constructor(
 
     private fun createEvent() {
         viewModelScope.launch {
-            val creatingEventJob = async {
+
+            val creatingEventJob = launch {
                 _state.update {
                     it.copy(isLoading = true)
                 }
@@ -297,10 +338,10 @@ class EventDetailViewModel @Inject constructor(
                 val isDateValid = validateDateRange(fromDateTime, toDateTime)
                 if (!isDateValid) {
                     resultChannel.send(Result.Error("\"From\" DateTime must not be after \"To\" DateTime"))
-                    return@async
+                    return@launch
                 }
 
-                val user = userPreferences.getAuthenticatedUser() ?: return@async
+                val user = userPreferences.getAuthenticatedUser() ?: return@launch
                 val eventId = UUID.randomUUID().toString()
 
                 val eventCreator = Attendee(
@@ -353,17 +394,20 @@ class EventDetailViewModel @Inject constructor(
                 useCases.event.createEvent(eventToBeCreated)
             }
 
-            val loadingJob = async {
+            val loadingJob = launch {
                 startLoading()
             }
 
-            creatingEventJob.await()
-            loadingJob.cancel()
-            _state.update { it.copy(loadingProgress = 1f) }
-            delay(500L)
-            _state.update { it.copy(isLoading = false) }
-            delay(50L)
-            resultChannel.send(Result.Success())
+            creatingEventJob.join()
+
+            if(creatingEventJob.isCompleted) {
+                loadingJob.cancel()
+                _state.update { it.copy(loadingProgress = 1f) }
+                delay(500L)
+                _state.update { it.copy(isLoading = false) }
+                delay(50L)
+                resultChannel.send(Result.Success())
+            }
         }
     }
 
@@ -395,7 +439,7 @@ class EventDetailViewModel @Inject constructor(
                     to = toDateTime,
                     photos = validPhotos,
                     attendees = attendeeList.toList(),
-                    isUserEventCreator = true,
+                    isUserEventCreator = state.value.isUserEventCreator,
                     host = state.value.eventCreatorId,
                     remindAtTime = when(state.value.reminderType) {
                         ReminderType.TEN_MINUTES_BEFORE -> fromDateTime.minusMinutes(10)
@@ -406,6 +450,7 @@ class EventDetailViewModel @Inject constructor(
                     },
                     eventReminderType = state.value.reminderType
                 )
+
                 useCases.event.updateEvent(eventToBeUpdated, deletedPhotos)
                 resultChannel.send(Result.Success())
             }
@@ -432,10 +477,12 @@ class EventDetailViewModel @Inject constructor(
 
                     attendeeList = attendeeList.sortedBy { it.userId != event.host }.toMutableStateList()
 
+                    val currentUserAsAttendee = attendeeList.find { it.userId == state.value.currentUserId }
+
                     _state.update {
                         it.copy(
                             eventId = eventId,
-                            editMode = editable,
+                            isInEditMode = editable,
                             eventTitle = event.eventTitle,
                             eventDescription = event.eventDescription ?: "",
                             fromDate = event.from.toLocalDate(),
@@ -445,15 +492,13 @@ class EventDetailViewModel @Inject constructor(
                             currentDate = event.from,
                             reminderType = event.eventReminderType,
                             addingPhotos = photoList.isNotEmpty(),
-                            eventCreatorId = event.host ?: ""
+                            eventCreatorId = event.host ?: "",
+                            isUserEventCreator = event.isUserEventCreator,
+                            isCurrentUserGoing = currentUserAsAttendee?.isGoing ?: true
                         )
                     }
-
-
                 }
-                else -> {
-
-                }
+                else -> Unit
             }
         }
     }

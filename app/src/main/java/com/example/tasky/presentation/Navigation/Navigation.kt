@@ -31,6 +31,7 @@ import com.example.tasky.feature_authentication.presentation.login_screen.LoginS
 import com.example.tasky.feature_authentication.presentation.register_screen.RegisterScreen
 import com.example.tasky.util.ArgumentTypeEnum
 import com.example.tasky.util.Screen
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 
 @Composable
@@ -46,11 +47,14 @@ fun Navigation(navController: NavHostController) {
             val viewModel = hiltViewModel<AgendaViewModel>()
             val state by viewModel.state.collectAsStateWithLifecycle()
             val logoutEventsChannelFlow = viewModel.logoutResult
+
             viewModel.dateDialogState = rememberMaterialDialogState()
+            viewModel.refreshState = rememberSwipeRefreshState(isRefreshing = state.isRefreshing)
 
             AgendaScreen(
                 state = state,
                 onEvent = viewModel::onEvent,
+                refreshState = viewModel.refreshState,
                 dateDialogState = viewModel.dateDialogState,
                 username = viewModel.username,
                 logoutEventsChannelFlow = logoutEventsChannelFlow,
@@ -262,7 +266,7 @@ fun Navigation(navController: NavHostController) {
                     }
                 }
                 photoUrl?.let {
-                    if(state.editMode) {
+                    if(state.isInEditMode && state.isUserEventCreator) {
                         viewModel.onEvent(EventDetailOnClick.DeletePhoto(it))
                     }
                 }

@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -67,6 +66,7 @@ import com.example.tasky.feature_agenda.presentation.components.TimePickerDialog
 import com.example.tasky.feature_agenda.presentation.event_detail_screen.components.AttendeeItem
 import com.example.tasky.feature_agenda.presentation.event_detail_screen.components.FilterChip
 import com.example.tasky.feature_agenda.presentation.util.DateTimeDialogType
+import com.example.tasky.feature_agenda.presentation.util.EventOptions
 import com.example.tasky.feature_agenda.presentation.util.SelectableChipOptions
 import com.example.tasky.feature_agenda.presentation.util.formatDateTimeOfPattern
 import com.example.tasky.feature_agenda.presentation.util.getInitials
@@ -237,7 +237,7 @@ fun EventDetailScreen(
                 )
             }
             Text(
-                text = if(state.editMode) stringResource(id = R.string.EditEvent) else
+                text = if(state.isInEditMode && state.isUserEventCreator) stringResource(id = R.string.EditEvent) else
                     formatDateTimeOfPattern(state.currentDate, "dd MMMM yyyy"),
                 color = Color.White,
                 fontSize = 16.sp,
@@ -245,7 +245,7 @@ fun EventDetailScreen(
                 fontFamily = interFont
 
             )
-            if (state.editMode) {
+            if (state.isInEditMode) {
                 Text(
                     text = stringResource(id = R.string.Save),
                     color = Color.White,
@@ -280,557 +280,560 @@ fun EventDetailScreen(
                 )
                 .background(BackgroundWhite)
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Row(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Square,
-                        contentDescription = null,
-                        tint = LightGreen
-                    )
-                    Text(
-                        text = stringResource(id = R.string.Event),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        fontFamily = interFont
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 20.dp, top = 8.dp, end = 17.dp)
-                        .applyIf(
-                            condition = state.editMode,
-                            modifier = Modifier.clickable {
-                                navigateTo(
-                                    Screen.EditDetailsScreen.route +
-                                            "/${ArgumentTypeEnum.TITLE.name}" +
-                                            "/${state.eventTitle}"
-                                )
-                            }
-                        )
-                    ,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(imageVector = Icons.Outlined.Circle, contentDescription = null)
-                        Text(
-                            text = state.eventTitle,
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = interFont
-                        )
-                    }
-                    if (state.editMode) {
-                        Icon(imageVector = Icons.Default.ArrowRight, contentDescription = null)
-                    }
-                }
-                Divider(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 17.dp, end = 17.dp, top = 8.dp),
-                    color = Light
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 25.dp, start = 17.dp, end = 17.dp)
-                        .applyIf(
-                            condition = state.editMode,
-                            modifier = Modifier.clickable {
-                                navigateTo(
-                                    Screen.EditDetailsScreen.route +
-                                            "/${ArgumentTypeEnum.DESCRIPTION.name}" +
-                                            "/${state.eventDescription}"
-                                )
-                            }
-                        )
-                    ,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Box(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = state.eventDescription,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 16.sp
-                        )
-                    }
-                    if (state.editMode) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowRight,
-                            contentDescription = null
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(20.dp))
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
 
-                if(state.addingPhotos) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Light2)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(10.dp)
+                item {
+                    Column(Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.padding(20.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Icon(
+                                imageVector = Icons.Default.Square,
+                                contentDescription = null,
+                                tint = LightGreen
+                            )
                             Text(
-                                text = stringResource(id = R.string.Photos),
-                                fontSize = 20.sp,
+                                text = stringResource(id = R.string.Event),
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 fontFamily = interFont
                             )
-                            Spacer(modifier = Modifier.height(10.dp))
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                photoList.forEach { photo ->
-                                    Box(
-                                        modifier = Modifier
-                                            .size(60.dp)
-                                            .border(
-                                                3.dp,
-                                                color = LightBlue,
-                                                shape = RoundedCornerShape(10.dp)
-                                            )
-                                    ) {
-                                        AsyncImage(
-                                            model = when(photo) {
-                                                is EventPhoto.Local -> photo.uri.toUri()
-                                                is EventPhoto.Remote -> {
-                                                    ImageRequest.Builder(context)
-                                                        .data(photo.url)
-                                                        .build()
-                                                }
-                                            },
-                                            contentDescription = null,
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .clickable {
-                                                    navigateTo(
-                                                        Screen.PhotoDetailsScreen.route +
-                                                                "/${
-                                                                    when (photo) {
-                                                                        is EventPhoto.Local -> photo.key
-                                                                        is EventPhoto.Remote -> photo.key
-                                                                    }
-                                                                }" +
-                                                                "/${
-                                                                    Uri.encode(
-                                                                        when (photo) {
-                                                                            is EventPhoto.Local -> photo.uri
-                                                                            is EventPhoto.Remote -> photo.url
-                                                                        }
-                                                                    )
-                                                                }"
-                                                    )
-                                                }
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 20.dp, top = 8.dp, end = 17.dp)
+                                .applyIf(
+                                    condition = state.isInEditMode && state.isUserEventCreator,
+                                    modifier = Modifier.clickable {
+                                        navigateTo(
+                                            Screen.EditDetailsScreen.route +
+                                                    "/${ArgumentTypeEnum.TITLE.name}" +
+                                                    "/${state.eventTitle}"
                                         )
                                     }
+                                ),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(imageVector = Icons.Outlined.Circle, contentDescription = null)
+                                Text(
+                                    text = state.eventTitle,
+                                    fontSize = 26.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = interFont
+                                )
+                            }
+                            if (state.isInEditMode && state.isUserEventCreator) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowRight,
+                                    contentDescription = null
+                                )
+                            }
+                        }
+                        Divider(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 17.dp, end = 17.dp, top = 8.dp),
+                            color = Light
+                        )
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 25.dp, start = 17.dp, end = 17.dp)
+                                .applyIf(
+                                    condition = state.isInEditMode && state.isUserEventCreator,
+                                    modifier = Modifier.clickable {
+                                        navigateTo(
+                                            Screen.EditDetailsScreen.route +
+                                                    "/${ArgumentTypeEnum.DESCRIPTION.name}" +
+                                                    "/${state.eventDescription}"
+                                        )
+                                    }
+                                ),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Box(
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = state.eventDescription,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 16.sp
+                                )
+                            }
+                            if (state.isInEditMode && state.isUserEventCreator) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowRight,
+                                    contentDescription = null
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        if (state.addingPhotos) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Light2)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(10.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(id = R.string.Photos),
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontFamily = interFont
+                                    )
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    FlowRow(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        photoList.forEach { photo ->
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(60.dp)
+                                                    .border(
+                                                        3.dp,
+                                                        color = LightBlue,
+                                                        shape = RoundedCornerShape(10.dp)
+                                                    )
+                                            ) {
+                                                AsyncImage(
+                                                    model = when (photo) {
+                                                        is EventPhoto.Local -> photo.uri.toUri()
+                                                        is EventPhoto.Remote -> {
+                                                            ImageRequest.Builder(context)
+                                                                .data(photo.url)
+                                                                .build()
+                                                        }
+                                                    },
+                                                    contentDescription = null,
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .clip(RoundedCornerShape(10.dp))
+                                                        .clickable {
+                                                            navigateTo(
+                                                                Screen.PhotoDetailsScreen.route +
+                                                                        "/${
+                                                                            when (photo) {
+                                                                                is EventPhoto.Local -> photo.key
+                                                                                is EventPhoto.Remote -> photo.key
+                                                                            }
+                                                                        }" +
+                                                                        "/${
+                                                                            Uri.encode(
+                                                                                when (photo) {
+                                                                                    is EventPhoto.Local -> photo.uri
+                                                                                    is EventPhoto.Remote -> photo.url
+                                                                                }
+                                                                            )
+                                                                        }"
+                                                            )
+                                                        }
+                                                )
+                                            }
+                                        }
+                                        if (photoList.size < 10 && state.isInEditMode && state.isUserEventCreator) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(60.dp)
+                                                    .border(
+                                                        3.dp,
+                                                        color = LightBlue,
+                                                        shape = RoundedCornerShape(10.dp)
+                                                    )
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Add,
+                                                    contentDescription = null,
+                                                    modifier = Modifier
+                                                        .background(Light2)
+                                                        .align(Alignment.Center)
+                                                        .clickable {
+                                                            photoPicker.launch(
+                                                                PickVisualMediaRequest(
+                                                                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                                                                )
+                                                            )
+                                                        },
+                                                    tint = Gray
+                                                )
+                                            }
+
+                                        }
+
+                                    }
                                 }
-                                if(photoList.size < 10 && state.editMode) {
-                                    Box(
+                            }
+                        } else {
+                            if(state.isUserEventCreator) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(100.dp)
+                                        .background(Light2)
+                                        .applyIf(
+                                            condition = state.isInEditMode,
+                                            modifier = Modifier.clickable {
+                                                photoPicker.launch(
+                                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                                )
+                                                onEvent(EventDetailOnClick.ToggleAddingPhotos)
+                                            }
+                                        )
+                                ) {
+                                    Row(
                                         modifier = Modifier
-                                            .size(60.dp)
-                                            .border(
-                                                3.dp,
-                                                color = LightBlue,
-                                                shape = RoundedCornerShape(10.dp)
-                                            )
+                                            .align(Alignment.Center)
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Add,
                                             contentDescription = null,
-                                            modifier = Modifier
-                                                .background(Light2)
-                                                .align(Alignment.Center)
-                                                .clickable {
-                                                    photoPicker.launch(
-                                                        PickVisualMediaRequest(
-                                                            ActivityResultContracts.PickVisualMedia.ImageOnly
-                                                        )
-                                                    )
-                                                }
-                                            ,
                                             tint = Gray
                                         )
+                                        Text(
+                                            text = stringResource(id = R.string.AddPhotos),
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontFamily = interFont,
+                                            color = Gray
+                                        )
                                     }
-
                                 }
-
                             }
                         }
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .background(Light2)
-                            .applyIf(
-                                condition = state.editMode,
-                                modifier = Modifier.clickable {
-                                    photoPicker.launch(
-                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                    )
-                                    onEvent(EventDetailOnClick.ToggleAddingPhotos)
-                                }
-                            )
-                    ) {
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Divider(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 17.dp, end = 17.dp, top = 8.dp),
+                            color = Light
+                        )
                         Row(
                             modifier = Modifier
-                                .align(Alignment.Center)
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceAround
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = null,
-                                tint = Gray
-                            )
-                            Text(
-                                text = stringResource(id = R.string.AddPhotos),
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                fontFamily = interFont,
-                                color = Gray
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(20.dp))
-                Divider(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 17.dp, end = 17.dp, top = 8.dp),
-                    color = Light
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                    ,
-                    horizontalArrangement = Arrangement.SpaceAround
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(0.5f)
-                            .padding(start = 17.dp, end = 17.dp),
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.From),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal,
-                            fontFamily = interFont,
-                            modifier = Modifier.align(Alignment.TopStart)
-                        )
-                        Text(
-                            text = state.fromTime.format(DateTimeFormatter.ofPattern("HH:mm")),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal,
-                            fontFamily = interFont,
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .applyIf(
-                                    condition = state.editMode,
-                                    modifier = Modifier.clickable {
-                                        onEvent(
-                                            EventDetailOnClick.DateTimePickerChanged(
-                                                DateTimeDialogType.FROM_TIME
-                                            )
-                                        )
-                                        timeDialogState.show()
-                                    }
-                                )
-                        )
-                        if(state.editMode) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowRight,
-                                contentDescription = null,
-                                modifier = Modifier.align(Alignment.TopEnd)
-                            )
-                        }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(0.5f)
-                            .padding(start = 17.dp, end = 17.dp),
-                    ) {
-                        Text(
-                            text = state.fromDate.format(DateTimeFormatter.ofPattern("MMM d yyyy")),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal,
-                            fontFamily = interFont,
-                            modifier = Modifier.applyIf(
-                                    condition = state.editMode,
-                                    modifier = Modifier
-                                        .clickable {
-                                            onEvent(
-                                                EventDetailOnClick.DateTimePickerChanged(
-                                                    DateTimeDialogType.FROM_DATE
-                                                )
-                                            )
-                                            dateDialogState.show()
-                                        }
-                                        .align(Alignment.TopStart)
-                                )
-                        )
-                        if(state.editMode) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowRight,
-                                contentDescription = null,
-                                modifier = Modifier.align(Alignment.TopEnd)
-                            )
-                        }
-                    }
-                }
-                Divider(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 17.dp, end = 17.dp, top = 8.dp),
-                    color = Light
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                    ,
-                    horizontalArrangement = Arrangement.SpaceAround
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(0.5f)
-                            .padding(start = 17.dp, end = 17.dp)
-                        ,
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.To),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal,
-                            fontFamily = interFont,
-                            modifier = Modifier.align(Alignment.TopStart)
-                        )
-                        Text(
-                            text = state.toTime.format(DateTimeFormatter.ofPattern("HH:mm")),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal,
-                            fontFamily = interFont,
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .applyIf(
-                                    condition = state.editMode,
-                                    modifier = Modifier.clickable {
-                                        onEvent(
-                                            EventDetailOnClick.DateTimePickerChanged(
-                                                DateTimeDialogType.TO_TIME
-                                            )
-                                        )
-                                        timeDialogState.show()
-                                    }
-                                )
-                        )
-                        if(state.editMode) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowRight,
-                                contentDescription = null,
-                                modifier = Modifier.align(Alignment.TopEnd)
-                            )
-                        }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(0.5f)
-                            .padding(start = 17.dp, end = 17.dp)
-                        ,
-                    ) {
-                        Text(
-                            text = state.toDate.format(DateTimeFormatter.ofPattern("MMM d yyyy")),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal,
-                            fontFamily = interFont,
-                            modifier = Modifier.applyIf(
-                                condition = state.editMode,
+                            Box(
                                 modifier = Modifier
-                                    .clickable {
-                                        onEvent(
-                                            EventDetailOnClick.DateTimePickerChanged(
-                                                DateTimeDialogType.TO_DATE
-                                            )
+                                    .fillMaxWidth()
+                                    .weight(0.5f)
+                                    .padding(start = 17.dp, end = 17.dp),
+                            ) {
+                                Text(
+                                    text = stringResource(id = R.string.From),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    fontFamily = interFont,
+                                    modifier = Modifier.align(Alignment.TopStart)
+                                )
+                                Text(
+                                    text = state.fromTime.format(DateTimeFormatter.ofPattern("HH:mm")),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    fontFamily = interFont,
+                                    modifier = Modifier
+                                        .align(Alignment.TopCenter)
+                                        .applyIf(
+                                            condition = state.isInEditMode && state.isUserEventCreator,
+                                            modifier = Modifier.clickable {
+                                                onEvent(
+                                                    EventDetailOnClick.DateTimePickerChanged(
+                                                        DateTimeDialogType.FROM_TIME
+                                                    )
+                                                )
+                                                timeDialogState.show()
+                                            }
                                         )
-                                        dateDialogState.show()
-                                    }
-                                    .align(Alignment.TopStart)
-                            )
-                        )
-                        if(state.editMode) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowRight,
-                                contentDescription = null,
-                                modifier = Modifier.align(Alignment.TopEnd)
-                            )
-                        }
-                    }
-                }
-                Divider(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 17.dp, end = 17.dp, top = 8.dp),
-                    color = Light
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 25.dp, start = 17.dp, end = 17.dp)
-                        .applyIf(
-                            condition = state.editMode,
-                            modifier = Modifier.clickable {
-                                onEvent(EventDetailOnClick.ToggleReminderMenu)
-                            }
-                        )
-                    ,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.NotificationsNone,
-                            contentDescription = null,
-                            modifier = Modifier.background(Light2),
-                            tint = Gray
-                        )
-                        Text(
-                            text = when(state.reminderType) {
-                                ReminderType.TEN_MINUTES_BEFORE -> stringResource(id = R.string.TenMinBefore)
-                                ReminderType.THIRTY_MINUTES_BEFORE -> stringResource(id = R.string.ThirtyMinBefore)
-                                ReminderType.ONE_HOUR_BEFORE -> stringResource(id = R.string.OneHourBefore)
-                                ReminderType.SIX_HOURS_BEFORE -> stringResource(id = R.string.SixHoursBefore)
-                                ReminderType.ONE_DAY_BEFORE -> stringResource(id = R.string.OneDayBefore)
-                            },
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal,
-                            fontFamily = interFont
-                        )
-                    }
-
-                    DropdownMenu(
-                        expanded = state.isReminderMenuVisible,
-                        onDismissRequest = {
-                            onEvent(EventDetailOnClick.ToggleReminderMenu)
-                        }
-                    ) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(text = stringResource(id = R.string.TenMinBefore))
-                            },
-                            onClick = {
-                                onEvent(EventDetailOnClick.ReminderTypeChanged(ReminderType.TEN_MINUTES_BEFORE))
-                                onEvent(EventDetailOnClick.ToggleReminderMenu)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = {
-                                Text(text = stringResource(id = R.string.ThirtyMinBefore))
-                            },
-                            onClick = {
-                                onEvent(EventDetailOnClick.ReminderTypeChanged(ReminderType.THIRTY_MINUTES_BEFORE))
-                                onEvent(EventDetailOnClick.ToggleReminderMenu)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = {
-                                Text(text = stringResource(id = R.string.OneHourBefore))
-                            },
-                            onClick = {
-                                onEvent(EventDetailOnClick.ReminderTypeChanged(ReminderType.ONE_HOUR_BEFORE))
-                                onEvent(EventDetailOnClick.ToggleReminderMenu)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = {
-                                Text(text = stringResource(id = R.string.SixHoursBefore))
-                            },
-                            onClick = {
-                                onEvent(EventDetailOnClick.ReminderTypeChanged(ReminderType.SIX_HOURS_BEFORE))
-                                onEvent(EventDetailOnClick.ToggleReminderMenu)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = {
-                                Text(text = stringResource(id = R.string.OneDayBefore))
-                            },
-                            onClick = {
-                                onEvent(EventDetailOnClick.ReminderTypeChanged(ReminderType.ONE_DAY_BEFORE))
-                                onEvent(EventDetailOnClick.ToggleReminderMenu)
-                            }
-                        )
-                    }
-
-                    if(state.editMode) {
-                        Icon(imageVector = Icons.Default.ArrowRight, contentDescription = null)
-                    }
-                }
-                Divider(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 17.dp, end = 17.dp, top = 8.dp),
-                    color = Light
-                )
-                Row(
-                    modifier = Modifier.padding(top = 20.dp, start = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.Visitors),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = interFont
-                    )
-                    if(state.editMode) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .background(Light2)
-                                .clickable {
-                                    onEvent(EventDetailOnClick.ToggleAddingAttendeeDialog)
+                                )
+                                if (state.isInEditMode && state.isUserEventCreator) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowRight,
+                                        contentDescription = null,
+                                        modifier = Modifier.align(Alignment.TopEnd)
+                                    )
                                 }
-                            ,
-                            tint = Gray
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(0.5f)
+                                    .padding(start = 17.dp, end = 17.dp),
+                            ) {
+                                Text(
+                                    text = state.fromDate.format(DateTimeFormatter.ofPattern("MMM d yyyy")),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    fontFamily = interFont,
+                                    modifier = Modifier.applyIf(
+                                        condition = state.isInEditMode && state.isUserEventCreator,
+                                        modifier = Modifier
+                                            .clickable {
+                                                onEvent(
+                                                    EventDetailOnClick.DateTimePickerChanged(
+                                                        DateTimeDialogType.FROM_DATE
+                                                    )
+                                                )
+                                                dateDialogState.show()
+                                            }
+                                            .align(Alignment.TopStart)
+                                    )
+                                )
+                                if (state.isInEditMode && state.isUserEventCreator) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowRight,
+                                        contentDescription = null,
+                                        modifier = Modifier.align(Alignment.TopEnd)
+                                    )
+                                }
+                            }
+                        }
+                        Divider(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 17.dp, end = 17.dp, top = 8.dp),
+                            color = Light
                         )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceAround
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(0.5f)
+                                    .padding(start = 17.dp, end = 17.dp),
+                            ) {
+                                Text(
+                                    text = stringResource(id = R.string.To),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    fontFamily = interFont,
+                                    modifier = Modifier.align(Alignment.TopStart)
+                                )
+                                Text(
+                                    text = state.toTime.format(DateTimeFormatter.ofPattern("HH:mm")),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    fontFamily = interFont,
+                                    modifier = Modifier
+                                        .align(Alignment.TopCenter)
+                                        .applyIf(
+                                            condition = state.isInEditMode && state.isUserEventCreator,
+                                            modifier = Modifier.clickable {
+                                                onEvent(
+                                                    EventDetailOnClick.DateTimePickerChanged(
+                                                        DateTimeDialogType.TO_TIME
+                                                    )
+                                                )
+                                                timeDialogState.show()
+                                            }
+                                        )
+                                )
+                                if (state.isInEditMode && state.isUserEventCreator) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowRight,
+                                        contentDescription = null,
+                                        modifier = Modifier.align(Alignment.TopEnd)
+                                    )
+                                }
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(0.5f)
+                                    .padding(start = 17.dp, end = 17.dp),
+                            ) {
+                                Text(
+                                    text = state.toDate.format(DateTimeFormatter.ofPattern("MMM d yyyy")),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    fontFamily = interFont,
+                                    modifier = Modifier.applyIf(
+                                        condition = state.isInEditMode && state.isUserEventCreator,
+                                        modifier = Modifier
+                                            .clickable {
+                                                onEvent(
+                                                    EventDetailOnClick.DateTimePickerChanged(
+                                                        DateTimeDialogType.TO_DATE
+                                                    )
+                                                )
+                                                dateDialogState.show()
+                                            }
+                                            .align(Alignment.TopStart)
+                                    )
+                                )
+                                if (state.isInEditMode && state.isUserEventCreator) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowRight,
+                                        contentDescription = null,
+                                        modifier = Modifier.align(Alignment.TopEnd)
+                                    )
+                                }
+                            }
+                        }
+                        Divider(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 17.dp, end = 17.dp, top = 8.dp),
+                            color = Light
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 25.dp, start = 17.dp, end = 17.dp)
+                                .applyIf(
+                                    condition = state.isInEditMode,
+                                    modifier = Modifier.clickable {
+                                        onEvent(EventDetailOnClick.ToggleReminderMenu)
+                                    }
+                                ),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.NotificationsNone,
+                                    contentDescription = null,
+                                    modifier = Modifier.background(Light2),
+                                    tint = Gray
+                                )
+                                Text(
+                                    text = when (state.reminderType) {
+                                        ReminderType.TEN_MINUTES_BEFORE -> stringResource(id = R.string.TenMinBefore)
+                                        ReminderType.THIRTY_MINUTES_BEFORE -> stringResource(id = R.string.ThirtyMinBefore)
+                                        ReminderType.ONE_HOUR_BEFORE -> stringResource(id = R.string.OneHourBefore)
+                                        ReminderType.SIX_HOURS_BEFORE -> stringResource(id = R.string.SixHoursBefore)
+                                        ReminderType.ONE_DAY_BEFORE -> stringResource(id = R.string.OneDayBefore)
+                                    },
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    fontFamily = interFont
+                                )
+                            }
+
+                            DropdownMenu(
+                                expanded = state.isReminderMenuVisible,
+                                onDismissRequest = {
+                                    onEvent(EventDetailOnClick.ToggleReminderMenu)
+                                }
+                            ) {
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(text = stringResource(id = R.string.TenMinBefore))
+                                    },
+                                    onClick = {
+                                        onEvent(EventDetailOnClick.ReminderTypeChanged(ReminderType.TEN_MINUTES_BEFORE))
+                                        onEvent(EventDetailOnClick.ToggleReminderMenu)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(text = stringResource(id = R.string.ThirtyMinBefore))
+                                    },
+                                    onClick = {
+                                        onEvent(EventDetailOnClick.ReminderTypeChanged(ReminderType.THIRTY_MINUTES_BEFORE))
+                                        onEvent(EventDetailOnClick.ToggleReminderMenu)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(text = stringResource(id = R.string.OneHourBefore))
+                                    },
+                                    onClick = {
+                                        onEvent(EventDetailOnClick.ReminderTypeChanged(ReminderType.ONE_HOUR_BEFORE))
+                                        onEvent(EventDetailOnClick.ToggleReminderMenu)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(text = stringResource(id = R.string.SixHoursBefore))
+                                    },
+                                    onClick = {
+                                        onEvent(EventDetailOnClick.ReminderTypeChanged(ReminderType.SIX_HOURS_BEFORE))
+                                        onEvent(EventDetailOnClick.ToggleReminderMenu)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(text = stringResource(id = R.string.OneDayBefore))
+                                    },
+                                    onClick = {
+                                        onEvent(EventDetailOnClick.ReminderTypeChanged(ReminderType.ONE_DAY_BEFORE))
+                                        onEvent(EventDetailOnClick.ToggleReminderMenu)
+                                    }
+                                )
+                            }
+
+                            if (state.isInEditMode) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowRight,
+                                    contentDescription = null
+                                )
+                            }
+                        }
+                        Divider(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 17.dp, end = 17.dp, top = 8.dp),
+                            color = Light
+                        )
+
+                        Row(
+                            modifier = Modifier.padding(top = 20.dp, start = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.Visitors),
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = interFont
+                            )
+                            if (state.isInEditMode && state.isUserEventCreator) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .background(Light2)
+                                        .clickable {
+                                            onEvent(EventDetailOnClick.ToggleAddingAttendeeDialog)
+                                        },
+                                    tint = Gray
+                                )
+                            }
+                        }
                     }
                 }
-
-                if(attendeeList.isNotEmpty()) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(220.dp)
-                            .padding(top = 10.dp)
-                    ) {
-                        item {
+                item {
+                    if(attendeeList.isNotEmpty()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 10.dp)
+                        ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 10.dp)
-                                ,
+                                    .padding(top = 10.dp),
                                 horizontalArrangement = Arrangement.SpaceEvenly
                             ) {
                                 SelectableChipOptions.values().forEachIndexed { index, chip ->
@@ -845,118 +848,139 @@ fun EventDetailScreen(
                                         onClick = {
                                             onEvent(EventDetailOnClick.SelectFilterOption(chip, index))
                                         }
-                                    )
+                                        )
+                                    }
                                 }
-                            }
-                        }
-                        when(state.selectedChip) {
-                            SelectableChipOptions.ALL -> {
-                                item {
-                                    Text(
-                                        text = stringResource(id = R.string.Going),
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        fontFamily = interFont,
-                                        color = DarkGray,
-                                        modifier = Modifier.padding(start = 12.dp, top = 15.dp)
-                                    )
+
+                            when(state.selectedChip) {
+                                SelectableChipOptions.ALL -> {
+                                        Text(
+                                            text = stringResource(id = R.string.Going),
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            fontFamily = interFont,
+                                            color = DarkGray,
+                                            modifier = Modifier.padding(start = 12.dp, top = 15.dp)
+                                        )
+                                    attendeeList.filter { it.isGoing }.forEach {
+                                        AttendeeItem(
+                                            initials = getInitials(it.fullName),
+                                            fullName = it.fullName,
+                                            eventCreator = it.userId == state.eventCreatorId,
+                                            isInEditMode = state.isInEditMode && state.isUserEventCreator,
+                                            onDeleteClick = {
+                                                onEvent(EventDetailOnClick.RemoveAttendee(it))
+                                            }
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
+                                        Text(
+                                            text = stringResource(id = R.string.NotGoing),
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            fontFamily = interFont,
+                                            color = DarkGray,
+                                            modifier = Modifier.padding(start = 12.dp, top = 15.dp)
+                                        )
+
+                                    attendeeList.filter { !it.isGoing }.forEach {
+                                        AttendeeItem(
+                                            initials = getInitials(it.fullName),
+                                            fullName = it.fullName,
+                                            eventCreator = it.userId == state.eventCreatorId,
+                                            isInEditMode = state.isInEditMode && state.isUserEventCreator,
+                                            onDeleteClick = {
+                                                onEvent(EventDetailOnClick.RemoveAttendee(it))
+                                            }
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
                                 }
-                                items(attendeeList.filter { it.isGoing }) {
-                                    AttendeeItem(
-                                        initials = getInitials(it.fullName),
-                                        fullName = it.fullName,
-                                        eventCreator = it.userId == state.eventCreatorId,
-                                        onDeleteClick = {
-                                            onEvent(EventDetailOnClick.RemoveAttendee(it))
-                                        }
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                SelectableChipOptions.GOING -> {
+
+                                        Text(
+                                            text = stringResource(id = R.string.Going),
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            fontFamily = interFont,
+                                            color = DarkGray,
+                                            modifier = Modifier.padding(start = 12.dp, top = 15.dp)
+                                        )
+
+                                    attendeeList.filter { it.isGoing }.forEach {
+                                        AttendeeItem(
+                                            initials = getInitials(it.fullName),
+                                            fullName = it.fullName,
+                                            eventCreator = it.userId == state.eventCreatorId,
+                                            isInEditMode = state.isInEditMode && state.isUserEventCreator,
+                                            onDeleteClick = {
+                                                onEvent(EventDetailOnClick.RemoveAttendee(it))
+                                            }
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
                                 }
-                                item {
-                                    Text(
-                                        text = stringResource(id = R.string.NotGoing),
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        fontFamily = interFont,
-                                        color = DarkGray,
-                                        modifier = Modifier.padding(start = 12.dp, top = 15.dp)
-                                    )
-                                }
-                                items(attendeeList.filter { !it.isGoing }) {
-                                    AttendeeItem(
-                                        initials = getInitials(it.fullName),
-                                        fullName = it.fullName,
-                                        eventCreator = it.userId == state.eventCreatorId,
-                                        onDeleteClick = {
-                                            onEvent(EventDetailOnClick.RemoveAttendee(it))
-                                        }
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                }
-                            }
-                            SelectableChipOptions.GOING -> {
-                                item {
-                                    Text(
-                                        text = stringResource(id = R.string.Going),
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        fontFamily = interFont,
-                                        color = DarkGray,
-                                        modifier = Modifier.padding(start = 12.dp, top = 15.dp)
-                                    )
-                                }
-                                items(attendeeList.filter { it.isGoing }) {
-                                    AttendeeItem(
-                                        initials = getInitials(it.fullName),
-                                        fullName = it.fullName,
-                                        eventCreator = it.userId == state.eventCreatorId,
-                                        onDeleteClick = {
-                                            onEvent(EventDetailOnClick.RemoveAttendee(it))
-                                        }
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                }
-                            }
-                            SelectableChipOptions.NOT_GOING -> {
-                                item {
-                                    Text(
-                                        text = stringResource(id = R.string.NotGoing),
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        fontFamily = interFont,
-                                        color = DarkGray,
-                                        modifier = Modifier.padding(start = 12.dp, top = 15.dp)
-                                    )
-                                }
-                                items(attendeeList.filter { !it.isGoing}) {
-                                    AttendeeItem(
-                                        initials = getInitials(it.fullName),
-                                        fullName = it.fullName,
-                                        eventCreator = it.userId == state.eventCreatorId,
-                                        onDeleteClick = {
-                                            onEvent(EventDetailOnClick.RemoveAttendee(it))
-                                        }
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                SelectableChipOptions.NOT_GOING -> {
+                                        Text(
+                                            text = stringResource(id = R.string.NotGoing),
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            fontFamily = interFont,
+                                            color = DarkGray,
+                                            modifier = Modifier.padding(start = 12.dp, top = 15.dp)
+                                        )
+
+                                    attendeeList.filter { !it.isGoing}.forEach {
+                                        AttendeeItem(
+                                            initials = getInitials(it.fullName),
+                                            fullName = it.fullName,
+                                            eventCreator = it.userId == state.eventCreatorId,
+                                            isInEditMode = state.isInEditMode && state.isUserEventCreator,
+                                            onDeleteClick = {
+                                                onEvent(EventDetailOnClick.RemoveAttendee(it))
+                                            }
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-            ) {
-                Text(
-                    text = "DELETE EVENT",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    fontFamily = interFont,
-                    color = Gray,
-                    modifier = Modifier.align(Alignment.Center)
-                )
+                item {
+                    Spacer(modifier = Modifier.height(50.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 10.dp)
+                            .applyIf(
+                                condition = state.isInEditMode,
+                                modifier = Modifier.clickable {
+                                    if(state.isUserEventCreator) {
+                                        onEvent(EventDetailOnClick.DeleteLeaveOrJoinEvent(EventOptions.DELETE))
+                                    } else {
+                                        if(state.isCurrentUserGoing) {
+                                            onEvent(EventDetailOnClick.DeleteLeaveOrJoinEvent(EventOptions.LEAVE))
+                                        } else {
+                                            onEvent(EventDetailOnClick.DeleteLeaveOrJoinEvent(EventOptions.JOIN))
+                                        }
+                                    }
+                                }
+                            )
+                    ) {
+                        Text(
+                            text = if(state.isUserEventCreator) stringResource(id = R.string.DELETE_EVENT) else
+                                if(state.isCurrentUserGoing) stringResource(id = R.string.LEAVE_EVENT) else stringResource(id = R.string.JOIN_EVENT),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = interFont,
+                            color = Gray,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+                }
             }
         }
     }

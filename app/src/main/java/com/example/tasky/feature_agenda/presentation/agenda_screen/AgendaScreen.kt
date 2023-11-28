@@ -35,6 +35,7 @@ import com.example.tasky.feature_agenda.domain.util.AgendaItemKey
 import com.example.tasky.feature_agenda.domain.util.toAgendaItemType
 import com.example.tasky.feature_agenda.presentation.agenda_screen.components.AgendaItemCard
 import com.example.tasky.feature_agenda.presentation.agenda_screen.components.DayChip
+import com.example.tasky.feature_agenda.presentation.agenda_screen.components.TimeNeedle
 import com.example.tasky.feature_agenda.presentation.agenda_screen.components.TopSection
 import com.example.tasky.feature_agenda.presentation.components.DatePickerDialog
 import com.example.tasky.feature_agenda.presentation.util.formatDateTimeOfPattern
@@ -44,6 +45,8 @@ import com.example.tasky.util.ArgumentTypeEnum
 import com.example.tasky.util.ObserveAsEvents
 import com.example.tasky.util.Result
 import com.example.tasky.util.Screen
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshState
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import kotlinx.coroutines.flow.Flow
 import java.time.ZoneId
@@ -54,6 +57,7 @@ fun AgendaScreen(
     state: AgendaState,
     onEvent: (AgendaEvent) -> Unit,
     dateDialogState: MaterialDialogState,
+    refreshState: SwipeRefreshState,
     username: String,
     logoutEventsChannelFlow: Flow<Result<Unit>>,
     navigateTo: (String) -> Unit
@@ -161,102 +165,216 @@ fun AgendaScreen(
                     Spacer(modifier = Modifier.height(20.dp))
                     Text(text = formatDateTimeOfPattern(state.currentDate, "dd MMMM yyyy"))
                     Spacer(modifier = Modifier.height(20.dp))
-                    LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                        items(state.itemList) { agendaItem ->
-                            when(agendaItem) {
-                                is AgendaItem.Event -> {
-                                    AgendaItemCard(
-                                        item = agendaItem,
-                                        timeRange = "${formatDateTimeOfPattern(agendaItem.from, "MMM d, HH:mm")} - ${formatDateTimeOfPattern(agendaItem.to, "MMM d, HH:mm")}",
-                                        onOpenClick = {
-                                            navigateTo(
-                                                Screen.EventDetailScreen.route +
-                                                        "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.eventId}"
-                                            )
-                                        },
-                                        onEditClick = {
-                                            navigateTo(
-                                                Screen.EventDetailScreen.route +
-                                                        "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.eventId}" +
-                                                        "&${ArgumentTypeEnum.EDIT_MODE.name}=edit"
-                                            )
-                                        },
-                                        onDeleteClick = {
-                                            onEvent(AgendaEvent.DeleteItem(agendaItem))
-                                        },
-                                        isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.id)] ?: false,
-                                        onMenuClick = { itemKey, isVisible ->
-                                            onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
-                                        },
-                                        isDeletionDialogVisible = state.isDeletionDialogVisible,
-                                        toggleDeletionDialog = {
-                                            onEvent(AgendaEvent.ToggleDeletionDialog)
-                                        }
-                                    )
+
+                    SwipeRefresh(
+                        state = refreshState,
+                        onRefresh = {
+                            onEvent(AgendaEvent.SwipeToRefresh)
+                        }
+                    ) {
+                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+
+                            items(state.itemList.filter { it.sortDate.toLocalTime().isBefore(state.currentTime) }) { agendaItem ->
+                                when(agendaItem) {
+                                    is AgendaItem.Event -> {
+                                        AgendaItemCard(
+                                            item = agendaItem,
+                                            timeRange = "${formatDateTimeOfPattern(agendaItem.from, "MMM d, HH:mm")} - ${formatDateTimeOfPattern(agendaItem.to, "MMM d, HH:mm")}",
+                                            onOpenClick = {
+                                                navigateTo(
+                                                    Screen.EventDetailScreen.route +
+                                                            "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.eventId}"
+                                                )
+                                            },
+                                            onEditClick = {
+                                                navigateTo(
+                                                    Screen.EventDetailScreen.route +
+                                                            "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.eventId}" +
+                                                            "&${ArgumentTypeEnum.EDIT_MODE.name}=edit"
+                                                )
+                                            },
+                                            onDeleteClick = {
+                                                onEvent(AgendaEvent.DeleteItem(agendaItem))
+                                            },
+                                            isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.id)] ?: false,
+                                            onMenuClick = { itemKey, isVisible ->
+                                                onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
+                                            },
+                                            isDeletionDialogVisible = state.isDeletionDialogVisible,
+                                            toggleDeletionDialog = {
+                                                onEvent(AgendaEvent.ToggleDeletionDialog)
+                                            }
+                                        )
+                                    }
+                                    is AgendaItem.Reminder -> {
+                                        AgendaItemCard(
+                                            item = agendaItem,
+                                            timeRange = formatDateTimeOfPattern(agendaItem.time, "MMM d, HH:mm"),
+                                            onOpenClick = {
+                                                navigateTo(
+                                                    Screen.ReminderDetailScreen.route +
+                                                            "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.reminderId}"
+                                                )
+                                            },
+                                            onEditClick = {
+                                                navigateTo(
+                                                    Screen.ReminderDetailScreen.route +
+                                                            "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.reminderId}" +
+                                                            "&${ArgumentTypeEnum.EDIT_MODE.name}=edit"
+                                                )
+                                            },
+                                            onDeleteClick = {
+                                                onEvent(AgendaEvent.DeleteItem(agendaItem))
+                                            },
+                                            isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.id)] ?: false,
+                                            onMenuClick = { itemKey, isVisible ->
+                                                onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
+                                            },
+                                            isDeletionDialogVisible = state.isDeletionDialogVisible,
+                                            toggleDeletionDialog = {
+                                                onEvent(AgendaEvent.ToggleDeletionDialog)
+                                            }
+                                        )
+                                    }
+                                    is AgendaItem.Task -> {
+                                        AgendaItemCard(
+                                            item = agendaItem,
+                                            timeRange = formatDateTimeOfPattern(agendaItem.time, "MMM d, HH:mm"),
+                                            onOpenClick = {
+                                                navigateTo(
+                                                    Screen.TaskDetailScreen.route +
+                                                            "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.taskId}"
+                                                )
+                                            },
+                                            onEditClick = {
+                                                navigateTo(
+                                                    Screen.TaskDetailScreen.route +
+                                                            "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.taskId}" +
+                                                            "&${ArgumentTypeEnum.EDIT_MODE.name}=edit"
+                                                )
+                                            },
+                                            onDeleteClick = {
+                                                onEvent(AgendaEvent.DeleteItem(agendaItem))
+                                            },
+                                            isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.taskId)] ?: false,
+                                            onMenuClick = { itemKey, isVisible ->
+                                                onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
+                                            },
+                                            isDeletionDialogVisible = state.isDeletionDialogVisible,
+                                            toggleDeletionDialog = {
+                                                onEvent(AgendaEvent.ToggleDeletionDialog)
+                                            },
+                                            selected = agendaItem.isDone,
+                                            toggleIsDone = {
+                                                onEvent(AgendaEvent.ToggleIsDone(agendaItem))
+                                            }
+                                        )
+                                    }
                                 }
-                                is AgendaItem.Reminder -> {
-                                    AgendaItemCard(
-                                        item = agendaItem,
-                                        timeRange = formatDateTimeOfPattern(agendaItem.time, "MMM d, HH:mm"),
-                                        onOpenClick = {
-                                            navigateTo(
-                                                Screen.ReminderDetailScreen.route +
-                                                        "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.reminderId}"
-                                            )
-                                        },
-                                        onEditClick = {
-                                            navigateTo(
-                                                Screen.ReminderDetailScreen.route +
-                                                        "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.reminderId}" +
-                                                        "&${ArgumentTypeEnum.EDIT_MODE.name}=edit"
-                                            )
-                                        },
-                                        onDeleteClick = {
-                                            onEvent(AgendaEvent.DeleteItem(agendaItem))
-                                        },
-                                        isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.id)] ?: false,
-                                        onMenuClick = { itemKey, isVisible ->
-                                            onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
-                                        },
-                                        isDeletionDialogVisible = state.isDeletionDialogVisible,
-                                        toggleDeletionDialog = {
-                                            onEvent(AgendaEvent.ToggleDeletionDialog)
-                                        }
-                                    )
+                            }
+
+                            item {
+                                if(state.itemList.isNotEmpty()) {
+                                    TimeNeedle()
                                 }
-                                is AgendaItem.Task -> {
-                                    AgendaItemCard(
-                                        item = agendaItem,
-                                        timeRange = formatDateTimeOfPattern(agendaItem.time, "MMM d, HH:mm"),
-                                        onOpenClick = {
-                                            navigateTo(
-                                                Screen.TaskDetailScreen.route +
-                                                "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.taskId}"
-                                            )
-                                        },
-                                        onEditClick = {
-                                            navigateTo(
-                                                Screen.TaskDetailScreen.route +
-                                                        "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.taskId}" +
-                                                         "&${ArgumentTypeEnum.EDIT_MODE.name}=edit"
-                                            )
-                                        },
-                                        onDeleteClick = {
-                                            onEvent(AgendaEvent.DeleteItem(agendaItem))
-                                        },
-                                        isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.taskId)] ?: false,
-                                        onMenuClick = { itemKey, isVisible ->
-                                            onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
-                                        },
-                                        isDeletionDialogVisible = state.isDeletionDialogVisible,
-                                        toggleDeletionDialog = {
-                                            onEvent(AgendaEvent.ToggleDeletionDialog)
-                                        },
-                                        selected = agendaItem.isDone,
-                                        toggleIsDone = {
-                                            onEvent(AgendaEvent.ToggleIsDone(agendaItem))
-                                        }
-                                    )
+                            }
+
+                            items(state.itemList.filter { it.sortDate.toLocalTime().isAfter(state.currentTime) }) { agendaItem ->
+                                when(agendaItem) {
+                                    is AgendaItem.Event -> {
+                                        AgendaItemCard(
+                                            item = agendaItem,
+                                            timeRange = "${formatDateTimeOfPattern(agendaItem.from, "MMM d, HH:mm")} - ${formatDateTimeOfPattern(agendaItem.to, "MMM d, HH:mm")}",
+                                            onOpenClick = {
+                                                navigateTo(
+                                                    Screen.EventDetailScreen.route +
+                                                            "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.eventId}"
+                                                )
+                                            },
+                                            onEditClick = {
+                                                navigateTo(
+                                                    Screen.EventDetailScreen.route +
+                                                            "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.eventId}" +
+                                                            "&${ArgumentTypeEnum.EDIT_MODE.name}=edit"
+                                                )
+                                            },
+                                            onDeleteClick = {
+                                                onEvent(AgendaEvent.DeleteItem(agendaItem))
+                                            },
+                                            isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.id)] ?: false,
+                                            onMenuClick = { itemKey, isVisible ->
+                                                onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
+                                            },
+                                            isDeletionDialogVisible = state.isDeletionDialogVisible,
+                                            toggleDeletionDialog = {
+                                                onEvent(AgendaEvent.ToggleDeletionDialog)
+                                            }
+                                        )
+                                    }
+                                    is AgendaItem.Reminder -> {
+                                        AgendaItemCard(
+                                            item = agendaItem,
+                                            timeRange = formatDateTimeOfPattern(agendaItem.time, "MMM d, HH:mm"),
+                                            onOpenClick = {
+                                                navigateTo(
+                                                    Screen.ReminderDetailScreen.route +
+                                                            "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.reminderId}"
+                                                )
+                                            },
+                                            onEditClick = {
+                                                navigateTo(
+                                                    Screen.ReminderDetailScreen.route +
+                                                            "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.reminderId}" +
+                                                            "&${ArgumentTypeEnum.EDIT_MODE.name}=edit"
+                                                )
+                                            },
+                                            onDeleteClick = {
+                                                onEvent(AgendaEvent.DeleteItem(agendaItem))
+                                            },
+                                            isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.id)] ?: false,
+                                            onMenuClick = { itemKey, isVisible ->
+                                                onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
+                                            },
+                                            isDeletionDialogVisible = state.isDeletionDialogVisible,
+                                            toggleDeletionDialog = {
+                                                onEvent(AgendaEvent.ToggleDeletionDialog)
+                                            }
+                                        )
+                                    }
+                                    is AgendaItem.Task -> {
+                                        AgendaItemCard(
+                                            item = agendaItem,
+                                            timeRange = formatDateTimeOfPattern(agendaItem.time, "MMM d, HH:mm"),
+                                            onOpenClick = {
+                                                navigateTo(
+                                                    Screen.TaskDetailScreen.route +
+                                                            "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.taskId}"
+                                                )
+                                            },
+                                            onEditClick = {
+                                                navigateTo(
+                                                    Screen.TaskDetailScreen.route +
+                                                            "?${ArgumentTypeEnum.ITEM_ID.name}=${agendaItem.taskId}" +
+                                                            "&${ArgumentTypeEnum.EDIT_MODE.name}=edit"
+                                                )
+                                            },
+                                            onDeleteClick = {
+                                                onEvent(AgendaEvent.DeleteItem(agendaItem))
+                                            },
+                                            isMenuVisible = state.isItemMenuVisible[AgendaItemKey(agendaItem.toAgendaItemType(), agendaItem.taskId)] ?: false,
+                                            onMenuClick = { itemKey, isVisible ->
+                                                onEvent(AgendaEvent.ToggleIndividualItemMenu(itemKey, isVisible))
+                                            },
+                                            isDeletionDialogVisible = state.isDeletionDialogVisible,
+                                            toggleDeletionDialog = {
+                                                onEvent(AgendaEvent.ToggleDeletionDialog)
+                                            },
+                                            selected = agendaItem.isDone,
+                                            toggleIsDone = {
+                                                onEvent(AgendaEvent.ToggleIsDone(agendaItem))
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }

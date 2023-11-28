@@ -75,4 +75,7 @@
     <string name="Photo">Photo</string>
     <string name="AddVisitor">Add visitor</string>
     <string name="Add">ADD</string>
+    <string name="DELETE_EVENT">DELETE EVENT</string>
+    <string name="LEAVE_EVENT">LEAVE EVENT</string>
+    <string name="JOIN_EVENT">JOIN EVENT</string>
 </resources>

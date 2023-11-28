@@ -4,6 +4,7 @@ import android.net.Uri
 import com.example.tasky.feature_agenda.domain.model.Attendee
 import com.example.tasky.feature_agenda.domain.util.ReminderType
 import com.example.tasky.feature_agenda.presentation.util.DateTimeDialogType
+import com.example.tasky.feature_agenda.presentation.util.EventOptions
 import com.example.tasky.feature_agenda.presentation.util.SelectableChipOptions
 import java.time.LocalDate
 import java.time.LocalTime
@@ -28,4 +29,5 @@ sealed class EventDetailOnClick {
     data class RemoveAttendee(val attendee: Attendee): EventDetailOnClick()
     data class AddPhoto(val photoUri: Uri?): EventDetailOnClick()
     data class DeletePhoto(val photoKey: String): EventDetailOnClick()
+    data class DeleteLeaveOrJoinEvent(val eventOptions: EventOptions): EventDetailOnClick()
 }
