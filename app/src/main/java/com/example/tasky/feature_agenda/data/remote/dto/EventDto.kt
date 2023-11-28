@@ -1,5 +1,8 @@
 package com.example.tasky.feature_agenda.data.remote.dto
 
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
 data class EventDto(
     val id: String,
     val title: String,

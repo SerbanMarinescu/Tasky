@@ -36,6 +36,7 @@ import com.example.tasky.feature_agenda.domain.util.PhotoValidator
 import com.example.tasky.feature_agenda.domain.util.TaskScheduler
 import com.example.tasky.feature_authentication.domain.util.UserPreferences
 import com.example.tasky.feature_authentication.domain.validation.UserDataValidator
+import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -53,10 +54,13 @@ object AgendaModule {
 
     @Provides
     @Singleton
-    fun provideAgendaApi(client: OkHttpClient): TaskyAgendaApi {
+    fun provideAgendaApi(
+        client: OkHttpClient,
+        moshi: Moshi
+    ): TaskyAgendaApi {
         return Retrofit.Builder()
             .baseUrl(Constants.BASE_URL)
-            .addConverterFactory(MoshiConverterFactory.create())
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
             .client(client)
             .build()
             .create()
@@ -97,8 +101,8 @@ object AgendaModule {
 
     @Provides
     @Singleton
-    fun provideJsonSerializer(): JsonSerializer {
-        return MoshiSerializer()
+    fun provideJsonSerializer(moshi: Moshi): JsonSerializer {
+        return MoshiSerializer(moshi)
     }
 
     @Provides

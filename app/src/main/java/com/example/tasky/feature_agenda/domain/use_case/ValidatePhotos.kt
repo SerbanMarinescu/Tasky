@@ -7,40 +7,29 @@ class ValidatePhotos(
     private val photoValidator: PhotoValidator
 ) {
 
-    suspend operator fun invoke(eventId: String, photoList: MutableList<EventPhoto.Local>) {
-        val parentDirectory = photoValidator.getDirectoryForImages(eventId)
-        val iterator = photoList.iterator()
-        var index = 0
+    suspend operator fun invoke(photoList: MutableList<EventPhoto.Local>): List<EventPhoto.Local> {
 
-        while (iterator.hasNext()) {
-            val photo = iterator.next()
+        val validPhotos = mutableListOf<EventPhoto.Local>()
+
+        photoList.forEach { photo ->
             val imageBytes = photoValidator.readUriAsByteArray(photo.uri)
-            imageBytes?.let {
-                val isPhotoSizeValid = photoValidator.checkImageSize(imageBytes)
+
+            imageBytes?.let { byteArray ->
+                val isPhotoSizeValid = photoValidator.checkImageSize(byteArray)
 
                 if(isPhotoSizeValid) {
-                    photoValidator.saveImageBytes(
-                        imageBytes = imageBytes,
-                        parentDirectory = parentDirectory,
-                        fileName = "photo$index"
-                    )
-                    index++
+                    validPhotos.add(photo.copy(byteArray = byteArray))
                 } else {
-                    val compressedImage = photoValidator.compressImage(imageBytes, 80)
-                    val isPhotoValidAfterCompression = photoValidator.checkImageSize(compressedImage)
+                    val compressedPhoto = photoValidator.compressImage(byteArray, 80)
+                    val isPhotoValidAfterCompression = photoValidator.checkImageSize(compressedPhoto)
 
                     if(isPhotoValidAfterCompression) {
-                        photoValidator.saveImageBytes(
-                            imageBytes = imageBytes,
-                            parentDirectory = parentDirectory,
-                            fileName = "photo$index"
-                        )
-                        index++
-                    } else {
-                        photoList.remove(photo)
+                        validPhotos.add(photo.copy(byteArray = compressedPhoto))
                     }
                 }
             }
         }
+
+        return validPhotos
     }
 }

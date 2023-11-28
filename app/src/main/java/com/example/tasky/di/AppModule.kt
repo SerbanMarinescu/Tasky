@@ -7,6 +7,8 @@ import com.example.tasky.common.Constants
 import com.example.tasky.feature_authentication.domain.util.UserPreferences
 import com.example.tasky.util.ApiKeyInterceptor
 import com.example.tasky.util.ApiTokenInterceptor
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -37,6 +39,15 @@ object AppModule {
         return  OkHttpClient.Builder()
             .addInterceptor(ApiKeyInterceptor(Constants.API_KEY))
             .addInterceptor(ApiTokenInterceptor(userPrefs))
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideMoshi(): Moshi {
+        return Moshi
+            .Builder()
+            .add(KotlinJsonAdapterFactory())
             .build()
     }
 }

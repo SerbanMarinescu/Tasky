@@ -1,6 +1,7 @@
 package com.example.tasky.feature_agenda.data.local
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
@@ -22,6 +23,9 @@ interface EventDao {
     @Upsert
     suspend fun upsertPhotos(photos: List<PhotoEntity>)
 
+    @Delete
+    suspend fun deletePhotos(photos: List<PhotoEntity>)
+
     @Transaction
     @Query("SELECT * FROM Event WHERE eventId = :eventId")
     suspend fun getEventById(eventId: String): EventWithAttendeesAndPhotos?
@@ -30,12 +34,25 @@ interface EventDao {
     @Query("SELECT * FROM Event WHERE `from` BETWEEN :startOfDay AND :endOfDay")
     fun getEventsForASpecificDay(startOfDay: Long, endOfDay: Long): Flow<List<EventWithAttendeesAndPhotos>>
 
+    @Query("SELECT * FROM Attendee WHERE eventId = :eventId")
+    suspend fun getAttendeesByEventId(eventId: String): List<AttendeeEntity>
+
     @Transaction
     @Query("DELETE FROM Event WHERE eventId = :eventId")
     suspend fun deleteEventById(eventId: String)
 
     @Query("DELETE FROM Attendee WHERE eventId = :eventId")
     suspend fun deleteAttendeeByEventId(eventId: String)
+
+    @Delete
+    suspend fun deleteAttendees(attendees: List<AttendeeEntity>)
+
+    @Transaction
+    suspend fun updateAttendeesForAnEvent(eventId: String, newAttendees: List<AttendeeEntity>) {
+        val currentAttendees = getAttendeesByEventId(eventId)
+        deleteAttendees(currentAttendees)
+        upsertAttendees(newAttendees)
+    }
 
     @Transaction
     @Query("DELETE FROM Event WHERE `from` BETWEEN :startOfDay AND :endOfDay")
