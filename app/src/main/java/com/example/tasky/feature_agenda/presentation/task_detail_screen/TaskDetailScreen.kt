@@ -46,8 +46,11 @@ import com.example.tasky.presentation.theme.Light
 import com.example.tasky.presentation.theme.Light2
 import com.example.tasky.presentation.theme.interFont
 import com.example.tasky.util.ArgumentTypeEnum
+import com.example.tasky.util.ObserveAsEvents
+import com.example.tasky.util.Result
 import com.example.tasky.util.Screen
 import com.vanpra.composematerialdialogs.MaterialDialogState
+import kotlinx.coroutines.flow.Flow
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -56,9 +59,18 @@ fun TaskDetailScreen(
     dateDialogState: MaterialDialogState,
     timeDialogState: MaterialDialogState,
     onEvent: (TaskDetailEvent) -> Unit,
+    navigationResult: Flow<Result<Unit>>,
     navigateTo: (String) -> Unit,
-    goBack: () -> Unit
+    navigateBack: () -> Unit
 ) {
+
+    ObserveAsEvents(flow = navigationResult) { result ->
+        when(result) {
+            is Result.Error -> Unit
+            is Result.Success -> navigateBack()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -73,7 +85,7 @@ fun TaskDetailScreen(
         ) {
             IconButton(
                 onClick = {
-                    goBack()
+                    navigateBack()
                 }
             ) {
                 Icon(
@@ -99,7 +111,6 @@ fun TaskDetailScreen(
                     fontSize = 16.sp,
                     modifier = Modifier.clickable {
                         onEvent(TaskDetailEvent.SaveTask)
-                        goBack()
                     }
                 )
             } else {
@@ -384,7 +395,6 @@ fun TaskDetailScreen(
                     .padding(bottom = 70.dp)
                     .clickable {
                         onEvent(TaskDetailEvent.DeleteTask)
-                        goBack()
                     },
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally

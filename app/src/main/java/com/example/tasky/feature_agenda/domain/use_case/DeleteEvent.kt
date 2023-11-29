@@ -1,6 +1,5 @@
 package com.example.tasky.feature_agenda.domain.use_case
 
-import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.EventRepository
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType
 import com.example.tasky.feature_agenda.domain.util.OperationType
@@ -17,8 +16,8 @@ class DeleteEvent(
     private val taskScheduler: TaskScheduler
 ) {
 
-    suspend operator fun invoke(event: AgendaItem.Event): Result<Unit> {
-        val result = repository.deleteEvent(event)
+    suspend operator fun invoke(eventId: String, isUserEventCreator: Boolean): Result<Unit> {
+        val result = repository.deleteEvent(eventId, isUserEventCreator)
 
         return when (result) {
             is Resource.Error -> {
@@ -27,7 +26,7 @@ class DeleteEvent(
 
                     IO -> {
                         taskScheduler.scheduleItemToBeSynced(
-                            itemId = event.eventId,
+                            itemId = eventId,
                             itemType = AgendaItemType.EVENT,
                             operation = OperationType.DELETE
                         )

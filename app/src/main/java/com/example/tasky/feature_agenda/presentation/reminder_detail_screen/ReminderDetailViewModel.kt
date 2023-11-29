@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.AgendaRepositories
 import com.example.tasky.feature_agenda.domain.use_case.AgendaUseCases
+import com.example.tasky.feature_agenda.domain.util.NotificationScheduler
 import com.example.tasky.feature_agenda.domain.util.ReminderType
 import com.example.tasky.util.ArgumentTypeEnum
 import com.example.tasky.util.Resource
@@ -30,14 +31,15 @@ import javax.inject.Inject
 class ReminderDetailViewModel @Inject constructor(
     private val useCases: AgendaUseCases,
     private val repositories: AgendaRepositories,
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
+    private val notificationScheduler: NotificationScheduler
 ): ViewModel() {
 
     private val _state = MutableStateFlow(ReminderDetailState())
     val state = _state.asStateFlow()
 
     private val resultChannel = Channel<Result<Unit>>()
-    val logoutResult = resultChannel.receiveAsFlow()
+    val navigationResult = resultChannel.receiveAsFlow()
 
     var dateDialogState by mutableStateOf(MaterialDialogState())
     var timeDialogState by mutableStateOf(MaterialDialogState())
@@ -90,10 +92,13 @@ class ReminderDetailViewModel @Inject constructor(
 
             ReminderDetailEvent.DeleteReminder -> {
                 val reminderId = savedStateHandle.get<String>(ArgumentTypeEnum.ITEM_ID.name)
-                reminderId?.let {
-                    viewModelScope.launch {
+                viewModelScope.launch {
+                    reminderId?.let {
                         useCases.reminder.deleteReminder(it)
+                        notificationScheduler.cancelNotification(it)
+                        resultChannel.send(Result.Success())
                     }
+                    resultChannel.send(Result.Success())
                 }
             }
 
@@ -128,10 +133,14 @@ class ReminderDetailViewModel @Inject constructor(
             existingReminderId?.let {
                 val reminderToBeUpdated = reminderToBeCreated.copy(reminderId = it)
                 useCases.reminder.updateReminder(reminderToBeUpdated)
+                notificationScheduler.scheduleNotification(reminderToBeUpdated)
+                resultChannel.send(Result.Success())
                 return@launch
             }
 
             useCases.reminder.createReminder(reminderToBeCreated)
+            notificationScheduler.scheduleNotification(reminderToBeCreated)
+            resultChannel.send(Result.Success())
         }
     }
 

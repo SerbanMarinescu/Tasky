@@ -214,24 +214,24 @@ class EventRepositoryImpl(
         }
     }
 
-    override suspend fun deleteEvent(event: AgendaItem.Event): Resource<Unit> {
+    override suspend fun deleteEvent(eventId: String, isUserEventCreator: Boolean): Resource<Unit> {
 
-        if(event.isUserEventCreator) {
-            db.eventDao.deleteEventById(event.eventId)
+        if(isUserEventCreator) {
+            db.eventDao.deleteEventById(eventId)
         } else {
-            db.eventDao.deleteAttendeeByEventId(event.eventId)
+            db.eventDao.deleteAttendeeByEventId(eventId)
         }
 
-        return syncDeletedEvent(event)
+        return syncDeletedEvent(eventId, isUserEventCreator)
     }
 
-    override suspend fun syncDeletedEvent(event: AgendaItem.Event): Resource<Unit> {
+    override suspend fun syncDeletedEvent(eventId: String, isUserEventCreator: Boolean): Resource<Unit> {
         return try {
-            if(event.isUserEventCreator) {
-                api.deleteEvent(event.eventId)
+            if(isUserEventCreator) {
+                api.deleteEvent(eventId)
             } else {
-                api.deleteAttendee(event.eventId)
-                db.eventDao.deleteEventById(event.eventId)
+                api.deleteAttendee(eventId)
+                db.eventDao.deleteEventById(eventId)
             }
             Resource.Success()
         } catch(e: HttpException) {

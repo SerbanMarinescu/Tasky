@@ -2,6 +2,7 @@ package com.example.tasky.di
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.work.WorkManager
 import com.example.tasky.TaskyApp
 import com.example.tasky.common.Constants
 import com.example.tasky.feature_authentication.domain.util.UserPreferences
@@ -49,5 +50,11 @@ object AppModule {
             .Builder()
             .add(KotlinJsonAdapterFactory())
             .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideWorkManager(@ApplicationContext context: Context): WorkManager {
+        return WorkManager.getInstance(context)
     }
 }

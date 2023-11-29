@@ -7,6 +7,10 @@ object Constants {
     const val BASE_URL = "https://tasky.pl-coding.com/"
     const val DATABASE_NAME = "Agenda.db"
 
+    const val NOTIFICATION_CHANNEL_ID = "channel_id"
+    const val NOTIFICATION_CHANNEL_DESCRIPTION = "Used to remind the User of upcoming Events, Tasks and Reminders"
+    const val APP_NAME = "Tasky"
+
     const val ACTION = "action"
     const val AGENDA_ITEM_TYPE = "agendaItemType"
     const val EVENT = "event"
