@@ -10,8 +10,11 @@ import java.time.ZonedDateTime
 
 data class EventDetailState(
     val eventId: String? = null,
-    val editMode: Boolean = true,
+    val isInEditMode: Boolean = true,
     val eventCreatorId: String = "",
+    val isUserEventCreator: Boolean = true,
+    val currentUserId: String? = null,
+    val isCurrentUserGoing: Boolean = true,
     val currentDate: ZonedDateTime = ZonedDateTime.now(),
     val eventTitle: String = "New Event",
     val eventDescription: String = "Event Description",

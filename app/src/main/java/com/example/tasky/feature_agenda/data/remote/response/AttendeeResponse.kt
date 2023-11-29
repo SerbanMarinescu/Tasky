@@ -6,5 +6,5 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class AttendeeResponse(
     val doesUserExist: Boolean,
-    val attendee: AttendeeDto
+    val attendee: AttendeeDto?
 )

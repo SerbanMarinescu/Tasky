@@ -15,6 +15,7 @@ import com.example.tasky.feature_agenda.presentation.util.generateNextDays
 import com.example.tasky.feature_agenda.presentation.util.getInitials
 import com.example.tasky.feature_authentication.domain.util.UserPreferences
 import com.example.tasky.util.Result
+import com.google.accompanist.swiperefresh.SwipeRefreshState
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalTime
 import javax.inject.Inject
 
 @HiltViewModel
@@ -38,6 +40,7 @@ class AgendaViewModel @Inject constructor(
     val state = _state.asStateFlow()
 
     var dateDialogState by mutableStateOf(MaterialDialogState())
+    var refreshState by mutableStateOf(SwipeRefreshState(false))
 
     var username by mutableStateOf("")
         private set
@@ -160,7 +163,9 @@ class AgendaViewModel @Inject constructor(
 
     private fun getRemoteAgenda() {
         viewModelScope.launch {
+            _state.update { it.copy(isRefreshing = true) }
             repositories.agendaRepository.fetchAgendaFromRemote(state.value.currentDate)
+            _state.update { it.copy(isRefreshing = false, currentTime = LocalTime.now()) }
         }
     }
 

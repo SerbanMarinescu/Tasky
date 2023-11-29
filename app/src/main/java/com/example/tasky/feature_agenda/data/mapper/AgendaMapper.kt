@@ -19,6 +19,7 @@ import com.example.tasky.feature_agenda.domain.util.ReminderType
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 
 fun Long.toZonedDateTime(timeZoneId: ZoneId = ZoneId.systemDefault()): ZonedDateTime {
     val instant = Instant.ofEpochMilli(this)
@@ -60,6 +61,7 @@ fun PhotoDto.toPhoto(): EventPhoto.Remote {
 }
 
 fun EventDto.toEvent(): AgendaItem.Event {
+    val timeDif = ChronoUnit.MINUTES.between(remindAt.toZonedDateTime(), from.toZonedDateTime())
     return AgendaItem.Event(
         eventId = id,
         eventTitle = title,
@@ -71,24 +73,38 @@ fun EventDto.toEvent(): AgendaItem.Event {
         isUserEventCreator = isUserEventCreator,
         host = host,
         remindAtTime = remindAt.toZonedDateTime(),
-        eventReminderType = ReminderType.ONE_HOUR_BEFORE
+        eventReminderType = when (timeDif) {
+            10L -> ReminderType.TEN_MINUTES_BEFORE
+            30L -> ReminderType.THIRTY_MINUTES_BEFORE
+            60L -> ReminderType.ONE_HOUR_BEFORE
+            6L * 60L -> ReminderType.SIX_HOURS_BEFORE
+            else -> ReminderType.ONE_DAY_BEFORE
+        }
     )
 }
 
 
 fun ReminderDto.toReminder(): AgendaItem.Reminder {
+    val timeDif = ChronoUnit.MINUTES.between(remindAt.toZonedDateTime(), time.toZonedDateTime())
     return AgendaItem.Reminder(
         reminderId = id,
         reminderTitle = title,
         reminderDescription = description,
         time = time.toZonedDateTime(),
         remindAtTime = remindAt.toZonedDateTime(),
-        typeOfReminder = ReminderType.ONE_HOUR_BEFORE
+        typeOfReminder = when (timeDif) {
+            10L -> ReminderType.TEN_MINUTES_BEFORE
+            30L -> ReminderType.THIRTY_MINUTES_BEFORE
+            60L -> ReminderType.ONE_HOUR_BEFORE
+            6L * 60L -> ReminderType.SIX_HOURS_BEFORE
+            else -> ReminderType.ONE_DAY_BEFORE
+        }
     )
 }
 
 
 fun TaskDto.toTask(): AgendaItem.Task {
+    val timeDif = ChronoUnit.MINUTES.between(remindAt.toZonedDateTime(), time.toZonedDateTime())
     return AgendaItem.Task(
         taskId = id,
         taskTitle = title,
@@ -96,7 +112,13 @@ fun TaskDto.toTask(): AgendaItem.Task {
         time = time.toZonedDateTime(),
         isDone = isDone,
         remindAtTime = remindAt.toZonedDateTime(),
-        taskReminderType = ReminderType.ONE_HOUR_BEFORE
+        taskReminderType = when (timeDif) {
+            10L -> ReminderType.TEN_MINUTES_BEFORE
+            30L -> ReminderType.THIRTY_MINUTES_BEFORE
+            60L -> ReminderType.ONE_HOUR_BEFORE
+            6L * 60L -> ReminderType.SIX_HOURS_BEFORE
+            else -> ReminderType.ONE_DAY_BEFORE
+        }
     )
 }
 
@@ -145,7 +167,7 @@ fun EventWithAttendeesAndPhotos.toEvent(): AgendaItem.Event {
         isUserEventCreator = event.isUserEventCreator,
         host = event.host,
         remindAtTime = event.remindAt.toZonedDateTime(),
-        eventReminderType = ReminderType.ONE_HOUR_BEFORE
+        eventReminderType = event.reminderType
     )
 }
 
@@ -181,7 +203,8 @@ fun AgendaItem.Event.toEventEntity(): EventEntity {
         remindAt = remindAtTime.toUtcTimestamp(),
         isUserEventCreator = isUserEventCreator,
         host = host ?: "",
-        eventId = eventId
+        eventId = eventId,
+        reminderType = eventReminderType
     )
 }
 

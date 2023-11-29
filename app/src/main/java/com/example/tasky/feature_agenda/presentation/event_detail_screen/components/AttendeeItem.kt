@@ -38,6 +38,7 @@ fun AttendeeItem(
     initials: String,
     fullName: String,
     eventCreator: Boolean,
+    isInEditMode: Boolean,
     onDeleteClick: () -> Unit
 ) {
     Box(
@@ -101,18 +102,19 @@ fun AttendeeItem(
                 }
 
             } else {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_delete),
-                    contentDescription = null,
-                    tint = DarkGray,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clickable {
-                            onDeleteClick()
-                        }
-                )
+                if(isInEditMode) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_delete),
+                        contentDescription = null,
+                        tint = DarkGray,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clickable {
+                                onDeleteClick()
+                            }
+                    )
+                }
             }
-
         }
     }
 }

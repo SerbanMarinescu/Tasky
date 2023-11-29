@@ -1,6 +1,5 @@
 package com.example.tasky.feature_agenda.data.repository
 
-import android.util.Log
 import com.example.tasky.feature_agenda.data.local.AgendaDatabase
 import com.example.tasky.feature_agenda.data.mapper.toAttendee
 import com.example.tasky.feature_agenda.data.mapper.toAttendeeEntity
@@ -154,16 +153,14 @@ class EventRepositoryImpl(
         deletedPhotos: List<EventPhoto>
     ): Resource<Unit> {
 
-        Log.d("UpdatingEvent", "Sync update event in repo")
         val localPhotos = event.photos.filterIsInstance<EventPhoto.Local>()
-        Log.d("UpdatingEvent", "PhotoList to add $localPhotos")
         val photoList = localPhotos.mapIndexed { index, eventPhoto ->
             val requestFile = eventPhoto.byteArray.toRequestBody("image/*".toMediaTypeOrNull(), 0, eventPhoto.byteArray.size)
             MultipartBody.Part.createFormData("photo$index", "photo$index.jpg", requestFile)
         }
-        Log.d("UpdatingEvent", "Photo list for request $photoList")
+
         val userId = userPrefs.getAuthenticatedUser()?.userId ?: return Resource.Error(message = "User is not logged in!", errorType = ErrorType.OTHER)
-        Log.d("UpdatingEvent", "Attendees in repo: ${event.attendees}")
+
         val updateEventRequest = UpdateEventRequest(
             id = event.eventId,
             title = event.title,
@@ -178,7 +175,9 @@ class EventRepositoryImpl(
                     is EventPhoto.Remote -> it.key
                 }
             },
-            isGoing = event.attendees.any{ it.userId == userId }
+            isGoing = event.attendees.any{
+                it.userId == userId && it.isGoing
+            }
         )
 
         val jsonEventRequest = jsonSerializer.toJson(updateEventRequest, UpdateEventRequest::class.java)
@@ -190,32 +189,22 @@ class EventRepositoryImpl(
                 photos = photoList
             )
 
-            val deletedPhotoEntities = deletedPhotos.mapNotNull {
-                it.toPhotoEntity(event.eventId)
-            }
+            val remotePhotos = response.body()?.photos
+            val photos = remotePhotos?.map { it.toPhoto() }
+            val newPhotos = photos?.mapNotNull { it.toPhotoEntity(event.eventId)}
 
-            db.eventDao.deletePhotos(deletedPhotoEntities)
+            val remoteAttendees = response.body()?.attendees
+            val attendees = remoteAttendees?.map { it.toAttendee() }
+            val newAttendees = attendees?.map { it.toAttendeeEntity(event.eventId) }
 
-            val remotePhotos = response.body()?.photos?.map {
-                it.toPhoto()
-            }
-            val photoEntities = remotePhotos?.mapNotNull {
-                it.toPhotoEntity(event.eventId)
-            }
-            photoEntities?.let {
-                db.eventDao.upsertPhotos(it)
-            }
+            val deletedPhotoEntities = deletedPhotos.mapNotNull { it.toPhotoEntity(event.eventId) }
 
-            val remoteAttendees = response.body()?.attendees?.map {
-                it.toAttendee()
-            }
-
-            val attendeeEntities = remoteAttendees?.map {
-                it.toAttendeeEntity(event.eventId)
-            }
-            attendeeEntities?.let {
-                db.eventDao.updateAttendeesForAnEvent(event.eventId, it)
-            }
+            db.eventDao.updateAttendeesAndPhotosForAnEvent(
+                eventId = event.eventId,
+                newAttendees = newAttendees,
+                newPhotos = newPhotos,
+                deletedPhotos = deletedPhotoEntities
+            )
 
             Resource.Success()
         } catch(e: HttpException) {
@@ -242,6 +231,7 @@ class EventRepositoryImpl(
                 api.deleteEvent(event.eventId)
             } else {
                 api.deleteAttendee(event.eventId)
+                db.eventDao.deleteEventById(event.eventId)
             }
             Resource.Success()
         } catch(e: HttpException) {

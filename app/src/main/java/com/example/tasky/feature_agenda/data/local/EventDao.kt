@@ -48,10 +48,22 @@ interface EventDao {
     suspend fun deleteAttendees(attendees: List<AttendeeEntity>)
 
     @Transaction
-    suspend fun updateAttendeesForAnEvent(eventId: String, newAttendees: List<AttendeeEntity>) {
+    suspend fun updateAttendeesAndPhotosForAnEvent(
+        eventId: String,
+        newAttendees: List<AttendeeEntity>?,
+        newPhotos: List<PhotoEntity>?,
+        deletedPhotos: List<PhotoEntity>
+    ) {
         val currentAttendees = getAttendeesByEventId(eventId)
         deleteAttendees(currentAttendees)
-        upsertAttendees(newAttendees)
+        newAttendees?.let {
+            upsertAttendees(newAttendees)
+        }
+
+        deletePhotos(deletedPhotos)
+        newPhotos?.let {
+            upsertPhotos(newPhotos)
+        }
     }
 
     @Transaction
