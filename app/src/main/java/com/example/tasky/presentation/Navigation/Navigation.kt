@@ -1,5 +1,6 @@
 package com.example.tasky.presentation.Navigation
 
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -12,6 +13,11 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
+import com.example.tasky.common.Constants.APP_SCHEME
+import com.example.tasky.common.Constants.EVENT_HOST
+import com.example.tasky.common.Constants.REMINDER_HOST
+import com.example.tasky.common.Constants.TASK_HOST
 import com.example.tasky.feature_agenda.presentation.agenda_screen.AgendaScreen
 import com.example.tasky.feature_agenda.presentation.agenda_screen.AgendaViewModel
 import com.example.tasky.feature_agenda.presentation.edit_details_screen.EditDetailsScreen
@@ -90,6 +96,12 @@ fun Navigation(navController: NavHostController) {
                     defaultValue = null
                     nullable = true
                 }
+            ),
+            deepLinks = listOf(
+                navDeepLink {
+                    action = Intent.ACTION_VIEW
+                    uriPattern = "${APP_SCHEME}://${TASK_HOST}?${ArgumentTypeEnum.ITEM_ID.name}={${ArgumentTypeEnum.ITEM_ID.name}}"
+                }
             )
         ) { entry ->
             val viewModel = hiltViewModel<TaskDetailViewModel>()
@@ -154,6 +166,12 @@ fun Navigation(navController: NavHostController) {
                     type = NavType.StringType
                     defaultValue = null
                     nullable = true
+                }
+            ),
+            deepLinks = listOf(
+                navDeepLink {
+                    action = Intent.ACTION_VIEW
+                    uriPattern = "${APP_SCHEME}://${REMINDER_HOST}?${ArgumentTypeEnum.ITEM_ID.name}={${ArgumentTypeEnum.ITEM_ID.name}}"
                 }
             )
         ) { entry ->
@@ -228,6 +246,12 @@ fun Navigation(navController: NavHostController) {
                     type = NavType.StringType
                     defaultValue = null
                     nullable = true
+                }
+            ),
+            deepLinks = listOf(
+                navDeepLink {
+                    action = Intent.ACTION_VIEW
+                    uriPattern = "${APP_SCHEME}://${EVENT_HOST}?${ArgumentTypeEnum.ITEM_ID.name}={${ArgumentTypeEnum.ITEM_ID.name}}"
                 }
             )
         ) { entry ->

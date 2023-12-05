@@ -28,7 +28,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.tasky.R
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.util.AgendaItemKey
@@ -41,6 +43,7 @@ import com.example.tasky.feature_agenda.presentation.components.DatePickerDialog
 import com.example.tasky.feature_agenda.presentation.util.formatDateTimeOfPattern
 import com.example.tasky.presentation.theme.BackgroundBlack
 import com.example.tasky.presentation.theme.BackgroundWhite
+import com.example.tasky.presentation.theme.interFont
 import com.example.tasky.util.ArgumentTypeEnum
 import com.example.tasky.util.ObserveAsEvents
 import com.example.tasky.util.Result
@@ -163,7 +166,13 @@ fun AgendaScreen(
                         }
                     }
                     Spacer(modifier = Modifier.height(20.dp))
-                    Text(text = formatDateTimeOfPattern(state.currentDate, "dd MMMM yyyy"))
+                    Text(
+                        text = formatDateTimeOfPattern(state.currentDate, "dd MMMM yyyy"),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = interFont,
+                        modifier = Modifier.padding(start = 15.dp)
+                    )
                     Spacer(modifier = Modifier.height(20.dp))
 
                     SwipeRefresh(

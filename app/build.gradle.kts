@@ -18,7 +18,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.tasky"
-        minSdk = 23
+        minSdk = 26
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
@@ -130,6 +130,10 @@ dependencies {
     //WorkManager with Coroutines
     implementation("androidx.work:work-runtime-ktx:2.7.1")
 
+    //Work Manager with Dagger Hilt
+    implementation("androidx.hilt:hilt-work:1.0.0")
+    ksp("androidx.hilt:hilt-compiler:1.0.0")
+    
     //DateTime Picker
     implementation("io.github.vanpra.compose-material-dialogs:datetime:0.8.1-rc")
 

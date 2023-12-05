@@ -10,6 +10,8 @@
     <string name="FULL_NAME_TOO_LONG">The full name must be shorter than 50 characters!</string>
     <string name="NoErrorMessage">NoError</string>
 
+    <string name="NotificationChannelDescription">Used to remind the User of upcoming Events, Tasks and Reminders</string>
+
     <string name="WelcomeMessage">Welcome Back!</string>
     <string name="EmailHint">Email address</string>
     <string name="PasswordHint">Password</string>
