@@ -119,10 +119,11 @@ fun Navigation(navController: NavHostController) {
                 dateDialogState = viewModel.dateDialogState,
                 timeDialogState = viewModel.timeDialogState,
                 onEvent = viewModel::onEvent,
+                navigationResult = viewModel.navigationResult,
                 navigateTo = {
                     navController.navigate(it)
                 },
-                goBack = {
+                navigateBack = {
                     navController.popBackStack()
                 }
             )
@@ -162,6 +163,8 @@ fun Navigation(navController: NavHostController) {
             viewModel.dateDialogState = rememberMaterialDialogState()
             viewModel.timeDialogState = rememberMaterialDialogState()
 
+            val navigationResult = viewModel.navigationResult
+
             LaunchedEffect(key1 = entry.savedStateHandle) {
                 val type = entry.savedStateHandle.get<String>(ArgumentTypeEnum.TYPE.name)
                 val text = entry.savedStateHandle.get<String>(ArgumentTypeEnum.TEXT.name)
@@ -183,10 +186,11 @@ fun Navigation(navController: NavHostController) {
                 onEvent = viewModel::onEvent,
                 dateDialogState = viewModel.dateDialogState,
                 timeDialogState = viewModel.timeDialogState,
+                navigationResult = navigationResult,
                 navigateTo = {
                     navController.navigate(it)
                 },
-                goBack = {
+                navigateBack = {
                     navController.popBackStack()
                 }
             )

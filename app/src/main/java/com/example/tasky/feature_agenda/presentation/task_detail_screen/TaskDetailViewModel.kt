@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.AgendaRepositories
 import com.example.tasky.feature_agenda.domain.use_case.AgendaUseCases
+import com.example.tasky.feature_agenda.domain.util.NotificationScheduler
 import com.example.tasky.feature_agenda.domain.util.ReminderType
 import com.example.tasky.util.ArgumentTypeEnum
 import com.example.tasky.util.Resource
@@ -30,14 +31,15 @@ import javax.inject.Inject
 class TaskDetailViewModel @Inject constructor(
     private val useCases: AgendaUseCases,
     private val repositories: AgendaRepositories,
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
+    private val notificationScheduler: NotificationScheduler
 ): ViewModel() {
 
     private val _state = MutableStateFlow(TaskDetailState())
     val state = _state.asStateFlow()
 
     private val resultChannel = Channel<Result<Unit>>()
-    val logoutResult = resultChannel.receiveAsFlow()
+    val navigationResult = resultChannel.receiveAsFlow()
 
     var dateDialogState by mutableStateOf(MaterialDialogState())
     var timeDialogState by mutableStateOf(MaterialDialogState())
@@ -90,10 +92,13 @@ class TaskDetailViewModel @Inject constructor(
 
             TaskDetailEvent.DeleteTask -> {
                 val taskId = savedStateHandle.get<String>(ArgumentTypeEnum.ITEM_ID.name)
-                taskId?.let {
-                    viewModelScope.launch {
+                viewModelScope.launch {
+                    taskId?.let {
                         useCases.task.deleteTask(it)
+                        notificationScheduler.cancelNotification(it)
+                        resultChannel.send(Result.Success())
                     }
+                    resultChannel.send(Result.Success())
                 }
             }
 
@@ -127,12 +132,16 @@ class TaskDetailViewModel @Inject constructor(
 
             val existingTaskId = state.value.taskId
             existingTaskId?.let {
-                val taskToBeUpdate = taskToBeCreated.copy(taskId = it)
-                useCases.task.updateTask(taskToBeUpdate)
+                val taskToBeUpdated = taskToBeCreated.copy(taskId = it)
+                useCases.task.updateTask(taskToBeUpdated)
+                notificationScheduler.scheduleNotification(taskToBeUpdated)
+                resultChannel.send(Result.Success())
                 return@launch
             }
 
             useCases.task.createTask(taskToBeCreated)
+            notificationScheduler.scheduleNotification(taskToBeCreated)
+            resultChannel.send(Result.Success())
         }
     }
 

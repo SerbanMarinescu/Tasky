@@ -10,6 +10,7 @@ import com.example.tasky.feature_agenda.domain.model.AgendaItem
 import com.example.tasky.feature_agenda.domain.repository.AgendaRepositories
 import com.example.tasky.feature_agenda.domain.use_case.AgendaUseCases
 import com.example.tasky.feature_agenda.domain.util.AgendaItemKey
+import com.example.tasky.feature_agenda.domain.util.NotificationScheduler
 import com.example.tasky.feature_agenda.domain.util.toAgendaItemType
 import com.example.tasky.feature_agenda.presentation.util.generateNextDays
 import com.example.tasky.feature_agenda.presentation.util.getInitials
@@ -33,7 +34,8 @@ import javax.inject.Inject
 class AgendaViewModel @Inject constructor(
     private val useCases: AgendaUseCases,
     private val repositories: AgendaRepositories,
-    private val userPreferences: UserPreferences
+    private val userPreferences: UserPreferences,
+    private val notificationScheduler: NotificationScheduler
 ): ViewModel() {
 
     private val _state = MutableStateFlow(AgendaState())
@@ -130,9 +132,18 @@ class AgendaViewModel @Inject constructor(
             is AgendaEvent.DeleteItem -> {
                 viewModelScope.launch {
                     when(event.item) {
-                        is AgendaItem.Event -> useCases.event.deleteEvent(event.item)
-                        is AgendaItem.Reminder -> useCases.reminder.deleteReminder(event.item.reminderId)
-                        is AgendaItem.Task -> useCases.task.deleteTask(event.item.taskId)
+                        is AgendaItem.Event -> {
+                            useCases.event.deleteEvent(event.item.eventId, event.item.isUserEventCreator)
+                            notificationScheduler.cancelNotification(event.item.eventId)
+                        }
+                        is AgendaItem.Reminder -> {
+                            useCases.reminder.deleteReminder(event.item.reminderId)
+                            notificationScheduler.cancelNotification(event.item.reminderId)
+                        }
+                        is AgendaItem.Task -> {
+                            useCases.task.deleteTask(event.item.taskId)
+                            notificationScheduler.cancelNotification(event.item.taskId)
+                        }
                     }
                 }
             }

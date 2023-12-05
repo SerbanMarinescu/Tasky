@@ -1,6 +1,5 @@
 package com.example.tasky.feature_agenda.presentation.event_detail_screen
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +14,7 @@ import com.example.tasky.feature_agenda.domain.model.Attendee
 import com.example.tasky.feature_agenda.domain.model.EventPhoto
 import com.example.tasky.feature_agenda.domain.repository.AgendaRepositories
 import com.example.tasky.feature_agenda.domain.use_case.AgendaUseCases
+import com.example.tasky.feature_agenda.domain.util.NotificationScheduler
 import com.example.tasky.feature_agenda.domain.util.PhotoValidator
 import com.example.tasky.feature_agenda.domain.util.ReminderType
 import com.example.tasky.feature_agenda.presentation.util.EventOptions.DELETE
@@ -55,7 +55,8 @@ class EventDetailViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val userPreferences: UserPreferences,
     private val userDataValidator: UserDataValidator,
-    private val photoValidator: PhotoValidator
+    private val photoValidator: PhotoValidator,
+    private val notificationScheduler: NotificationScheduler
 ): ViewModel() {
 
     private val _state = MutableStateFlow(EventDetailState())
@@ -284,7 +285,14 @@ class EventDetailViewModel @Inject constructor(
             is EventDetailOnClick.DeleteLeaveOrJoinEvent -> {
                 when(event.eventOptions) {
                     DELETE -> {
-
+                        viewModelScope.launch {
+                            state.value.eventId?.let {
+                                useCases.event.deleteEvent(it, state.value.isUserEventCreator)
+                                notificationScheduler.cancelNotification(it)
+                                resultChannel.send(Result.Success())
+                            }
+                            resultChannel.send(Result.Success())
+                        }
                     }
                     JOIN -> {
                         val newList = attendeeList.map { attendee ->
@@ -309,7 +317,6 @@ class EventDetailViewModel @Inject constructor(
                         attendeeList.clear()
                         attendeeList.addAll(newList)
                         _state.update { it.copy(isCurrentUserGoing = false) }
-                        Log.d("attendee", attendeeList.toList().toString())
                     }
                 }
             }
@@ -392,6 +399,7 @@ class EventDetailViewModel @Inject constructor(
                 )
 
                 useCases.event.createEvent(eventToBeCreated)
+                notificationScheduler.scheduleNotification(eventToBeCreated)
             }
 
             val loadingJob = launch {
@@ -452,6 +460,7 @@ class EventDetailViewModel @Inject constructor(
                 )
 
                 useCases.event.updateEvent(eventToBeUpdated, deletedPhotos)
+                notificationScheduler.scheduleNotification(eventToBeUpdated)
                 resultChannel.send(Result.Success())
             }
         }

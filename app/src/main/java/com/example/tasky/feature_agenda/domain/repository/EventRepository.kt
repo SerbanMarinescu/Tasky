@@ -19,7 +19,7 @@ interface EventRepository {
 
     suspend fun syncUpdatedEvent(event: AgendaItem.Event, deletedPhotos: List<EventPhoto> = emptyList()): Resource<Unit>
 
-    suspend fun deleteEvent(event: AgendaItem.Event): Resource<Unit>
+    suspend fun deleteEvent(eventId: String, isUserEventCreator: Boolean): Resource<Unit>
 
-    suspend fun syncDeletedEvent(event: AgendaItem.Event): Resource<Unit>
+    suspend fun syncDeletedEvent(eventId: String, isUserEventCreator: Boolean): Resource<Unit>
 }

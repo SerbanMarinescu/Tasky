@@ -1,8 +1,8 @@
 package com.example.tasky.feature_agenda.di
 
+import android.app.AlarmManager
 import android.content.Context
 import androidx.room.Room
-import androidx.work.WorkManager
 import com.example.tasky.common.Constants
 import com.example.tasky.common.Constants.DATABASE_NAME
 import com.example.tasky.feature_agenda.data.local.AgendaDatabase
@@ -12,6 +12,7 @@ import com.example.tasky.feature_agenda.data.repository.EventRepositoryImpl
 import com.example.tasky.feature_agenda.data.repository.ReminderRepositoryImpl
 import com.example.tasky.feature_agenda.data.repository.TaskRepositoryImpl
 import com.example.tasky.feature_agenda.data.util.MoshiSerializer
+import com.example.tasky.feature_agenda.data.util.NotificationSchedulerImpl
 import com.example.tasky.feature_agenda.data.util.PhotoValidatorImpl
 import com.example.tasky.feature_agenda.data.util.TaskSchedulerImpl
 import com.example.tasky.feature_agenda.domain.repository.AgendaRepositories
@@ -32,6 +33,7 @@ import com.example.tasky.feature_agenda.domain.use_case.UpdateTask
 import com.example.tasky.feature_agenda.domain.use_case.ValidateAttendee
 import com.example.tasky.feature_agenda.domain.use_case.ValidatePhotos
 import com.example.tasky.feature_agenda.domain.util.JsonSerializer
+import com.example.tasky.feature_agenda.domain.util.NotificationScheduler
 import com.example.tasky.feature_agenda.domain.util.PhotoValidator
 import com.example.tasky.feature_agenda.domain.util.TaskScheduler
 import com.example.tasky.feature_authentication.domain.util.UserPreferences
@@ -95,12 +97,6 @@ object AgendaModule {
 
     @Provides
     @Singleton
-    fun provideWorkManager(@ApplicationContext context: Context): WorkManager {
-        return WorkManager.getInstance(context)
-    }
-
-    @Provides
-    @Singleton
     fun provideJsonSerializer(moshi: Moshi): JsonSerializer {
         return MoshiSerializer(moshi)
     }
@@ -109,6 +105,24 @@ object AgendaModule {
     @Singleton
     fun provideTaskScheduler(db: AgendaDatabase): TaskScheduler {
         return TaskSchedulerImpl(db)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAlarmManager(@ApplicationContext context: Context): AlarmManager {
+        return context.getSystemService(AlarmManager::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationScheduler(
+       @ApplicationContext context: Context,
+       alarmManager: AlarmManager
+    ): NotificationScheduler {
+        return NotificationSchedulerImpl(
+            context,
+            alarmManager
+        )
     }
 
     @Provides

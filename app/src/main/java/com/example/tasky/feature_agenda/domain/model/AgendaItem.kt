@@ -1,9 +1,12 @@
 package com.example.tasky.feature_agenda.domain.model
 
+import android.os.Parcelable
 import com.example.tasky.feature_agenda.domain.util.ReminderType
 import com.squareup.moshi.JsonClass
+import kotlinx.parcelize.Parcelize
 import java.time.ZonedDateTime
 
+@Parcelize
 sealed class AgendaItem(
     val id: String,
     val title: String,
@@ -11,7 +14,9 @@ sealed class AgendaItem(
     val sortDate: ZonedDateTime,
     val remindAt: ZonedDateTime,
     val reminderType: ReminderType
-) {
+): Parcelable {
+
+    @Parcelize
     @JsonClass(generateAdapter = true)
     data class Event(
         val eventId: String,
@@ -25,8 +30,9 @@ sealed class AgendaItem(
         val host: String?,
         val remindAtTime: ZonedDateTime,
         val eventReminderType: ReminderType
-    ) : AgendaItem(eventId, eventTitle, eventDescription, from, remindAtTime, eventReminderType)
+    ) : AgendaItem(eventId, eventTitle, eventDescription, from, remindAtTime, eventReminderType), Parcelable
 
+    @Parcelize
     @JsonClass(generateAdapter = true)
     data class Task(
         val taskId: String,
@@ -36,8 +42,9 @@ sealed class AgendaItem(
         val isDone: Boolean,
         val remindAtTime: ZonedDateTime,
         val taskReminderType: ReminderType
-    ) : AgendaItem(taskId, taskTitle, taskDescription, time, remindAtTime, taskReminderType)
+    ) : AgendaItem(taskId, taskTitle, taskDescription, time, remindAtTime, taskReminderType), Parcelable
 
+    @Parcelize
     @JsonClass(generateAdapter = true)
     data class Reminder(
         val reminderId: String,
@@ -46,5 +53,5 @@ sealed class AgendaItem(
         val time: ZonedDateTime,
         val remindAtTime: ZonedDateTime,
         val typeOfReminder: ReminderType
-    ) : AgendaItem(reminderId, reminderTitle, reminderDescription, time, remindAtTime, typeOfReminder)
+    ) : AgendaItem(reminderId, reminderTitle, reminderDescription, time, remindAtTime, typeOfReminder), Parcelable
 }
