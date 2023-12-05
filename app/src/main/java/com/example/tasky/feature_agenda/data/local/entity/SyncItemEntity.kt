@@ -12,8 +12,8 @@ data class SyncItemEntity(
     val itemId: String,
     val itemType: AgendaItemType,
     val operation: OperationType,
-    @PrimaryKey
-    val tableId: String = ""
+    @PrimaryKey(autoGenerate = true)
+    val tableId: Int = 0
 ) {
     class Converters {
 

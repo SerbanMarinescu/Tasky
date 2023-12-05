@@ -1,6 +1,7 @@
 package com.example.tasky.feature_agenda.data.worker
 
 import android.content.Context
+import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.tasky.feature_agenda.data.local.AgendaDatabase
@@ -12,11 +13,14 @@ import com.example.tasky.feature_agenda.domain.util.AgendaItemType.EVENT
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType.REMINDER
 import com.example.tasky.feature_agenda.domain.util.AgendaItemType.TASK
 import com.example.tasky.feature_agenda.domain.util.OperationType
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
 
-class SyncWorker(
-    private val context: Context,
-    private val workerParams: WorkerParameters,
+@HiltWorker
+class SyncWorker @AssistedInject constructor(
+    @Assisted private val context: Context,
+    @Assisted private val workerParams: WorkerParameters,
     private val repositories: AgendaRepositories,
     private val db: AgendaDatabase
 ) : CoroutineWorker(context, workerParams) {

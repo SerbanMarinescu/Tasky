@@ -8,23 +8,14 @@ object Constants {
     const val DATABASE_NAME = "Agenda.db"
 
     const val NOTIFICATION_CHANNEL_ID = "channel_id"
-    const val NOTIFICATION_CHANNEL_DESCRIPTION = "Used to remind the User of upcoming Events, Tasks and Reminders"
     const val APP_NAME = "Tasky"
-
-    const val ACTION = "action"
-    const val AGENDA_ITEM_TYPE = "agendaItemType"
-    const val EVENT = "event"
-    const val DELETED_PHOTOS = "deletedPhotos"
-    const val REMINDER = "reminder"
-    const val TASK = "task"
-    const val DELETED_EVENT_IDS = "deletedEventIds"
-    const val DELETED_REMINDER_IDS = "deletedReminderIds"
-    const val DELETED_TASK_IDS = "deletedTaskIds"
+    const val APP_SCHEME = "tasky"
+    const val EVENT_HOST = "event_detail"
+    const val REMINDER_HOST = "reminder_detail"
+    const val TASK_HOST = "task_detail"
+    const val DEEP_LINK_HANDLER = "DeepLinkHandler"
 
     const val WORK_DATA_KEY = "workDataKey"
-
-    const val TYPE_KEY = "TypeKey"
-    const val TEXT_KEY = "TextKey"
 
     const val ROUTE_REGISTER = "RegisterScreen"
     const val ROUTE_LOGIN = "LoginScreen"
